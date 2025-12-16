@@ -11,6 +11,7 @@
     <title>Game Tournament</title>
 </head>
 
+<<<<<<< HEAD
 <body>
     <?php
     include('partial/footer.php');
@@ -27,3 +28,18 @@
     </header>
     <?php include('database/dbConfig.php');
     ?>
+=======
+<header>
+    <div class="logo">TournaX</div>
+    <nav class="headnav">
+        <a href="#">Home</a>
+        <a href="#">Tournaments</a>
+        <a href="#">Teams</a>
+        <a href="#">Contact</a>
+    </nav>
+    <nav class="signnav">
+        <a href="#">SingUp</a>
+        <a href="#">Login</a>
+    </nav>
+</header>
+>>>>>>> dbc3b88f484fa1cf52d9585c51ff036d45087ec8
