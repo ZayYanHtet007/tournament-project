@@ -1,5 +1,6 @@
 <?php
-    include('partial/header.php');
+include('partial/header.php');
+
 ?>
 
 <?php
