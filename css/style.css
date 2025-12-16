@@ -24,14 +24,17 @@ header {
     background: transparent;
     position: fixed;
     top: 0;
+
     width: 100%;
     z-index: 1000;
+
 }
 
 .logo {
     font-size: 29px;
     font-weight: bold;
     letter-spacing: 2px;
+
     flex-shrink: 0;
     font-family: 'Arvo', serif;
 }
@@ -39,6 +42,7 @@ header {
 nav {
     display: flex;
     align-items: center;
+
 }
 
 nav a {
