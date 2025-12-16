@@ -1,6 +1,8 @@
 <?php
-    include('partial/header.php');
+include('partial/header.php');
+
 ?>
+
 
 <section>
     <div class="title">
@@ -8,6 +10,3 @@
     </div>
 </section>
 
-<?php
-    include('partial/footer.php');
-?>
