@@ -1,4 +1,5 @@
 
+
 <?php
     $server = $_SERVER['SERVER_NAME'] ?? "localhost";
     // if($server == "localhost"){
@@ -24,3 +25,4 @@
     }else{
         echo "Connection successfully to $server";
     }
+
