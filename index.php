@@ -1,6 +1,5 @@
 <?php
 include('partial/header.php');
-
 ?>
 
 <?php
@@ -86,6 +85,68 @@ $characterColor = 0xff6600;
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 </script>
+
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+        <h1>Compete. Win. Dominate.</h1>
+        <p>The ultimate platform for competitive gaming tournaments. Join events, challenge top players, and claim your victory.</p>
+        <button><span>Join Tournament</span></button>
+        <button><span>Register Tour</span></button>
+    </div>
+</section>
+
+
+<section class="section">
+    <h2>Upcoming Tournaments</h2>
+    <div class="tournaments">
+        <div class="card">
+            <div class="card-text">
+                <h3>Valorant Cup</h3>
+                <p>5v5 competitive tournament with top teams.</p>
+                <span>Prize Pool: $5,000</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-text">
+                <h3>PUBG Showdown</h3>
+                <p>Battle royale tournament for squads.</p>
+                <span>Prize Pool: $3,000</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-text">
+                <h3>CS2 Masters</h3>
+                <p>High-level tactical FPS competition.</p>
+                <span>Prize Pool: $4,000</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const header = document.querySelector("header");
+
+    window.addEventListener("scroll", () => {
+        if (window.scrollY > 50) {
+            header.classList.add("scrolled");
+        } else {
+            header.classList.remove("scrolled");
+        }
+    });
+    const heroBg = document.querySelector('.hero-bg');
+
+    window.addEventListener('scroll', () => {
+        const scrollPosition = window.scrollY;
+        // Move background up/down slowly relative to scroll
+        heroBg.style.transform = translateY($ {
+                scrollPosition * 0.3
+            }
+            px);
+    });
+</script>
+
+
 <?php
 include('partial/footer.php');
 ?>
