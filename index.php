@@ -92,7 +92,7 @@ $characterColor = 0xff6600;
         <h1>Compete. Win. Dominate.</h1>
         <p>The ultimate platform for competitive gaming tournaments. Join events, challenge top players, and claim your victory.</p>
         <button><span>Join Tournament</span></button>
-        <button><span>Register</span></button>
+        <button><span>Register Tour</span></button>
     </div>
 </section>
 
