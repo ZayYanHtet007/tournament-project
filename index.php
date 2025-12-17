@@ -1,6 +1,5 @@
 <?php
 include('partial/header.php');
-
 ?>
 
 <?php
