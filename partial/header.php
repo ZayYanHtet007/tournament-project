@@ -12,7 +12,6 @@
 </head>
 
 <body>
-    
 
     <header>
         <div class="logo">TournaX</div>
@@ -27,5 +26,4 @@
             <a href="#">Login</a>
         </nav>
     </header>
-    <?php include('database/dbConfig.php');
-    ?>
+    
