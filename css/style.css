@@ -24,34 +24,48 @@ header {
     background: transparent;
     position: fixed;
     top: 0;
-
     width: 100%;
     z-index: 1000;
-
 }
 
 .logo {
     font-size: 29px;
     font-weight: bold;
     letter-spacing: 2px;
-
-    flex-shrink: 0;
     font-family: 'Arvo', serif;
 }
 
-nav {
+.headnav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
-
+    gap: 30px;
 }
 
-nav a {
-    margin-left: 30px;
+
+.headnav a {
     font-size: 16px;
     opacity: 0.8;
 }
 
-nav a:hover {
+.headnav a:hover {
+    opacity: 1;
+}
+
+.signnav{
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.signnav a {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.signnav a:hover {
     opacity: 1;
 }
 
@@ -92,7 +106,7 @@ footer {
 
     .title {
         font-size: 32px;
-        margin-top: 100px;
+        margin-top: 100px;        
     }
 }
 
@@ -100,37 +114,28 @@ footer {
     header {
         padding: 15px 20px;
         flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .logo {
-        margin-right: 0;
-        margin-bottom: 10px;
+        align-items: center;
     }
 
     nav {
-        width: 100%;
-        justify-content: space-around;
-    }
-
-    nav a {
-        margin: 0;
-        font-size: 14px;
+        justify-content: center;
+        margin-top: 10px;
     }
 
     .title {
         font-size: 28px;
-        margin-top: 80px;
+        margin-top: 100px;
     }
 }
 
 @media (max-width: 480px) {
-    .title {
-        font-size: 24px;
-        margin-top: 60px;
+    nav {
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
-    nav a {
-        font-size: 13px;
+    .title {
+        font-size: 24px;
+        margin-top: 90px;
     }
 }
