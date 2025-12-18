@@ -134,18 +134,15 @@ $characterColor = 0xff6600;
             header.classList.remove("scrolled");
         }
     });
+
     const heroBg = document.querySelector('.hero-bg');
 
     window.addEventListener('scroll', () => {
         const scrollPosition = window.scrollY;
         // Move background up/down slowly relative to scroll
-        heroBg.style.transform = `translateY(${
-                scrollPosition * 0.3
-            }
-            px)`;
+        heroBg.style.transform = `translateY(${scrollPosition * 0.3}px)`;
     });
 </script>
-
 
 <?php
 include('partial/footer.php');
