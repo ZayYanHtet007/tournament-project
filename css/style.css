@@ -116,6 +116,163 @@ header.scrolled {
     padding: 0 20px;
 }
 
+.hero {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: url('../images/Tour1.jpg') center/cover no-repeat;
+    background-attachment: fixed;
+    position: relative;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1;
+}
+
+
+.hero h1 {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: blueviolet;
+    font-weight: bold;
+}
+
+
+.hero p {
+    max-width: 600px;
+    margin: auto;
+    opacity: 1;
+    font-size: 16px;
+    color: #f2f2f2;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: #fff;
+}
+
+.hero button {
+    margin-top: 30px;
+    padding: 15px 40px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #ffa8ee, #ff45ec);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transform: skew(-15deg);
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+
+.hero button:hover {
+    transform: skew(-15deg) translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.hero button span {
+    display: inline-block;
+    transform: skew(15deg);
+}
+
+.hero-content {
+    animation: heroFade 1.2s ease forwards;
+}
+
+@keyframes heroFade {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero::after {
+    transition: background 0.5s ease;
+}
+
+
+
+/* TOURNAMENTS */
+.section {
+    padding: 80px 60px;
+}
+
+
+.section h2 {
+    font-size: 32px;
+    margin-bottom: 40px;
+}
+
+.tournaments {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+
+.card {
+    height: 300px;
+    background: url('../images/pubg.jpg') center/cover no-repeat;
+    padding: 30px;
+    border: 1px solid #1f1f1f;
+    transition: background 0.8s ease, box-shadow 0.8s ease;
+    overflow: hidden;
+}
+
+.card-text {
+    position: relative;
+    z-index: 1;
+    transition: filter 0.5s ease, opacity 0.5s ease;
+}
+
+.card:hover {
+    background: url('../images/valorant.jpg') center/cover no-repeat;
+    position: relative;
+    transition: background 0.8s ease, box-shadow 0.8s ease;
+    z-index: 2;
+}
+
+.card-text h3 {
+    margin-bottom: 10px;
+    color: #00B4FF;
+}
+
+
+.card-text p {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 20px;
+    color: #EAEAEA;
+}
+
+
+.card-text span {
+    font-size: 12px;
+}
+
+.card:hover .card-text {
+    filter: blur(5px);
+}
+
 /* FOOTER */
 footer {
     text-align: center;
