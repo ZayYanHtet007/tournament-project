@@ -2,88 +2,189 @@
 include('partial/header.php');
 ?>
 
-<?php
-// Optional: character color from PHP
-$characterColor = 0xff6600;
-?>
+<!-- 3D HERO SECTION -->
+<section class="hero-3d">
+    <canvas id="bg"></canvas>
 
-<section>
-    <div class="title">
-        Tournaments
+    <div class="hero-text">
+        <h1>Galactic Tournaments</h1>
+        <p>
+            Enter the cosmic arena. Battle for supremacy in the stars.
+        </p>
     </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+<!-- NORMAL CONTENT BELOW -->
+<section class="normal-content">
+</section>
 
-<script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 
-    // Add a plane for reference
-    const planeGeometry = new THREE.PlaneGeometry(100, 100);
-    const planeMaterial = new THREE.MeshBasicMaterial({
-        color: 0x222222,
-        side: THREE.DoubleSide
-    });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI / 2;
-    scene.add(plane);
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-    // Create a simple character (cube)
-    const characterGeometry = new THREE.BoxGeometry(1, 2, 1);
-    const characterMaterial = new THREE.MeshBasicMaterial({
-        color: <?php echo $characterColor; ?>
-    });
-    const character = new THREE.Mesh(characterGeometry, characterMaterial);
-    character.position.y = 1;
-    scene.add(character);
+// SCENE
+const scene = new THREE.Scene();
 
-    camera.position.set(0, 5, 10);
-    camera.lookAt(0, 0, 0);
+// CAMERA
+const camera = new THREE.PerspectiveCamera(
+    70,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    2000
+);
+camera.position.set(0, 1.5, 6);
 
-    // Track mouse
-    let mouse = {
-        x: 0,
-        y: 0
-    };
-    document.addEventListener('mousemove', event => {
-        // Convert screen coordinates to normalized device coordinates (-1 to 1)
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    });
+// Clock for animations
+const clock = new THREE.Clock();
 
-    // Raycaster to find cursor position on the plane
-    const raycaster = new THREE.Raycaster();
+// RENDERER
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("bg"),
+    antialias: true,
+    alpha: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 
-    function animate() {
-        requestAnimationFrame(animate);
+// 🌌 GALAXY BACKGROUND
+function galaxy(color, count, size, spread) {
+    const geo = new THREE.BufferGeometry();
+    const pos = [];
 
-        // Update raycaster
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObject(plane);
-
-        if (intersects.length > 0) {
-            const point = intersects[0].point;
-            // Make character look at cursor
-            character.lookAt(point.x, character.position.y, point.z);
-        }
-
-        renderer.render(scene, camera);
+    for (let i = 0; i < count; i++) {
+        pos.push(
+            (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread
+        );
     }
 
-    animate();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
 
-    // Handle resize
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    return new THREE.Points(
+        geo,
+        new THREE.PointsMaterial({
+            color,
+            size,
+            transparent: true,
+            opacity: 0.8
+        })
+    );
+}
+
+scene.add(galaxy(0xffffff, 2500, 0.6, 1200));
+scene.add(galaxy(0x6a0dad, 1800, 1.4, 900));
+scene.add(galaxy(0x00bfff, 1500, 1.2, 800));
+scene.add(galaxy(0xff4500, 800, 1.8, 700));
+scene.add(galaxy(0x32cd32, 600, 1.6, 500));
+
+// Add fog for depth
+scene.fog = new THREE.FogExp2(0x000011, 0.0005);
+
+// 💡 LIGHTS
+scene.add(new THREE.AmbientLight(0x4444ff, 0.4));
+
+const light = new THREE.PointLight(0xffffff, 1.5);
+light.position.set(5, 6, 8);
+scene.add(light);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+dirLight.position.set(-1, 1, 1);
+scene.add(dirLight);
+
+// 🧍 CHARACTER (REAL 3D MODEL)
+const loader = new GLTFLoader();
+let character;
+let mixer;
+
+loader.load(
+    'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+    function (gltf) {
+        character = gltf.scene;
+        character.position.set(-1.8, -1, 0);
+        character.scale.set(0.5, 0.5, 0.5);
+        scene.add(character);
+
+        // Add animation
+        mixer = new THREE.AnimationMixer(character);
+        if (gltf.animations.length > 0) {
+            const action = mixer.clipAction(gltf.animations[0]);
+            action.play();
+        }
+    },
+    undefined,
+    function (error) {
+        console.error('An error happened loading the model:', error);
+        // Fallback to cube
+        const charGeo = new THREE.BoxGeometry(1, 2, 1);
+        const charMat = new THREE.MeshStandardMaterial({ color: 0xff6600 });
+        character = new THREE.Mesh(charGeo, charMat);
+        character.position.set(-1.8, -1, 0);
+        scene.add(character);
+    }
+);
+
+// 🖱 MOUSE FOLLOW
+let mouseX = 0;
+let mouseY = 0;
+
+window.addEventListener("mousemove", e => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 0.6;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 0.6;
+});
+
+// 🖱 SCROLL → MOVE LEFT ONLY
+let scrollTarget = -1.8;
+const maxLeft = -3;
+
+const heroSection = document.querySelector(".hero-3d");
+
+// SCROLL → MOVE LEFT ONLY (LOCAL)
+window.addEventListener("scroll", () => {
+    const heroHeight = heroSection.offsetHeight;
+    const scrollY = Math.min(window.scrollY, heroHeight);
+
+    scrollTarget = Math.max(-3, -1.8 - scrollY * 0.002);
+});
+
+
+// 🎥 ANIMATE
+function animate() {
+    requestAnimationFrame(animate);
+
+    const delta = clock.getDelta();
+
+    scene.rotation.y += 0.0003;
+
+    if (character) {
+        character.position.x += (scrollTarget - character.position.x) * 0.05;
+        character.rotation.y += (mouseX - character.rotation.y) * 0.05;
+        character.rotation.x += (-mouseY - character.rotation.x) * 0.05;
+    }
+
+    if (mixer) mixer.update(delta);
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// RESIZE
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
 </script>
 
 <section class="hero">

@@ -15,6 +15,79 @@ body {
     background-color: #0d0d0d;
     color: #fff;
 }
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    overflow-x: hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* HERO SECTION */
+.hero-3d {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* CANVAS FOR 3D */
+#bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+/* HERO TEXT */
+.hero-text {
+    position: relative;
+    z-index: 2;
+    width: 45%;
+    margin-left: 50%;
+    padding: 120px 30px;
+    color: white;
+}
+
+/* SECOND SECTION CONTENT */
+.normal-content {
+    background: #0b0b0f;
+    padding: 100px 50px;
+    color: white;
+}
+
+/* TOURNAMENT CARDS */
+.tournaments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.card {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+}
+
+.card h3 {
+    margin: 0 0 10px 0;
+}
+
+.card span {
+    display: block;
+    margin-top: 10px;
+    color: #ffcc00;
+}
+
+/* Right-side content */
+#content {
+    position: relative;
+    width: 45%;
+    margin-left: 50%;
+    padding: 100px;
+    color: white;
+}
 
 a {
     text-decoration: none;
@@ -273,6 +346,390 @@ header.scrolled {
     filter: blur(5px);
 }
 
+/* SignUp */
+.content {
+    padding-top: 90px; /* Avoid header overlap */
+    padding-bottom: 90px;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at center, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%), 
+                linear-gradient(45deg, rgba(255,69,236,0.1) 0%, rgba(0,180,255,0.1) 100%);
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255,69,236,0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0,180,255,0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.reg_container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 25px;
+    background: linear-gradient(145deg, rgba(26,26,26,0.95), rgba(42,42,42,0.95));
+    border-radius: 20px;
+    width: 50%;
+    margin: 0 auto;
+    color: white;
+    box-shadow: 0 0 50px rgba(255, 69, 236, 0.5), 0 0 100px rgba(0, 180, 255, 0.4);
+    border: 2px solid transparent;
+    border-image: linear-gradient(45deg, #FF45EC, #00B4FF) 1;
+    backdrop-filter: blur(15px);
+    animation: fadeInUp 1s ease-out, glowPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glowPulse {
+    from {
+        box-shadow: 0 0 30px rgba(255, 69, 236, 0.3), 0 0 60px rgba(0, 180, 255, 0.2);
+    }
+    to {
+        box-shadow: 0 0 40px rgba(255, 69, 236, 0.5), 0 0 80px rgba(0, 180, 255, 0.4);
+    }
+}
+
+.reg_image{
+    width: 30%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 10px 0 0 10px;
+}
+
+.reg_column{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.reg_container h2{
+    margin: 0;
+    text-align: center;
+    padding: 30px 0 20px 0;
+    width: 100%;
+    font-size: 28px;
+    font-weight: bold;
+    color: #00B4FF;
+    text-shadow: 0 0 10px rgba(0, 180, 255, 0.8);
+    letter-spacing: 2px;
+}
+
+.upload_photo{
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid #00B4FF;
+    cursor: pointer;
+    margin: 20px auto;
+    box-shadow: 0 0 20px rgba(0, 180, 255, 0.6);
+    transition: all 0.3s ease;
+    object-fit: cover;
+    backdrop-filter: blur(5px);
+}
+
+.upload_photo:hover{
+    box-shadow: 0 0 30px rgba(0, 180, 255, 0.9);
+    transform: scale(1.05);
+    border-color: #FF45EC;
+}
+
+.reg_input{
+    margin: 5px 0 20px 0;
+    padding: 15px;
+    width: 100%;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-size: 14px;
+    font-family: 'Arial', sans-serif;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    backdrop-filter: blur(10px);
+}
+
+.reg_input:focus {
+    border-color: #00B4FF;
+    box-shadow: 0 0 20px rgba(0, 180, 255, 0.8), inset 0 0 10px rgba(0, 180, 255, 0.2);
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.02);
+}
+
+.reg_row label {
+    display: block;
+    margin-bottom: 8px;
+    color: #EAEAEA;
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.5px;
+}
+
+.reg_row {
+    width: 100%;
+    margin-bottom: 10px;
+}
+.dropdown {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* Style the dropdown button */
+.dropbtn {
+  background: linear-gradient(135deg, #FF45EC, #00B4FF);
+  color: white;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  box-shadow: 0 0 20px rgba(255, 69, 236, 0.6);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dropbtn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(255, 69, 236, 0.9);
+}
+
+/* Dropdown content */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: rgba(26, 26, 26, 0.95);
+  min-width: 100%;
+  box-shadow: 0 0 20px rgba(0, 180, 255, 0.5);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Links inside dropdown content */
+.dropdown-content a {
+  color: #EAEAEA;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.dropdown-content a:hover {
+  background: rgba(255, 69, 236, 0.2);
+  color: #00B4FF;
+  box-shadow: inset 0 0 10px rgba(0, 180, 255, 0.3);
+}
+
+/* Show the dropdown content on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.g-recaptcha {
+    margin: 10px 0 20px 0;
+}
+
+.reg_button{
+    padding: 14px 30px;
+    background: linear-gradient(135deg, #FF45EC, #00B4FF);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 69, 236, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(5px);
+}
+
+.reg_button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 69, 236, 0.9);
+}
+
+.reg_cancel{
+    margin-left: 10px;
+    padding: 14px 30px;
+    background: linear-gradient(135deg, #FF45EC, #00B4FF);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 69, 236, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(5px);
+}
+
+.reg_cancel:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 69, 236, 0.9);
+}
+
+
+/* login */
+.login_container{
+    width: 50%;
+    margin: auto;
+    height: 730px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: gray 0 2px 5px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    position: relative;    /* IMPORTANT */
+    overflow: hidden;      /* Keeps blur inside container */
+}
+
+.login_container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../images/gif2.gif');
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: blur(4px);      
+    z-index: 0;         
+}
+
+.login_container > * {
+    position: relative;
+    z-index: 1;
+}
+
+.login_container h3{
+    font-size: xx-large;
+    color: wheat;
+    text-align: center;
+    padding: 30px 0 20px 0;
+    width: 100%;
+    transition: color 0.3s, background 0.3s;
+}
+
+.login_input{
+    margin-left: 200px;
+    margin-top: 30px;
+    padding: 10px;
+    font-size: 16px;
+    width: 50%;
+    border: none;
+    outline: none;
+    color: white;
+    border-bottom: wheat 2px solid;
+    background: transparent;
+    transition: border-bottom-color 0.3s, box-shadow 0.3s;
+}
+
+.login_input:focus {
+    border-bottom-color: #68939F;
+    box-shadow: 0 2px 8px rgba(104,147,159,0.15);
+}
+
+.login_container label{
+    color: wheat;
+    margin-top: 50px;
+    margin-left: 250px;
+}
+
+.login_container a{
+    text-decoration: none;
+    color: #68939F;
+    margin-left: 20px;
+    border: none;
+    padding: 5px 5px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+.login_container a.forget_btn{
+    padding: 5px 5px;
+    margin-top: 50px;
+    margin-left: 245px;
+    color: wheat;
+}
+
+.btnlogin{
+    padding: 10px 15px;
+    background-color: #1F1F1F;
+    color: wheat;
+    border: 2px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-left: 250px;
+    margin-top: 20px;
+}
+
+.logcancel{
+    padding: 10px 15px;
+    background-color: #1F1F1F;
+    color: wheat;
+    border: 2px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-left: 20px;
+    margin-top: 40px;
+}
+
 /* FOOTER */
 footer {
     text-align: center;
@@ -330,5 +787,29 @@ footer {
     .title {
         font-size: 24px;
         margin-top: 90px;
+    }
+
+    .reg_container {
+        max-width: 90%;
+        padding: 30px 20px;
+    }
+
+    .reg_container h2 {
+        font-size: 24px;
+    }
+
+    .upload_photo {
+        width: 100px;
+        height: 100px;
+    }
+
+    .reg_input {
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    .reg_button, .reg_cancel {
+        padding: 10px 20px;
+        font-size: 14px;
     }
 }
