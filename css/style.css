@@ -790,14 +790,14 @@ footer {
     }
 }
 
-.container {
+.AboutContainer {
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
 }
 
 
-.hero {
+.AboutHero {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -806,17 +806,17 @@ footer {
     flex-wrap: wrap;
 }
 
-.hero-text {
+.AboutHero-text {
     flex: 1;
     min-width: 300px;
 }
-.hero-image {
+.AboutHero-image {
     flex: 1;
     min-width: 300px;
     display: flex;
     justify-content: center;
 }
-.hero-image img {
+.AboutHero-image img {
     width: 100%;
     max-width: 600px;
     height: auto;
@@ -824,17 +824,17 @@ footer {
     object-fit: cover;
 }
 
-h1 {
+.About-h1 {
     font-size: 3rem;
     font-weight: 800;
 }
 
-h2 {
+.About-h2 {
     font-size: 2rem;
     letter-spacing: 1px;
 }
 
-h3 {
+.About-h3 {
     font-size: 1.2rem;
     color: #9b51e0;
     margin-bottom: 15px;
@@ -847,7 +847,7 @@ h3 {
     border-left: 4px solid #27ae60;
     padding-left: 15px;
 }
-.hero2{
+.AboutHero2{
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -856,7 +856,7 @@ h3 {
     flex-wrap: wrap;
 
 }
-.cards-column{
+.Aboutcards-column{
     flex: 1  1  520px;
     display: flex;
     flex-direction: column;
@@ -864,7 +864,7 @@ h3 {
     min-width: 260px;
     max-width: 520px;
 }
-.card{
+.Aboutcard{
     background-color: #0b0b10;
     padding: 20px;
     border-radius: 12px;
@@ -874,11 +874,11 @@ h3 {
     width: 100%;
 
 }
-.card:hover{
+.Aboutcard:hover{
     transform: translateY(-6px);
     border-color: #6a9cff;
 }
-.card h3{
+.Aboutcard h3{
     font-size: 1.25rem;
     margin-bottom: 12px;
     color: #ffffff;
@@ -886,17 +886,17 @@ h3 {
     align-items: center;
     gap: 10px;
 }
-.card p{
+.Aboutcard p{
     color: #c4c7cc;
     margin: 0;
 }
-.hero-image2{
+.AboutHero-image2{
     flex: 0 0 420px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-.hero-image2 img{
+.AboutHero-image2 img{
     width: 100%;
     max-width: 420px;
     height: auto;
