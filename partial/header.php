@@ -18,8 +18,8 @@
         <div class="logo">TournaX</div>
         <nav class="headnav">
             <a href="index.php">Home</a>
-            <a href="#">Tournaments</a>
-            <a href="aboutUs.php">About Us</a>
+            <a href="tournament.php">Tournaments</a>
+            <a href="#">About Us</a>
             <a href="#">Contact</a>
         </nav>
         <nav class="signnav">
