@@ -14,12 +14,12 @@ include('partial/header.php');
                 <div class="games-grid">
                     <?php 
                     $games = [
-                        ['name' => 'Valorant', 'tournaments' => 45, 'players' => '25K+', 'gradient' => 'red-pink'],
-                        ['name' => 'League of Legends', 'tournaments' => 78, 'players' => '50K+', 'gradient' => 'blue-cyan'],
-                        ['name' => 'CS:GO', 'tournaments' => 62, 'players' => '35K+', 'gradient' => 'orange-yellow'],
-                        ['name' => 'Dota 2', 'tournaments' => 34, 'players' => '18K+', 'gradient' => 'purple-indigo'],
-                        ['name' => 'Apex Legends', 'tournaments' => 28, 'players' => '15K+', 'gradient' => 'rose-orange'],
-                        ['name' => 'Rocket League', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'cyan-indigo']
+                        ['name' => 'Valorant','image' => 'valorant.png', 'tournaments' => 45, 'players' => '25K+', 'gradient' => 'red-pink'],
+                        ['name' => 'League of Legends', 'image' => 'lol.png', 'tournaments' => 78, 'players' => '50K+', 'gradient' => 'blue-cyan'],
+                        ['name' => 'CS:GO', 'image' => 'csgo.png', 'tournaments' => 62, 'players' => '35K+', 'gradient' => 'orange-yellow'],
+                        ['name' => 'Dota 2', 'image' => 'dota2.png', 'tournaments' => 34, 'players' => '18K+', 'gradient' => 'purple-indigo'],
+                        ['name' => 'Apex Legends', 'image' => 'valorant.png', 'tournaments' => 28, 'players' => '15K+', 'gradient' => 'rose-orange'],
+                        ['name' => 'Rocket League', 'image' => 'valorant.png', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'cyan-indigo']
                     ];
                     foreach($games as $index => $game): 
                     ?>
@@ -27,7 +27,7 @@ include('partial/header.php');
                         <div class="game-bg gradient-<?php echo $game['gradient']; ?>"></div>
                         
                         <div class="game-icon gradient-<?php echo $game['gradient']; ?>">
-                            <img src="images/games/<?php echo strtolower(str_replace(' ', '-', $game['name'])); ?>.png"
+                            <img src="images/games/<?php echo $game['image']; ?>" alt="<?php echo $game['name']; ?>"
                                 alt="<?php echo $game['name']; ?>"
                                 class="game-img">
                         </div>
