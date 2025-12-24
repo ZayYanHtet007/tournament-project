@@ -1,0 +1,126 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: #0d0d0d;
+    color: white;
+}
+
+/* HEADER */
+.legacy-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 20px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(13,13,13,0.95);
+    z-index: 1000;
+}
+
+.legacy-logo {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.legacy-logo span {
+    color: #d333d3;
+}
+
+.legacy-headnav,
+.legacy-signnav {
+    display: flex;
+    gap: 30px;
+}
+
+.legacy-headnav a,
+.legacy-signnav a {
+    text-decoration: none;
+    color: white;
+    opacity: 0.8;
+}
+
+.legacy-headnav a:hover,
+.legacy-signnav a:hover {
+    opacity: 1;
+}
+
+/* HERO */
+.hero {
+    height: 100vh;
+    background: linear-gradient(to bottom, #000, #111);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-top: 80px;
+}
+
+.hero h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    opacity: 0.8;
+    margin-bottom: 30px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 14px 30px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.primary {
+    background: #d333d3;
+    color: white;
+}
+
+.secondary {
+    border: 2px solid #d333d3;
+    color: #d333d3;
+}
+
+/* DASHBOARD */
+.dashboard {
+    padding: 80px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+    background: #0f0f0f;
+}
+
+.card {
+    background: #161616;
+    padding: 40px;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 18px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+}
+
+/* FOOTER */
+.footer {
+    text-align: center;
+    padding: 30px;
+    background: #0a0a0a;
+    opacity: 0.7;
+}
