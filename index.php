@@ -42,10 +42,6 @@ include('partial/header.php');
 
             <div class="container hero-container">
                 <div class="hero-content">
-                    <div class="live-badge">
-                        <span class="live-dot"></span>
-                        <span>LIVE TOURNAMENTS</span>
-                    </div>
 
                     <h1 class="hero-title">
                         <span class="gradient-text">COMPETE</span>

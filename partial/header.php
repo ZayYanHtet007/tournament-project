@@ -14,7 +14,7 @@
 <body>
 
     <header class="legacy-header">
-        <div class="legacy-logo">TournaX</div>
+        <div class="legacy-logo">Tourna<span>X</span></div>
         <nav class="legacy-headnav">
             <a href="index.php">Home</a>
             <a href="tournament.php">Tournaments</a>
