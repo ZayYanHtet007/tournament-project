@@ -20,15 +20,6 @@
             <a href="aboutUs.php">About Us</a>
             <a href="#">Contact</a>
         </nav>
-<<<<<<< HEAD
-        <nav class="signnav">
-            <a href="#">SignUp</a>
-            <a href="#">Login</a>
-        </nav>
-    </header>
-    <?php include('database/dbConfig.php');
-    ?>
-=======
         <nav class="legacy-signnav">
             <a href="login.php">Login</a>
             <button class="btn-primary">Join Now</button>
@@ -46,4 +37,3 @@
             }
         });
     </script>
->>>>>>> 7b78f6f8b7c3ef9119502d97bceba8a87721894c

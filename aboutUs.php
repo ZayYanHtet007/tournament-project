@@ -1,16 +1,6 @@
 <?php
 include('partial/header.php');
 ?>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body class="about-body">
 
     <div class="container">
         <section class="legacy-hero">
@@ -56,10 +46,6 @@ include('partial/header.php');
             </div>
         </section>
     </div>
-
-</body>
-
-</html>
 
 
 <?php
