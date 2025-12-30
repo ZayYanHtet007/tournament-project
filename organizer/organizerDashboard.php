@@ -65,7 +65,7 @@ $username = "Organizer";
         <p>Compete. Manage. Dominate the Tournament Arena.</p>
 
         <div class="hero-buttons">
-            <a href="#" class="btn primary">Create Tournament</a>
+            <a href="createTournament.php" class="btn primary">Create Tournament</a>
             <a href="#" class="btn secondary">Join Tournament</a>
         </div>
     </div>
