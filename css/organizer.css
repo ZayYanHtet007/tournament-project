@@ -133,68 +133,57 @@ body {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Animated Grid Background */
-.grid-background {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: gridMove 20s linear infinite;
-    transform: rotateX(60deg);
-    transform-style: preserve-3d;
-}
+/* Animated Grid Background - Subtle */
+    .grid-background {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 30s linear infinite;
+      transform: rotateX(70deg);
+      opacity: 0.3;
+      z-index: 0;
+    }
 
 @keyframes gridMove {
-    0% { transform: translateY(0) rotateX(60deg); }
-    100% { transform: translateY(50px) rotateX(60deg); }
-}
+      0% { transform: translateY(0) rotateX(70deg); }
+      100% { transform: translateY(60px) rotateX(70deg); }
+    }
 
-/* Floating 3D Cubes */
-.cube {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    transform-style: preserve-3d;
-    animation: floatCube 6s ease-in-out infinite;
-}
+    /* Glowing Orbs - Subtle */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: orbFloat 12s ease-in-out infinite;
+      opacity: 0.4;
+      z-index: 0;
+    }
 
-.cube::before,
-.cube::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border: 2px solid;
-    background: rgba(0, 255, 255, 0.05);
-}
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(147, 51, 234, 0.3), transparent);
+      top: -10%;
+      right: -10%;
+    }
 
-.cube::before {
-    border-color: #00ffff;
-    transform: rotateY(0deg) translateZ(50px);
-    box-shadow: 0 0 20px #00ffff;
-}
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent);
+      bottom: -10%;
+      left: -10%;
+      animation-delay: 3s;
+    }
 
-.cube::after {
-    border-color: #ff00ff;
-    transform: rotateY(90deg) translateZ(50px);
-    box-shadow: 0 0 20px #ff00ff;
-}
-
-.cube-1 { top: 10%; left: 15%; animation-delay: 0s; }
-.cube-2 { top: 60%; left: 70%; animation-delay: 1s; }
-.cube-3 { top: 30%; left: 80%; animation-delay: 2s; }
-.cube-4 { top: 70%; left: 20%; animation-delay: 3s; }
-.cube-5 { top: 40%; left: 30%; animation-delay: 4s; }
-
-@keyframes floatCube {
-    0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
-    25% { transform: translateY(-30px) rotateX(180deg) rotateY(90deg); }
-    50% { transform: translateY(0) rotateX(360deg) rotateY(180deg); }
-    75% { transform: translateY(-30px) rotateX(180deg) rotateY(270deg); }
-}
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, -30px) scale(1.1); }
+    }
 
 /* Glowing Orbs */
 .orb {
@@ -237,21 +226,29 @@ body {
 }
 
 /* Particles */
-.particle {
-    position: absolute;
-    width: 3px;
-    height: 3px;
-    background: #00ffff;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #00ffff;
-    animation: particleFloat 5s ease-in-out infinite;
-}
+    .particle {
+      position: fixed;
+      width: 2px;
+      height: 2px;
+      background: #667eea;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #667eea;
+      animation: particleFloat 8s ease-in-out infinite;
+      opacity: 0.6;
+      z-index: 1;
+    }
 
-@keyframes particleFloat {
-    0% { transform: translateY(0) translateX(0); opacity: 0; }
-    50% { opacity: 1; }
-    100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
-}
+    @keyframes particleFloat {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      50% { opacity: 0.6; }
+      100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .nav-links { gap: 15px; font-size: 0.9rem; }
+      .tournament-grid { grid-template-columns: 1fr; }
+    }
 
 /* Neon Lines */
 .neon-line {
@@ -265,16 +262,10 @@ body {
 
 .line-1 { top: 20%; animation-delay: 0s; }
 .line-2 { 
-    top: 50%; 
+    top: 60%; 
     animation-delay: 1.5s;
     background: linear-gradient(90deg, transparent, #ff00ff, transparent);
     box-shadow: 0 0 20px #ff00ff;
-}
-.line-3 { 
-    top: 80%; 
-    animation-delay: 3s;
-    background: linear-gradient(90deg, transparent, #8a2be2, transparent);
-    box-shadow: 0 0 20px #8a2be2;
 }
 
 @keyframes lineMove {

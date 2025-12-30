@@ -17,28 +17,20 @@ $username = "Organizer";
 
 <!-- Animated Grid Background -->
   <div class="grid-background"></div>
-  
-  <!-- Floating Cubes -->
-  <div class="cube cube-1"></div>
-  <div class="cube cube-2"></div>
-  <div class="cube cube-3"></div>
-  <div class="cube cube-4"></div>
-  <div class="cube cube-5"></div>
 
-  <!-- Glowing Orbs -->
+  <!-- Background Effects -->
+  <div class="grid-background"></div>
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
 
   <!-- Particles -->
   <script>
-    for(let i = 0; i < 50; i++) {
+    for(let i = 0; i < 20; i++) {
       const particle = document.createElement('div');
       particle.className = 'particle';
       particle.style.left = Math.random() * 100 + '%';
-      particle.style.top = Math.random() * 100 + '%';
-      particle.style.animationDelay = Math.random() * 5 + 's';
-      particle.style.animationDuration = (3 + Math.random() * 4) + 's';
+      particle.style.animationDelay = Math.random() * 8 + 's';
+      particle.style.animationDuration = (6 + Math.random() * 4) + 's';
       document.body.appendChild(particle);
     }
   </script>
@@ -46,7 +38,6 @@ $username = "Organizer";
   <!-- Neon Lines -->
   <div class="neon-line line-1"></div>
   <div class="neon-line line-2"></div>
-  <div class="neon-line line-3"></div>
 
 <header class="legacy-header">
     <div class="legacy-logo">Tourna<span>X</span></div>
