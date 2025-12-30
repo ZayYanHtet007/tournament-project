@@ -242,7 +242,6 @@ include('partial/header.php');
             </div>
         </section>
     </div>
-<<<<<<< HEAD
 </section>
 
 <script>
@@ -268,8 +267,6 @@ include('partial/header.php');
 </script>
 
 
-=======
->>>>>>> 7b78f6f8b7c3ef9119502d97bceba8a87721894c
 <?php
 include('partial/footer.php');
 ?>
