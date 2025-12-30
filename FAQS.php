@@ -2,10 +2,9 @@
 include('partial/header.php');
 ?>
 
-<body class="faq-body">
-     <header class="faq-header">
-        <h1 class="faq-h1">General FAQ</h1>
-    </header>
+    <div class="faqheader">
+             <h1 class="faq-h1">General FAQ</h1>
+    </div>
 
     <div class="faq-search-container">
         <input type="text" id="faqSearch" class="faq-search-box" placeholder="Type to search questions...">
@@ -103,7 +102,7 @@ include('partial/header.php');
         });
     </script>
 
-</body>
+
 
 <?php
 include('partial/footer.php');

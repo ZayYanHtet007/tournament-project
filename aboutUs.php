@@ -10,7 +10,7 @@ include('partial/header.php');
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="about-body">
 
     <div class="container">
         <section class="hero">
