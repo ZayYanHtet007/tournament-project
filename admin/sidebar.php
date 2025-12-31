@@ -10,18 +10,34 @@
     <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body>
+    
+     <?php
+    include("../database/dbConfig.php");
+    session_start();
+    ?>
 
 <div class="wrapper">
 
     <div class="sidebar">
         <h2>Tournament Admin</h2>
-        <a href="index.php"><i class="fa fa-chart-line"></i> Dashboard</a>
-        <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
+        <a href="adminDashboard.php"><i class="fa fa-chart-line"></i> Dashboard</a>
         <a href="players.php"><i class="fa fa-users"></i> Players</a>
-        <a href="matches.php"><i class="fa fa-gamepad"></i> Matches</a>
-        <a href="results.php"><i class="fa fa-medal"></i> Results</a>
-        <a href="logout.php"><i class="fa fa-sign-out-alt"></i> Logout</a>
+        <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
+        <a href="post.php"><i class="fa fa-pen-to-square"></i> Post</a>
+        <a href="approveUserAccount.php"><i class="fa fa-user-check"></i> Approve Account User</a>
+        <a href="notification.php"><i class="fa fa-bell"></i> Notification</a>
+        <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
+        <a href="accountSetting.php"><i class="fa fa-cog"></i> Account Setting</a>
+        <div class="admin_profile">
+        <img class="admin_avatar"></img>
+        <div class="info">
+            <div class="name">Admin User</div>
+            <div class="email">admin@gmail.com</div>
+        </div>
     </div>
+</div>
+
+   
 
     <div class="main">
 
@@ -32,4 +48,4 @@
             </div>
         </div>
 
-        <div class="main-content container-fluid mt-4">
+        <div class="main-content">
