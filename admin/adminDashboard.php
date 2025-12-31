@@ -36,7 +36,48 @@ include('sidebar.php');
                 </div>
             </div> 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="chart">
+    <!-- for barchart -->
+    <canvas id="userchart"></canvas>
+</div>
+<?php
+$sql4="select created_at, count(*) as usertotal from users group by created_at";
+$users=mysqli_query($conn,$sql4);
+$data=[];
+$labels=[];
+while($row=mysqli_fetch_assoc($users)){
+    $data[]=$row;
+    $labels[]=$row['created_at'];
+}
+?>
+<script>
+                const values = <?= json_encode(array_column($data, 'usertotal')) ?>;
+                const labels = <?= json_encode($labels) ?>;
 
+                new Chart(document.getElementById('userchart'), {
+                    // line ,bar
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Registered Users',
+                            data: values,
+                          backgroundColor: 'light',                                            
+                                          
+                          borderColor: 'rgba(185, 214, 223, 1)',    
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+    </script>
 <?php
 include('footer.php');
 ?>

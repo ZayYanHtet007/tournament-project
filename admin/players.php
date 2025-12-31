@@ -34,8 +34,8 @@ $result=mysqli_query($conn,$sql);
           <td><img src="../images/<?= $row['profile_img']?>"malt="" class="users_img"></td>
         <td><?= $row['username']?></td>
          <td><?= $row['email']?></td>
-         <td><?= $row['created at']?></td>
-         <td><?= $row['last update ']?></td>
+         <td><?= $row['created_at']?></td>
+         <td><?= $row['last_update']?></td>
         <td><a $href="" class="btn_in"> InActive</a></td>
 
       </tr>

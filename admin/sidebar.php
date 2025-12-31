@@ -29,7 +29,7 @@
         <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
         <a href="accountSetting.php"><i class="fa fa-cog"></i> Account Setting</a>
         <div class="admin_profile">
-        <div class="admin_avatar">AD</div>
+        <img class="admin_avatar"></img>
         <div class="info">
             <div class="name">Admin User</div>
             <div class="email">admin@gmail.com</div>

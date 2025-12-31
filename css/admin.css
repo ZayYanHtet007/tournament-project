@@ -5,6 +5,7 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Inter', sans-serif;
+
 }
 
 html,
@@ -14,7 +15,6 @@ body {
     height: 100vh;
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f4f9;
 
 }
 
@@ -118,7 +118,18 @@ body {
     background-color: #343454;
     border-left: 4px solid #00bcd4;
 }
+/* for player */
+.btn_in{
+    text-decoration: none;
+    background:linear-gradient(135deg, rgb(137, 17, 197),rgba(244, 4, 172, 0.865)); 
+    color: white;
+    padding: 3px 3px;
+    border-radius: 6px;
 
+
+
+}
+/* bottom admin profile  */
 .admin_profile{
     margin-top: auto;
     padding: 20px;
@@ -142,6 +153,7 @@ body {
     font-weight: bold;
     font-size: 13px;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 /* .profile_content {
@@ -157,6 +169,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
 }
 
 .email {
@@ -165,6 +178,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
 }
 .main {
     margin-left: 250px;
