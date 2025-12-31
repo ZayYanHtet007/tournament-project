@@ -1,91 +1,134 @@
 <?php
-session_start();
-$error = '';
-$email = '';
+// Admin login handler
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Load DB connection
+require_once __DIR__ . '/../database/dbConfig.php';
+require_once __DIR__ . '/../admin/sidebar.php';
+
+
+// If already logged in, redirect to dashboard
+if (!empty($_SESSION['admin_id'])) {
+    header('Location: /adminDashboard.php');
+    exit;
+}
+
+$error_msg = '';
+$email_raw = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['txtemail'] ?? '');
-    $pwd   = $_POST['txtpwd'] ?? '';
+    $email_raw = $_POST['email'] ?? '';
+    $email = filter_var($email_raw, FILTER_VALIDATE_EMAIL);
+    $password = $_POST['password'] ?? '';
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Please enter a valid email address.';
-    } elseif ($pwd === '') {
-        $error = 'Please enter your password.';
+    if (!$email || $password === '') {
+        $error_msg = 'Please enter a valid email and password.';
     } else {
-        require_once __DIR__ . '/../database/dbConfig.php';
-
+        // Try admins table first, then users with role 'admin'
         $queries = [
-            "SELECT id, name, email, password FROM admins WHERE email = ? LIMIT 1",
-            "SELECT id, username AS name, email, password FROM users WHERE email = ? AND role = 'admin' LIMIT 1"
+            ['sql' => "SELECT admin_id, username, password FROM admins WHERE email = ? LIMIT 1"],
+
         ];
 
-        $row = null;
-        foreach ($queries as $sql) {
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param('s', $email);
-            $stmt->execute();
-            $res = $stmt->get_result();
-
-            if ($res && $res->num_rows === 1) {
-                $row = $res->fetch_assoc();
+        $found = false;
+        foreach ($queries as $q) {
+            if ($stmt = $conn->prepare($q['sql'])) {
+                $stmt->bind_param('s', $email);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($res && $res->num_rows > 0) {
+                    $user = $res->fetch_assoc();
+                    $found = true;
+                    $stmt->close();
+                    break;
+                }
                 $stmt->close();
-                break;
             }
-            $stmt->close();
         }
 
-        if (!$row) {
-            $error = 'No admin account found.';
+        if (!$found) {
+            $error_msg = 'No admin account found for that email.';
         } else {
-            if (password_verify($pwd, $row['password'])) {
-                $_SESSION['admin_id']   = $row['id'];
-                $_SESSION['admin_name'] = $row['name'] ?: $row['email'];
-                header('Location: adminDashboard.php');
+            $hash = $user['password'] ?? '';
+            if (!empty($hash) && password_verify($password, $hash)) {
+                session_regenerate_id(true);
+                $_SESSION['admin_id'] = $user['id'];
+                $_SESSION['admin_name'] = $user['name'] ?: $user['email'];
+                header('Location: /adminDashboard.php');
                 exit;
             } else {
-                $error = 'Incorrect password.';
+                // allow legacy plain-text check as a last resort (not recommended)
+                if ($password === $hash && $hash !== '') {
+                    session_regenerate_id(true);
+                    $_SESSION['admin_id'] = $user['id'];
+                    $_SESSION['admin_name'] = $user['name'] ?: $user['email'];
+                    header('Location: adminDashboard.php');
+                    exit;
+                }
+                $error_msg = 'Incorrect password.';
             }
         }
     }
 }
+
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>Admin Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="../css/admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
 
-<div class="login_body"> 
+<div id="Admin-login-container">
+    <h2>Admin Account</h2>
 
-    <div id="Admin_login-container">
-        <h2>Admin Login</h2>
+   
 
-        <?php if (!empty($error)): ?>
-            <div class="error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
+    <form action="" method="post" id="loginForm">
+        <div class="Admin-login-input-group">
+            <i class="fas fa-envelope"></i>
+            <input type="email" name="email" placeholder="Email" minlength="5" maxlength="254" required>
+        </div>
+        <div class="error-message" id="email-error"></div>
+        
 
-        <form method="post">
-            <div class="Admin_login_input-group">
-                <i class="fas fa-envelope"></i>
-                <input type="email" name="txtemail"
-                       value="<?= htmlspecialchars($email) ?>"
-                       placeholder="Email" required>
-            </div>
+        <div class="Admin-login-input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" placeholder="Password" minlength="5" maxlength="64" required>
+        </div>
+        <div class="error-message" id="password-error"></div>
 
-            <div class="Admin_login_input-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" name="txtpwd" placeholder="Password" required>
-            </div>
+        <button type="submit" class="Admin-login-btn-submit">Login</button>
 
-            <button type="submit">Login</button>
-        </form>
-    </div>
+    </form>
+</div>
 
-</div> 
-</html>
->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.querySelector('input[name="email"]');
+        const passwordInput = document.querySelector('input[name="password"]');
+        const emailError = document.getElementById('email-error');
+        const passwordError = document.getElementById('password-error');
 
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
+        }
+
+        loginForm.addEventListener('submit', function(e) {
+            let isValid = true;
+            emailError.textContent = '';
+            passwordError.textContent = '';
+
+            if (!validateEmail(emailInput.value.trim())) {
+                emailError.textContent = 'Please enter a valid email address.';
+                isValid = false;
+            }
+
+            if (passwordInput.value.length < 5) {
+                passwordError.textContent = 'Password must be at least 5 characters.';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
