@@ -309,6 +309,28 @@ include('partial/header.php');
 
         <button class="createBtn">Create Team</button>
     </div>
+</section>
+
+<script>
+    const header = document.querySelector("header");
+
+    window.addEventListener("scroll", () => {
+        if (window.scrollY > 50) {
+            header.classList.add("scrolled");
+        } else {
+            header.classList.remove("scrolled");
+        }
+    });
+    const heroBg = document.querySelector('.hero-bg');
+
+    window.addEventListener('scroll', () => {
+        const scrollPosition = window.scrollY;
+        // Move background up/down slowly relative to scroll
+        heroBg.style.transform = `translateY(${
+                scrollPosition * 0.3
+            }
+            px)`;
+    });
 </div>
 
 <script>
