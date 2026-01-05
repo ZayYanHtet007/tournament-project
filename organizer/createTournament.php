@@ -243,8 +243,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
 
                     <!-- Submit Buttons -->
                     <div class="button-group">
+<<<<<<< HEAD
                         <button type="submit" class="btn-primary" name="btnCreate">Create Tournament</button>
                         <button type="submit" name="status" value="upcoming">Save as Draft</button>
+=======
+                        <button type="submit" class="btn-primary-form">Create Tournament</button>
+                        <button type="button" class="btn-secondary-form" onclick="saveDraft()">Save as Draft</button>
+>>>>>>> b5470d4cb24c0bba7e4f2ccdb0b93fe1b2eb8642
                     </div>
                 </form>
             </div>
