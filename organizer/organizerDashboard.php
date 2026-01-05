@@ -2,40 +2,11 @@
     session_start();
     require_once "../database/dbConfig.php"; // include if you need DB later
 
-<<<<<<< HEAD
     // ===== ACCESS CONTROL =====
     if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_organizer'])) {
         // user is not logged in
         header("Location: ../login.php");
         exit;
-=======
-/* Fake login check (replace with real auth later) */
-$isLoggedIn = true;
-$username = "Organizer";
-?>
-
-<?php
-include 'header.php';
-?>
-
-<!-- Animated Grid Background -->
-  <div class="grid-background"></div>
-
-  <!-- Background Effects -->
-  <div class="grid-background"></div>s
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-
-  <!-- Particles -->
-  <script>
-    for(let i = 0; i < 20; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = Math.random() * 100 + '%';
-      particle.style.animationDelay = Math.random() * 8 + 's';
-      particle.style.animationDuration = (6 + Math.random() * 4) + 's';
-      document.body.appendChild(particle);
->>>>>>> b5470d4cb24c0bba7e4f2ccdb0b93fe1b2eb8642
     }
 
     if ($_SESSION['is_organizer']!= 1){
@@ -46,7 +17,6 @@ include 'header.php';
     // Fetch organizer username from session
     $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'Organizer';
 
-<<<<<<< HEAD
     $isLoggedIn = true;
     ?>
 
@@ -60,12 +30,6 @@ include 'header.php';
     </head>
 
     <body>
-=======
-<section class="hero">
-    <div class="hero-content">
-        <h1>Welcome, <?php echo $username; ?> 🎮</h1>
-        <p>Compete. Manage. Dominate the Tournament Arena.</p>
->>>>>>> b5470d4cb24c0bba7e4f2ccdb0b93fe1b2eb8642
 
         <!-- Animated Grid Background -->
         <div class="grid-background"></div>
@@ -75,7 +39,6 @@ include 'header.php';
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
 
-<<<<<<< HEAD
         <!-- Particles -->
         <script>
             for (let i = 0; i < 20; i++) {
@@ -140,8 +103,3 @@ include 'header.php';
     </body>
 
     </html>
-=======
-<?php
-include 'footer.php';
-?>
->>>>>>> b5470d4cb24c0bba7e4f2ccdb0b93fe1b2eb8642
