@@ -44,9 +44,9 @@ include('partial/header.php');
             <div class="hero-content">
 
                 <h1 class="hero-title">
-                    <span class="gradient-text">COMPETE</span>
+                    <span class="gradient-text">TournaX</span>
                     <br>
-                    <span>FOR GLORY</span>
+                    <span>COMPETE FOR GLORY</span>
                 </h1>
 
                 <p class="hero-subtitle">
@@ -302,14 +302,18 @@ include('partial/header.php');
         <span class="closeBtn">&times;</span>
 
         <h2>Create Team</h2>
-
-        <input type="text" placeholder="Team Name">
-        <input type="text" placeholder="Team Image">
+        <div>
+            <img src="" alt="" class="legacy-upload_photo" id="img">
+            <input type="file" id="uploadInput" name="image" style="display: none;" onchange="previewImage(event)" required>
+        </div>
+        <input type="text" placeholder="Team Name (6-16 chars)">
+        <input type="text" placeholder="Short Name (2-4 chars)">
+        <textarea name="" id="" placeholder="Motto (Within 100 chars)"></textarea>
         <input type="number" placeholder="Players">
 
         <button class="createBtn">Create Team</button>
     </div>
-</section>
+</div>
 
 <script>
     const header = document.querySelector("header");
@@ -331,7 +335,7 @@ include('partial/header.php');
             }
             px)`;
     });
-</div>
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

@@ -173,8 +173,8 @@
 
                     <!-- Submit Buttons -->
                     <div class="button-group">
-                        <button type="submit" class="btn-primary">Create Tournament</button>
-                        <button type="button" class="btn-secondary" onclick="saveDraft()">Save as Draft</button>
+                        <button type="submit" class="btn-primary-form">Create Tournament</button>
+                        <button type="button" class="btn-secondary-form" onclick="saveDraft()">Save as Draft</button>
                     </div>
                 </form>
             </div>
