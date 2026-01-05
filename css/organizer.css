@@ -296,3 +296,20 @@ p {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
 }
+
+.message {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.message:contains('✅') {
+    color: green;
+}
+
+.message:contains('❌') {
+    color: red;
+}
+
+

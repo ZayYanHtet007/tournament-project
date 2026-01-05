@@ -31,7 +31,7 @@
     if (isset($_SESSION['user_id'])) {
         $uid = $_SESSION['user_id'];
         $sql = "select * from users where user_id=$uid";
-        $result = mysqli_query($con, $sql);
+        $result = mysqli_query($conn, $sql);
         $user = mysqli_fetch_assoc($result);
     ?>
         <a href=""><img src="images/<?= $user['profile_img'] ?>" alt="" class="profilegif"><?= $user['username'] ?></a>

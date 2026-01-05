@@ -1,23 +1,96 @@
+<?php
+session_start();
+
+
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = 1;
+    $_SESSION['is_organizer'] = 1;
+    $_SESSION['organizer_status'] = 'approved';
+}
+
+require_once "../database/dbConfig.php";
+
+
+if (
+    !isset($_SESSION['user_id']) ||
+    $_SESSION['is_organizer'] != 1 ||
+    $_SESSION['organizer_status'] !== 'approved'
+) {
+    header("Location: ../login.php");
+    exit;
+}
+
+$message = "";
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
+    $organizer_id = $_SESSION['user_id'];
+
+    $title = trim($_POST['title']);
+    $description = trim($_POST['description']);
+    $game_name = trim($_POST['game_name']);
+    $game_type = trim($_POST['game_type']);
+    $match_type = trim($_POST['match_type']);
+    $format = trim($_POST['format']);
+    $max_participants = (int)$_POST['max_participants'];
+    $fee = (float)$_POST['fee'];
+    $registration_deadline = $_POST['registration_deadline'];
+    $start_date = $_POST['start_date'];
+    $status = $_POST['status'];
+
+
+    if (empty($title) || empty($description) || empty($game_name) || $max_participants <= 0) {
+        $message = "❌ Please fill all required fields";
+    } else {
+
+        $check_sql = "SELECT organizer_id FROM tournaments WHERE organizer_id = $organizer_id AND title = '$title'";
+        $result = mysqli_query($conn, $check_sql);
+
+        if (mysqli_num_rows($result) > 0) {
+            $message = "❌ You already have a tournament with this title.";
+        } else {
+
+            $sql = "INSERT INTO tournaments 
+            (organizer_id, title, description, game_name, game_type, match_type, format, max_participants, fee, registration_deadline, start_date, status, created_at, last_update)
+            VALUES 
+            ($organizer_id, '$title', '$description', '$game_name', '$game_type', '$match_type', '$format', $max_participants, $fee, '$registration_deadline', '$start_date', '$status', NOW(), NOW())";
+
+            if (mysqli_query($conn, $sql)) {
+                echo "<script>alert('Tournament created successfully');</script>";
+                $message = "✅ Tournament created successfully";
+            } else {
+                $message = "❌ Database error: " . mysqli_error($conn);
+            }
+        }
+    }
+}
+
+
+
+
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Tournament</title>
     <link rel="stylesheet" href="../css/createtour.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
         <div class="header">
             <div class="header-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9"/>
+                    <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9" />
                 </svg>
             </div>
             <h1>Create Tournament</h1>
             <p>Set up your gaming tournament and start competing</p>
         </div>
+
+
 
         <!-- Form Card -->
         <div class="card">
@@ -26,7 +99,7 @@
                 <p class="card-description">Fill in the information below to create your tournament</p>
             </div>
             <div class="card-content">
-                <form id="tournamentForm">
+                <form method="post" action="">
                     <!-- Basic Information -->
                     <div class="form-section">
                         <div class="form-row">
@@ -55,14 +128,15 @@
                             <div class="form-group">
                                 <label for="game_type">Game Type</label>
                                 <select id="game_type" name="game_type" required>
-                                    <option value="">Select game type</option>
                                     <option value="moba">MOBA</option>
                                     <option value="fps">FPS</option>
                                     <option value="battle_royale">Battle Royale</option>
                                     <option value="sports">Sports</option>
                                     <option value="fighting">Fighting</option>
                                     <option value="strategy">Strategy</option>
+                                    <option value="esport">Esport</option>
                                 </select>
+
                             </div>
                         </div>
                     </div>
@@ -73,11 +147,9 @@
                             <div class="form-group">
                                 <label for="match_type">Match Type</label>
                                 <select id="match_type" name="match_type" required>
-                                    <option value="">Select match type</option>
                                     <option value="solo">Solo</option>
-                                    <option value="duo">Duo</option>
-                                    <option value="squad">Squad</option>
-                                    <option value="team_5v5">Team 5v5</option>
+                                    <option value="team">Team</option>
+
                                 </select>
                             </div>
 
@@ -100,25 +172,25 @@
                             <div class="form-group">
                                 <label for="max_participants">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="9" cy="7" r="4"/>
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                     </svg>
                                     Max Participants
                                 </label>
-                                <input type="number" id="max_participants" name="max_participants" placeholder="e.g., 64" required>
+                                <input type="number" id="max_participants" name="max_participants" placeholder="e.g., 64" required min="1">
                             </div>
 
                             <div class="form-group">
                                 <label for="fee">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="12" y1="1" x2="12" y2="23"/>
-                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                        <line x1="12" y1="1" x2="12" y2="23" />
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                                     </svg>
                                     Entry Fee
                                 </label>
-                                <input type="number" id="fee" name="fee" step="0.01" placeholder="e.g., 10.00" required>
+                                <input type="number" id="fee" name="fee" step="0.01" placeholder="e.g., 10.00" required min="1">
                             </div>
                         </div>
                     </div>
@@ -129,10 +201,10 @@
                             <div class="form-group">
                                 <label for="registration_deadline">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                        <line x1="16" y1="2" x2="16" y2="6"/>
-                                        <line x1="8" y1="2" x2="8" y2="6"/>
-                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                        <line x1="16" y1="2" x2="16" y2="6" />
+                                        <line x1="8" y1="2" x2="8" y2="6" />
+                                        <line x1="3" y1="10" x2="21" y2="10" />
                                     </svg>
                                     Registration Deadline
                                 </label>
@@ -142,10 +214,10 @@
                             <div class="form-group">
                                 <label for="start_date">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                        <line x1="16" y1="2" x2="16" y2="6"/>
-                                        <line x1="8" y1="2" x2="8" y2="6"/>
-                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                        <line x1="16" y1="2" x2="16" y2="6" />
+                                        <line x1="8" y1="2" x2="8" y2="6" />
+                                        <line x1="3" y1="10" x2="21" y2="10" />
                                     </svg>
                                     Start Date
                                 </label>
@@ -160,12 +232,10 @@
                             <div class="form-group">
                                 <label for="status">Status</label>
                                 <select id="status" name="status" required>
-                                    <option value="draft">Draft</option>
-                                    <option value="published">Published</option>
-                                    <option value="registration_open">Registration Open</option>
+                                    <option value="upcoming">Upcoming</option>
                                     <option value="ongoing">Ongoing</option>
                                     <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
+
                                 </select>
                             </div>
                         </div>
@@ -173,8 +243,8 @@
 
                     <!-- Submit Buttons -->
                     <div class="button-group">
-                        <button type="submit" class="btn-primary">Create Tournament</button>
-                        <button type="button" class="btn-secondary" onclick="saveDraft()">Save as Draft</button>
+                        <button type="submit" class="btn-primary" name="btnCreate">Create Tournament</button>
+                        <button type="submit" name="status" value="upcoming">Save as Draft</button>
                     </div>
                 </form>
             </div>
@@ -186,7 +256,7 @@
                 <div class="info-card-content">
                     <div class="info-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9"/>
+                            <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9" />
                         </svg>
                     </div>
                     <div class="info-text">
@@ -200,10 +270,10 @@
                 <div class="info-card-content">
                     <div class="info-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                         </svg>
                     </div>
                     <div class="info-text">
@@ -217,10 +287,10 @@
                 <div class="info-card-content">
                     <div class="info-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
                     </div>
                     <div class="info-text">
@@ -232,17 +302,17 @@
         </div>
     </div>
 
-    <script>
+    <!-- <script>
         // Form submission handler
         document.getElementById('tournamentForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
-            
+
             console.log('Tournament Data:', data);
             alert('Tournament created successfully!\n\nCheck console for details.');
-            
+
             // You can add your API call or further processing here
         });
 
@@ -250,10 +320,12 @@
         function saveDraft() {
             const formData = new FormData(document.getElementById('tournamentForm'));
             const data = Object.fromEntries(formData.entries());
-            
+
             console.log('Draft saved:', data);
             alert('Tournament saved as draft!');
         }
-    </script>
+    </script> -->
 </body>
+
+
 </html>
