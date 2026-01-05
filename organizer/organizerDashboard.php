@@ -6,20 +6,15 @@ $isLoggedIn = true;
 $username = "Organizer";
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>TournaX | Home</title>
-    <link rel="stylesheet" href="../css/organizer.css">
-</head>
-<body>
+<?php
+include 'header.php';
+?>
 
 <!-- Animated Grid Background -->
   <div class="grid-background"></div>
 
   <!-- Background Effects -->
-  <div class="grid-background"></div>
+  <div class="grid-background"></div>s
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
 
@@ -38,26 +33,6 @@ $username = "Organizer";
   <!-- Neon Lines -->
   <div class="neon-line line-1"></div>
   <div class="neon-line line-2"></div>
-
-<header class="legacy-header">
-    <div class="legacy-logo">Tourna<span>X</span></div>
-
-    <nav class="legacy-headnav">
-        <a href="#">Tournament</a>
-        <a href="#">Post</a>
-        <a href="#">Report</a>
-    </nav>
-
-    <nav class="legacy-signnav">
-        <?php if($isLoggedIn): ?>
-            <a href="#">Profile</a>
-            <a href="#">Logout</a>
-        <?php else: ?>
-            <a href="#">Login</a>
-            <a href="#">Register</a>
-        <?php endif; ?>
-    </nav>
-</header>
 
 <section class="hero">
     <div class="hero-content">
@@ -80,9 +55,6 @@ $username = "Organizer";
     <div class="card">🧾 History</div>
 </section>
 
-<footer class="footer">
-    © 2025 TournaX. All rights reserved.
-</footer>
-
-</body>
-</html>
+<?php
+include 'footer.php';
+?>
