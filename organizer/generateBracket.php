@@ -1,18 +1,34 @@
 <?php
 session_start();
+require_once 'standardBracket.php';
 
-// Handle team count selection for the schedule view
-// This is independent of the actual tournament state in the other file
-$viewTeams = $_POST['viewTeams'] ?? 12;
+// Try to pull actual teams from the session tournament if it exists
+$tournament = isset($_SESSION['tournament']) ? unserialize($_SESSION['tournament']) : null;
 
-// Layout Configuration
+// Determine current view based on selection or active tournament
+$viewTeams = $_POST['viewTeams'] ?? ($tournament ? $tournament->totalTeams : 12);
+
+// Configuration aligned with StandardTournament2.php logic
 $config = [
-    12 => ['groups' => 4, 'size' => 3, 'hasQuarters' => false, 'label' => '12 Teams (4 Groups of 3)'],
-    16 => ['groups' => 4, 'size' => 4, 'hasQuarters' => true,  'label' => '16 Teams (4 Groups of 4)'],
-    24 => ['groups' => 8, 'size' => 3, 'hasQuarters' => true,  'label' => '24 Teams (8 Groups of 3)']
+    12 => ['groups' => 2, 'size' => 6, 'label' => '12 Teams (2 Groups of 6)'],
+    16 => ['groups' => 4, 'size' => 4, 'label' => '16 Teams (4 Groups of 4)'],
+    24 => ['groups' => 4, 'size' => 6, 'label' => '24 Teams (4 Groups of 6)']
 ];
 
 $current = $config[$viewTeams];
+
+/**
+ * Generates Round Robin match-ups for scheduling display
+ */
+function getRoundRobinPairs($size) {
+    $pairs = [];
+    for ($i = 1; $i <= $size; $i++) {
+        for ($j = $i + 1; $j <= $size; $j++) {
+            $pairs[] = [$i, $j];
+        }
+    }
+    return $pairs;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,44 +44,50 @@ $current = $config[$viewTeams];
         .section-title { font-size:18px; margin-bottom:14px; display:flex; gap:10px; align-items:center; }
         .section-title::before { content:""; width:4px; height:18px; background:linear-gradient(180deg,var(--accent),var(--accent2)); border-radius:4px; }
         
-        .setup-bar { background: var(--card); padding: 15px; border-radius: 10px; display: flex; gap: 15px; align-items: center; border: 1px solid #333; }
-        select, button { padding: 10px; border-radius: 6px; border: none; font-weight: 600; }
-        select { background: #111; color: white; border: 1px solid #444; }
-        button { background: var(--accent); color: white; cursor: pointer; }
+        /* Styled Combo Box and Button */
+        .setup-bar { background: var(--card); padding: 15px; border-radius: 12px; display: flex; gap: 15px; align-items: center; border: 1px solid #333; }
+        select, .btn-print { padding: 10px 18px; border-radius: 12px; border: 1px solid #444; font-weight: 600; cursor: pointer; }
+        select { background: #111; color: white; }
+        button[type="submit"] { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .btn-print { background: #21262d; color: white; }
 
-        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
-        .schedule-card { background: var(--card); border-radius: 14px; padding: 16px; border: 1px solid #242433; }
+        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+        .schedule-card { background: var(--card); border-radius: 16px; padding: 20px; border: 1px solid #242433; }
         
         .match-row { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 10px; background: #222235; border-radius: 10px; margin-bottom: 8px; font-size: 13px; 
         }
         
-        .team-placeholder { font-weight: 500; color: #aaa; flex: 1; }
-        .vs-tag { font-size: 10px; font-weight: bold; color: var(--accent); margin: 0 10px; }
+        .team-name { font-weight: 500; color: #fff; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .vs-tag { font-size: 10px; font-weight: bold; color: var(--accent); margin: 0 10px; flex-shrink: 0; }
         
         .date-input {
-            background: #000; color: var(--accent); border: 1px solid #444;
-            padding: 4px; border-radius: 4px; font-size: 11px; outline: none;
+            background: #000; color: #00ffcc; border: 1px solid #444;
+            padding: 5px; border-radius: 6px; font-size: 11px; outline: none; margin-left: 10px;
         }
 
         @media print { 
-            header, .setup-bar { display: none; } 
-            .date-input { border: none; background: transparent; }
+            header, .setup-bar, button { display: none; } 
+            body { background: white; color: black; }
+            .schedule-card { border: 1px solid #ddd; background: white; }
+            .match-row { background: #f9f9f9; border: 1px solid #eee; }
+            .date-input { border: none; background: transparent; color: black; }
+            .team-name { color: black; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Tourna<span>X</span> Schedule Planner</h1>
-    <button onclick="window.print()">Print PDF</button>
+    <h1 style="font-size: 20px;">Tourna<span style="color:var(--accent)">X</span> Schedule Planner</h1>
+    <button class="btn-print" onclick="window.print()">Download Schedule PDF</button>
 </header>
 
 <main>
     <div class="setup-bar">
-        <form method="post" style="display:flex; gap:10px; align-items:center;">
-            <span>Select Tournament Format:</span>
+        <form method="post" style="display:flex; gap:15px; align-items:center;">
+            <span>Tournament Format:</span>
             <select name="viewTeams">
                 <?php foreach($config as $val => $opt): ?>
                     <option value="<?= $val ?>" <?= $viewTeams == $val ? 'selected' : '' ?>><?= $opt['label'] ?></option>
@@ -76,73 +98,67 @@ $current = $config[$viewTeams];
     </div>
 
     <section>
-        <div class="section-title">Group Stage Matches (Round Robin)</div>
+        <div class="section-title">Group Stage: Round Robin Scheduling</div>
         <div class="schedule-grid">
-            <?php for($i=0; $i < $current['groups']; $i++): $gName = chr(65+$i); ?>
+            <?php 
+            $matches = getRoundRobinPairs($current['size']);
+            for($i=0; $i < $current['groups']; $i++): 
+                $gLetter = chr(65+$i); 
+            ?>
             <div class="schedule-card">
-                <h3>Group <?= $gName ?></h3>
-                <?php 
-                // Simple logic to show 3 matches for a group of 3, or 6 for a group of 4
-                $matchCount = ($current['size'] == 3) ? 3 : 6;
-                for($m=1; $m <= $matchCount; $m++): 
-                ?>
+                <h3 style="margin-top:0; color:var(--accent)">Group <?= $gLetter ?></h3>
+                <?php foreach($matches as $pair): ?>
                 <div class="match-row">
-                    <span class="team-placeholder">T<?= $m ?> (Grp <?= $gName ?>)</span>
+                    <span class="team-name">Team <?= $pair[0] ?></span>
                     <span class="vs-tag">VS</span>
-                    <span class="team-placeholder" style="text-align:right;">T<?= $m+1 ?> (Grp <?= $gName ?>)</span>
-                    <input type="datetime-local" class="date-input" style="margin-left:10px;">
+                    <span class="team-name" style="text-align:right;">Team <?= $pair[1] ?></span>
+                    <input type="datetime-local" class="date-input">
                 </div>
-                <?php endfor; ?>
+                <?php endforeach; ?>
             </div>
             <?php endfor; ?>
         </div>
     </section>
 
-    
-
     <section>
-        <div class="section-title">Knockout Brackets</div>
+        <div class="section-title">Knockout Phase Brackets</div>
         <div class="schedule-grid">
             
-            <?php if ($current['hasQuarters']): ?>
             <div class="schedule-card">
-                <h3 style="color:var(--accent2)">Quarter-Finals</h3>
-                <?php for($q=1; $q<=4; $q++): ?>
+                <h3 style="color:var(--accent2); margin-top:0;">Quarter-Finals</h3>
+                <?php 
+                $labels = ['QF 1: A1 vs B4', 'QF 2: B2 vs A3', 'QF 3: B1 vs A4', 'QF 4: A2 vs B3'];
+                if ($viewTeams > 12) $labels = ['QF 1: A1 vs C2', 'QF 2: B1 vs D2', 'QF 3: C1 vs A2', 'QF 4: D1 vs B2'];
+                
+                foreach($labels as $label): ?>
                 <div class="match-row">
-                    <span class="team-placeholder">Winner Match <?= $q ?></span>
-                    <span class="vs-tag">VS</span>
-                    <span class="team-placeholder" style="text-align:right;">Winner Match <?= $q+1 ?></span>
-                    <input type="datetime-local" class="date-input" style="margin-left:10px;">
+                    <span class="team-name" style="font-size:11px;"><?= $label ?></span>
+                    <input type="datetime-local" class="date-input">
                 </div>
-                <?php endfor; ?>
+                <?php endforeach; ?>
             </div>
-            <?php endif; ?>
 
             <div class="schedule-card">
-                <h3 style="color:var(--accent2)">Semi-Finals</h3>
-                <?php for($s=1; $s<=2; $s++): ?>
+                <h3 style="color:var(--accent2); margin-top:0;">Semi-Finals</h3>
                 <div class="match-row">
-                    <span class="team-placeholder">Winner QF <?= $s ?></span>
-                    <span class="vs-tag">VS</span>
-                    <span class="team-placeholder" style="text-align:right;">Winner QF <?= $s+2 ?></span>
-                    <input type="datetime-local" class="date-input" style="margin-left:10px;">
+                    <span class="team-name">Winner QF 1 vs QF 2</span>
+                    <input type="datetime-local" class="date-input">
                 </div>
-                <?php endfor; ?>
+                <div class="match-row">
+                    <span class="team-name">Winner QF 3 vs QF 4</span>
+                    <input type="datetime-local" class="date-input">
+                </div>
             </div>
 
             <div class="schedule-card" style="border: 2px solid var(--accent);">
-                <h3 style="color:var(--accent)">Championship Sunday</h3>
-                <div class="match-row" style="background:rgba(123, 63, 228, 0.1)">
-                    <span class="team-placeholder">Loser Semi 1</span>
-                    <span class="vs-tag" style="color:var(--accent2)">3RD PLACE</span>
-                    <span class="team-placeholder" style="text-align:right;">Loser Semi 2</span>
-                    <input type="datetime-local" class="date-input" style="margin-left:10px;">
+                <h3 style="color:var(--accent); margin-top:0;">Grand Finals</h3>
+                <div class="match-row" style="background:rgba(229, 57, 53, 0.1)">
+                    <span class="team-name">3RD PLACE MATCH</span>
+                    <input type="datetime-local" class="date-input">
                 </div>
                 <div class="match-row" style="background:rgba(123, 63, 228, 0.2)">
-                    <span class="team-placeholder">Winner Semi 1</span>
-                    <span class="vs-tag">GRAND FINAL</span>
-                    <span class="team-placeholder" style="text-align:right;">Winner Semi 2</span>
-                    <input type="datetime-local" class="date-input" style="margin-left:10px;">
+                    <span class="team-name" style="font-weight:bold; color:var(--gold)">GRAND FINAL (BO5)</span>
+                    <input type="datetime-local" class="date-input">
                 </div>
             </div>
 
