@@ -20,65 +20,47 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $game_name = trim($_POST['game_name']);
-    $game_type = trim($_POST['game_type']);
-    $match_type = trim($_POST['match_type']);
-    $format = trim($_POST['format']);
+    $game_type = $_POST['game_type'];
+    $match_type = $_POST['match_type'];
+    $format = $_POST['format'];
     $max_participants = (int)$_POST['max_participants'];
     $fee = (float)$_POST['fee'];
     $registration_deadline = $_POST['registration_deadline'];
     $start_date = $_POST['start_date'];
 
-    // 🔒 FORCE STATUS until payment
-    $status = 'upcoming';
-
-    if (empty($title) || empty($description) || empty($game_name) || $max_participants <= 0) {
+    if (empty($title) || empty($description) || empty($game_name)) {
         $message = "❌ Please fill all required fields";
     } else {
 
-        $check = $conn->prepare("
-            SELECT tournament_id 
-            FROM tournaments 
-            WHERE organizer_id = ? AND title = ?
+        $stmt = $conn->prepare("
+            INSERT INTO tournaments
+            (organizer_id, title, description, game_name, game_type, match_type, format,
+             max_participants, fee, registration_deadline, start_date,
+             status, admin_status, created_at, last_update)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', 'pending', NOW(), NOW())
         ");
-        $check->bind_param("is", $organizer_id, $title);
-        $check->execute();
-        $res = $check->get_result();
 
-        if ($res->num_rows > 0) {
-            $message = "❌ You already have a tournament with this title.";
+        $stmt->bind_param(
+            "issssssidss",
+            $organizer_id,
+            $title,
+            $description,
+            $game_name,
+            $game_type,
+            $match_type,
+            $format,
+            $max_participants,
+            $fee,
+            $registration_deadline,
+            $start_date
+        );
+
+        if ($stmt->execute()) {
+            $tournament_id = $stmt->insert_id;
+            header("Location: stripe-payment.php?tournament_id=$tournament_id");
+            exit;
         } else {
-
-            $stmt = $conn->prepare("
-                INSERT INTO tournaments
-                (organizer_id, title, description, game_name, game_type, match_type, format,
-                 max_participants, fee, registration_deadline, start_date, status,
-                 created_at, last_update)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-            ");
-
-            $stmt->bind_param(
-                "issssssidsss",
-                $organizer_id,
-                $title,
-                $description,
-                $game_name,
-                $game_type,
-                $match_type,
-                $format,
-                $max_participants,
-                $fee,
-                $registration_deadline,
-                $start_date,
-                $status
-            );
-
-            if ($stmt->execute()) {
-                $tournament_id = $stmt->insert_id;
-                header("Location: stripe-payment.php?tournament_id=$tournament_id");
-                exit;
-            } else {
-                $message = "❌ Database error";
-            }
+            $message = "❌ Database error";
         }
     }
 }
