@@ -8,21 +8,21 @@ require __DIR__ . '/stripe-php/init.php';
 header('Content-Type: application/json');
 
 try {
-    $intent = \Stripe\PaymentIntent::create([
-        'amount' => 1000, // $10 in cents
-        'currency' => 'usd',
-        'payment_method_types' => ['card'],
-    ]);
+  $intent = \Stripe\PaymentIntent::create([
+    'amount' => 1000, // $10 in cents
+    'currency' => 'usd',
+    'payment_method_types' => ['card'],
+  ]);
 
-    echo json_encode(['clientSecret' => $intent->client_secret]);
-
+  echo json_encode(['clientSecret' => $intent->client_secret]);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+  http_response_code(500);
+  echo json_encode(['error' => $e->getMessage()]);
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Stripe Payment</title>
@@ -35,6 +35,7 @@ try {
       margin-bottom: 10px;
       max-width: 400px;
     }
+
     button {
       padding: 8px 16px;
       background-color: #28a745;
@@ -45,59 +46,61 @@ try {
     }
   </style>
 </head>
+
 <body>
 
-<h1>Stripe Payment</h1>
+  <h1>Stripe Payment</h1>
 
-<form id="payment-form">
-  <div id="card-element"></div>
-  <div id="card-errors" style="color:red;"></div>
-  <button type="submit">Pay</button>
-</form>
+  <form id="payment-form">
+    <div id="card-element"></div>
+    <div id="card-errors" style="color:red;"></div>
+    <button type="submit">Pay</button>
+  </form>
 
-<script>
-  const stripe = Stripe('pk_test_51SjY15B56m619Hec0bOD4PF3oCMOr54bg9TtRZmCCk4HmmbkgBklKtwJuddlr3Gvwa5lF3bpIszzFuH4drKXMGaw00Xt9J1YwC'); // ← Replace with your real publishable key
-  const elements = stripe.elements();
-  const card = elements.create('card', {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#32325d',
+  <script>
+    const stripe = Stripe('pk_test_51SjY15B56m619Hec0bOD4PF3oCMOr54bg9TtRZmCCk4HmmbkgBklKtwJuddlr3Gvwa5lF3bpIszzFuH4drKXMGaw00Xt9J1YwC'); // ← Replace with your real publishable key
+    const elements = stripe.elements();
+    const card = elements.create('card', {
+      style: {
+        base: {
+          fontSize: '16px',
+          color: '#32325d',
+        },
       },
-    },
-  });
-  card.mount('#card-element');
+    });
+    card.mount('#card-element');
 
-  const form = document.getElementById('payment-form');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    const form = document.getElementById('payment-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    // 1. Get clientSecret from server
-    const res = await fetch('payment.php');
-    const data = await res.json();
+      // 1. Get clientSecret from server
+      const res = await fetch('payment.php');
+      const data = await res.json();
 
-    if (data.error) {
-      document.getElementById('card-errors').textContent = data.error;
-      return;
-    }
+      if (data.error) {
+        document.getElementById('card-errors').textContent = data.error;
+        return;
+      }
 
-    // 2. Confirm card payment
-    const result = await stripe.confirmCardPayment(data.clientSecret, {
-      payment_method: {
-        card: card,
-        billing_details: {
-          name: 'Test User'
+      // 2. Confirm card payment
+      const result = await stripe.confirmCardPayment(data.clientSecret, {
+        payment_method: {
+          card: card,
+          billing_details: {
+            name: 'Test User'
+          }
         }
+      });
+
+      if (result.error) {
+        document.getElementById('card-errors').textContent = result.error.message;
+      } else if (result.paymentIntent.status === 'succeeded') {
+        alert('Payment successful!');
       }
     });
-
-    if (result.error) {
-      document.getElementById('card-errors').textContent = result.error.message;
-    } else if (result.paymentIntent.status === 'succeeded') {
-      alert('Payment successful!');
-    }
-  });
-</script>
+  </script>
 
 </body>
+
 </html>

@@ -45,6 +45,7 @@ if (isset($_POST['btnlogin'])) {
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['is_organizer'] = 1;
+            $_SESSION['organizer_status'] = $status;
 
             header("Location: organizer/organizerDashboard.php");
             exit;

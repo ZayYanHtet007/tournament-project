@@ -1,19 +1,10 @@
 <?php
 session_start();
-
-
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['user_id'] = 1;
-    $_SESSION['is_organizer'] = 1;
-    $_SESSION['organizer_status'] = 'approved';
-}
-
 require_once "../database/dbConfig.php";
-
 
 if (
     !isset($_SESSION['user_id']) ||
-    $_SESSION['is_organizer'] != 1 ||
+    !$_SESSION['is_organizer'] ||
     $_SESSION['organizer_status'] !== 'approved'
 ) {
     header("Location: ../login.php");
@@ -21,7 +12,9 @@ if (
 }
 
 $message = "";
+
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
+
     $organizer_id = $_SESSION['user_id'];
 
     $title = trim($_POST['title']);
@@ -34,38 +27,61 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
     $fee = (float)$_POST['fee'];
     $registration_deadline = $_POST['registration_deadline'];
     $start_date = $_POST['start_date'];
-    $status = $_POST['status'];
 
+    // 🔒 FORCE STATUS until payment
+    $status = 'upcoming';
 
     if (empty($title) || empty($description) || empty($game_name) || $max_participants <= 0) {
         $message = "❌ Please fill all required fields";
     } else {
 
-        $check_sql = "SELECT organizer_id FROM tournaments WHERE organizer_id = $organizer_id AND title = '$title'";
-        $result = mysqli_query($conn, $check_sql);
+        $check = $conn->prepare("
+            SELECT tournament_id 
+            FROM tournaments 
+            WHERE organizer_id = ? AND title = ?
+        ");
+        $check->bind_param("is", $organizer_id, $title);
+        $check->execute();
+        $res = $check->get_result();
 
-        if (mysqli_num_rows($result) > 0) {
+        if ($res->num_rows > 0) {
             $message = "❌ You already have a tournament with this title.";
         } else {
 
-            $sql = "INSERT INTO tournaments 
-            (organizer_id, title, description, game_name, game_type, match_type, format, max_participants, fee, registration_deadline, start_date, status, created_at, last_update)
-            VALUES 
-            ($organizer_id, '$title', '$description', '$game_name', '$game_type', '$match_type', '$format', $max_participants, $fee, '$registration_deadline', '$start_date', '$status', NOW(), NOW())";
+            $stmt = $conn->prepare("
+                INSERT INTO tournaments
+                (organizer_id, title, description, game_name, game_type, match_type, format,
+                 max_participants, fee, registration_deadline, start_date, status,
+                 created_at, last_update)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ");
 
-            if (mysqli_query($conn, $sql)) {
-                echo "<script>alert('Tournament created successfully');</script>";
-                $message = "✅ Tournament created successfully";
+            $stmt->bind_param(
+                "issssssidsss",
+                $organizer_id,
+                $title,
+                $description,
+                $game_name,
+                $game_type,
+                $match_type,
+                $format,
+                $max_participants,
+                $fee,
+                $registration_deadline,
+                $start_date,
+                $status
+            );
+
+            if ($stmt->execute()) {
+                $tournament_id = $stmt->insert_id;
+                header("Location: stripe-payment.php?tournament_id=$tournament_id");
+                exit;
             } else {
-                $message = "❌ Database error: " . mysqli_error($conn);
+                $message = "❌ Database error";
             }
         }
     }
 }
-
-
-
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -243,13 +259,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
 
                     <!-- Submit Buttons -->
                     <div class="button-group">
-<<<<<<< HEAD
                         <button type="submit" class="btn-primary" name="btnCreate">Create Tournament</button>
                         <button type="submit" name="status" value="upcoming">Save as Draft</button>
-=======
-                        <button type="submit" class="btn-primary-form">Create Tournament</button>
-                        <button type="button" class="btn-secondary-form" onclick="saveDraft()">Save as Draft</button>
->>>>>>> b5470d4cb24c0bba7e4f2ccdb0b93fe1b2eb8642
                     </div>
                 </form>
             </div>
