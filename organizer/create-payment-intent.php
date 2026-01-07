@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
-$CREATION_FEE = 10; // USD
+$CREATION_FEE = 100; // USD
 
 $intent = \Stripe\PaymentIntent::create([
   'amount' => $CREATION_FEE * 100,

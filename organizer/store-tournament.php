@@ -18,7 +18,7 @@ $fee = (float)$_POST['fee'];
 $registration_deadline = $_POST['registration_deadline'];
 $start_date = $_POST['start_date'];
 
-$CREATION_FEE = 10;
+$CREATION_FEE = 100;
 $STRIPE_METHOD_ID = 1; // payment_methods.id for Stripe
 
 mysqli_begin_transaction($conn);
