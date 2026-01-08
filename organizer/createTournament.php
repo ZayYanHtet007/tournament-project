@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 <?php
 session_start();
 require_once "../database/dbConfig.php";
@@ -327,3 +329,4 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
 
 
 </html>
+>>>>>>> 5e47652805dec721eb6593317e65ca170fad2b63

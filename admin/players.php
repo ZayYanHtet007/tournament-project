@@ -1,51 +1,49 @@
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <?php
-include('sidebar.php');
-?>
- <!-- <?php
-    include("../database/dbConfig.php");
- ?>  -->
+require_once __DIR__ . '/../database/dbConfig.php';
+require_once __DIR__ . '/sidebar.php';
 
 
-<?php
-$sql="select * from users ";
-$result=mysqli_query($conn,$sql);
+$sql = "SELECT * FROM users WHERE is_organizer = 0 ORDER BY user_id ASC;";
+$result = mysqli_query($conn, $sql);
 
 ?>
- 
-  <table class="table table-dark table-striped">
-    <thead>
-      <tr>
-        <th>Profile_img</th>
-        <th>Players-name</th>
-        <th>Email</th>
-        <th>created at</th>
-        <th>last update</th>
-        <th>Ban</th>
-      </tr>
-    </thead>
-    <tbody>
-    <?php
-    $sql="select * from users";
-    $users=mysqli_query($conn,$sql);
-    while($row=mysqli_fetch_assoc(($users))){?>
-  <tr>
-          <td><img src="../images/<?= $row['profile_img']?>"malt="" class="users_img"></td>
-        <td><?= $row['username']?></td>
-         <td><?= $row['email']?></td>
-         <td><?= $row['created_at']?></td>
-         <td><?= $row['last_update']?></td>
-        <td><a $href="" class="btn_in"> InActive</a></td>
 
-      </tr>
-   <?php }
-    ?>
-   
-    </tbody>
-  </table> 
+<div class="main-content">
+    <div class="main-content-container">
+        <div class="tournament-header-section">
+            <h2>Tournament Management</h2>
+            <p>View and manage all active and upcoming tournaments.</p>
+        </div>
+
+        <div class="search-wrapper">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="text" placeholder="Search tournament, games or IDs...">
+        </div>
 
 
-<?php
-include('footer.php');
-?>
+        <div class="tournament-card-wrapper">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle custom-tournament-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PlayerName</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <?php while ($row = mysqli_fetch_assoc($result)):
+                        ?>
+                            <tr onclick="window.location='playersDetail.php?id=<?= $row['user_id'] ?>'">
+                                <td><span class="id-badge">#<?= $row['user_id'] ?></span></td>
+                                <td class="fw-bold text-dark"><?= htmlspecialchars($row['username']) ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>

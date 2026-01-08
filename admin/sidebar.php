@@ -1,51 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Admin</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="../css/admin.css">
 </head>
+
 <body>
-    
-     <?php
-    include("../database/dbConfig.php");
-    session_start();
+    <?php
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $adminName = $_SESSION['admin_name'] ?? 'Admin User';
+    $adminEmail = $_SESSION['admin_email'] ?? 'admin@gmail.com';
+    $adminInitial = substr($adminName, 0, 1);
     ?>
 
-<div class="wrapper">
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="fa fa-bars"></i>
+    </button>
 
-    <div class="sidebar">
-        <h2>Tournament Admin</h2>
-        <a href="adminDashboard.php"><i class="fa fa-chart-line"></i> Dashboard</a>
-        <a href="players.php"><i class="fa fa-users"></i> Players</a>
-        <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
-        <a href="post.php"><i class="fa fa-pen-to-square"></i> Post</a>
-        <a href="approveUserAccount.php"><i class="fa fa-user-check"></i> Approve Account User</a>
-        <a href="notification.php"><i class="fa fa-bell"></i> Notification</a>
-        <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
-        <a href="accountSetting.php"><i class="fa fa-cog"></i> Account Setting</a>
-        <div class="admin_profile">
-        <img class="admin_avatar"></img>
-        <div class="info">
-            <div class="name">Admin User</div>
-            <div class="email">admin@gmail.com</div>
-        </div>
-    </div>
-</div>
-
-   
-
-    <div class="main">
-
-        <div class="header">
-            <h3>Dashboard</h3>
-            <div class="admin-name">
-                <?= $_SESSION['admin_name'] ?? 'Admin' ?>
+    <div class="wrapper">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Tournament Admin</h2>
             </div>
-        </div>
 
-        <div class="main-content">
+            <div class="sidebar-menu">
+                <a href="adminDashboard.php"><i class="fa fa-chart-line"></i> Dashboard</a>
+                <a href="players.php"><i class="fa fa-users"></i> Players</a>
+                <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
+                <a href="post.php"><i class="fa fa-pen-to-square"></i> Post</a>
+                <a href="organizers.php"><i class="fa fa-user-check"></i> Organizers</a>
+                <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
+            </div>
+
+            <div class="profile-popup" id="profilePopup">
+                <div class="popup-header">
+                    <div class="popup-avatar-large"><?= $adminInitial ?></div>
+                    <div class="popup-info">
+                        <h4>Hi, <?= $adminName ?>!</h4>
+                        <button class="manage-btn">Customize Profile</button>
+                    </div>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-item"><i class="fa fa-lock"></i><span>Change Password</span></div>
+                    <hr style="border-color: #45455e; margin: 5px 0;">
+                    <a href="logout.php" class="popup-item logout-link">
+                        <i class="fa fa-sign-out-alt"></i><span>Sign out</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="admin_profile" onclick="togglePopup(event)">
+                <div class="admin_avatar"><?= $adminInitial ?></div>
+                <div class="profile_content">
+                    <div class="name"><?= $adminName ?></div>
+                    <div class="email"><?= $adminEmail ?></div>
+                </div>
+                <i class="fa fa-ellipsis-v" style="margin-left: auto; color: #94a3b8; font-size: 12px;"></i>
+            </div>
+        </nav>
+
+        <div class="main">
+            <header class="header">
+                <h3>Tournaments</h3>
+                <div class="admin-name"><?= $adminName ?></div>
+            </header>
+
+            <div class="main-content">
+
+                <script>
+                    function toggleSidebar() {
+                        document.getElementById('sidebar').classList.toggle('active');
+                    }
+
+                    function togglePopup(event) {
+                        event.stopPropagation();
+                        document.getElementById('profilePopup').classList.toggle('show');
+                    }
+
+                    window.onclick = function(e) {
+                        if (!document.querySelector('.sidebar').contains(e.target)) {
+                            document.getElementById('profilePopup').classList.remove('show');
+                        }
+                        // Close sidebar on mobile when clicking outside
+                        if (window.innerWidth <= 768 && !document.getElementById('sidebar').contains(e.target) && !e.target.closest('.mobile-toggle')) {
+                            document.getElementById('sidebar').classList.remove('active');
+                        }
+                    };
+                </script>
