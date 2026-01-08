@@ -1,4 +1,4 @@
-<footer>
+<footer class="legacy-footer">
     © 2025 TournaX. ALL RIGHTS RESERVED.
 </footer>
 
