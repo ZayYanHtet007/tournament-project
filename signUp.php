@@ -1,69 +1,177 @@
-<?php
-include('partial/header.php');
+<?php include('partial/header.php');
 ?>
-
 <?php
+session_start();
+
+require_once "database/dbConfig.php";
+
+$error = "";
+$success = "";
+
 if (isset($_POST['btnsave'])) {
+
+    $username = trim($_POST['username']);
+    $email    = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirm  = $_POST['confirmPassword'];
+
+    // Checkbox
+    $isOrganizerChecked = isset($_POST['isOrganizer']);
+
+    /* ===== PHP VALIDATION ===== */
+    if (strlen($username) < 3) {
+        $error = "Username must be at least 3 characters";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address";
+    } elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters";
+    } elseif ($password !== $confirm) {
+        $error = "Passwords do not match";
+    } else {
+
+        /* ===== DUPLICATE CHECK ===== */
+        $check = "SELECT user_id FROM users WHERE username = ? OR email = ?";
+        $stmt = mysqli_prepare($conn, $check);
+        mysqli_stmt_bind_param($stmt, "ss", $username, $email);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
+
+        if (mysqli_stmt_num_rows($stmt) > 0) {
+            $error = "Username or Email already exists";
+        } else {
+
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            if ($isOrganizerChecked) {
+                $is_organizer = 1;
+                $organizer_status = "pending";
+            } else {
+                $is_organizer = 0;
+                $organizer_status = NULL;
+            }
+
+            /* ===== INSERT USER ===== */
+            $sql = "INSERT INTO users 
+                    (username, email, password, is_organizer, organizer_status)
+                    VALUES (?, ?, ?, ?, ?)";
+
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param(
+                $stmt,
+                "sssis",
+                $username,
+                $email,
+                $hashed_password,
+                $is_organizer,
+                $organizer_status
+            );
+
+            if (mysqli_stmt_execute($stmt)) {
+                $success = "Signup successful. You can now login.";
+            } else {
+                $error = "Signup failed. Please try again.";
+            }
+        }
+    }
 }
 ?>
 
-<div class="content">
-    <div class="reg_container">
-        <img src="" alt="" class="reg_image">
-        <div class="reg_column">
-            <h2>Sign Up</h2>
-            <form action="" method="post" enctype="multipart/form-data">
-                <div>
-                    <label for="uploadInput" style="cursor: pointer; margin: 0;">Upload Profile Picture
-                        <img src="" alt="" class="upload_photo" id="img">
-                    </label>
-                    <input type="file" id="uploadInput" name="image" style="display: none;" onchange="previewImage(event)" required>
+<!-- ================= BACKGROUND EFFECTS ================= -->
+<div class="geometric-shape-1"></div>
+<div class="geometric-shape-2"></div>
+
+<div class="floating-card-signup"></div>
+<div class="floating-card-signup"></div>
+<div class="floating-card-signup"></div>
+
+<div class="wave-container">
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+</div>
+
+<div class="ring ring-1"></div>
+<div class="ring ring-2"></div>
+
+<div class="orb-signup orb-signup-1"></div>
+<div class="orb-signup orb-signup-2"></div>
+
+<div class="grid-overlay"></div>
+
+<!-- ================= SIGNUP CARD ================= -->
+<div class="card-container-signup">
+    <div class="card-signup">
+        <div class="card-header-signup">
+            <h1 class="card-title-signup">Tournament Registration</h1>
+            <p class="card-description-signup">
+                Create your account to join the competition
+            </p>
+        </div>
+
+        <div class="card-content-signup">
+
+            <!-- ERROR / SUCCESS -->
+            <?php if ($error): ?>
+                <div class="error-message" style="color:#ff4d4d; margin-bottom:15px;">
+                    <?= htmlspecialchars($error) ?>
                 </div>
-                <div class="reg_row">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" class="reg_input" required>
+            <?php endif; ?>
+
+            <?php if ($success): ?>
+                <div class="success-message" style="color:#4caf50; margin-bottom:15px;">
+                    <?= htmlspecialchars($success) ?>
                 </div>
-                <div class="reg_row">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="reg_input" required>
+            <?php endif; ?>
+
+            <form method="POST">
+
+                <!-- Username -->
+                <div class="form-field-signup">
+                    <label>Username</label>
+                    <input type="text" name="username" required minlength="3"
+                        value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
                 </div>
-                <div class="reg_row">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="reg_input" required>
+
+                <!-- Email -->
+                <div class="form-field-signup">
+                    <label>Email</label>
+                    <input type="email" name="email" required
+                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
                 </div>
-                <div class="reg_row">
-                    <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="reg_input" required>
+
+                <!-- Password -->
+                <div class="form-field-signup">
+                    <label>Password</label>
+                    <input type="password" name="password" required minlength="8">
                 </div>
-                <div class="reg_row">
-                    <label for="role">Select Role</label>
-                    <div class="dropdown">
-                        <input type="password" id="role" name="role" class="reg_input" class="dropbtn" required></input>
-                        <div class="dropdown-content">
-                            <a href="#">Player</a>
-                            <a href="#">Organizer</a>
-                        </div>
-                    </div>
+
+                <!-- Confirm Password -->
+                <div class="form-field-signup">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirmPassword" required>
                 </div>
-                <div class="g-recaptcha" data-sitekey="6LdjzgksAAAAAIz_1CCXM52-J_BSyBPYXfP_LVkw" data-theme="dark" required></div>
-                <div class="reg_row">
-                    <button type="submit" name="btnsave" class="reg_button">Register</button>
-                    <input type="reset" value="cancel" class="reg_button">
+
+                <!-- Organizer -->
+                <div class="checkbox-field-signup">
+                    <input type="checkbox" name="isOrganizer"
+                        <?= isset($_POST['isOrganizer']) ? 'checked' : '' ?>>
+                    <label>I am a tournament organizer</label>
                 </div>
+
+                <!-- Buttons -->
+                <div class="button-group-signup">
+                    <button type="submit" name="btnsave" class="btn-primary-form btn-signup">
+                        Register
+                    </button>
+
+                    <a href="index.php" class="btn-secondary-form btn-signup">
+                        Cancel
+                    </a>
+                </div>
+
             </form>
-            <script>
-                function previewImage(event) {
-                    let img = document.getElementById('img');
-                    img.src = URL.createObjectURL(event.target.files[0]);
-                    img.onload = function() {
-                        URL.revokeObjectURL(img.src);
-                    }
-                }
-            </script>
         </div>
     </div>
 </div>
 
-<?php
-include('partial/footer.php');
-?>
+<?php include('partial/footer.php'); ?>
