@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL & ~E_DEPRECATED);
+ini_set('display_errors', '0');
 session_start();
 
 require_once "../stripe-php/init.php";
@@ -58,8 +60,8 @@ try {
   $pay->execute();
 
   mysqli_commit($conn);
-
-  echo "✅ Payment successful. Waiting for admin approval.";
+  header("Location: payment-success.php?tournament_id=$tournament_id");
+  exit;
 } catch (Exception $e) {
   mysqli_rollback($conn);
   echo "❌ Payment succeeded but database failed.";
