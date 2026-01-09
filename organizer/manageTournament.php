@@ -1,5 +1,5 @@
 <?php
-include 'header.php';
+include('header.php');
 ?>
 
 <body class="manage-tournament-body">
@@ -394,4 +394,7 @@ include 'header.php';
         init();
     </script>
 </body>
-</html>
+
+<?php
+include('footer.php');
+?>

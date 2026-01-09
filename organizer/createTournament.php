@@ -4,256 +4,499 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Tournament</title>
-    <link rel="stylesheet" href="../css/createtour.css">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/organizer/createtour.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9"/>
-                </svg>
-            </div>
-            <h1>Create Tournament</h1>
-            <p>Set up your gaming tournament and start competing</p>
-        </div>
+    <div id="root"></div>
 
-        <!-- Form Card -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Tournament Details</h2>
-                <p class="card-description">Fill in the information below to create your tournament</p>
-            </div>
-            <div class="card-content">
-                <form id="tournamentForm">
-                    <!-- Basic Information -->
-                    <div class="form-section">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="title">Tournament Title</label>
-                                <input type="text" id="title" name="title" placeholder="e.g., Summer Championship 2024" required>
-                            </div>
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Mock game data
+        const GAMES = [
+            { name: 'League of Legends', type: 'MOBA' },
+            { name: 'Dota 2', type: 'MOBA' },
+            { name: 'Counter-Strike 2', type: 'FPS' },
+            { name: 'Valorant', type: 'FPS' },
+            { name: 'Overwatch 2', type: 'FPS' },
+            { name: 'Rocket League', type: 'Sports' },
+            { name: 'FIFA 24', type: 'Sports' },
+            { name: 'Street Fighter 6', type: 'Fighting' },
+            { name: 'Tekken 8', type: 'Fighting' },
+            { name: 'Fortnite', type: 'Battle Royale' },
+            { name: 'Apex Legends', type: 'Battle Royale' },
+            { name: 'Minecraft', type: 'Sandbox' },
+            { name: 'Starcraft II', type: 'RTS' },
+            { name: 'Age of Empires IV', type: 'RTS' },
+            { name: 'Hearthstone', type: 'Card Game' },
+            { name: 'Magic: The Gathering Arena', type: 'Card Game' },
+        ];
+
+        // GameSelector Component
+        function GameSelector({ value, onChange, gameType }) {
+            const [open, setOpen] = useState(false);
+            const [search, setSearch] = useState('');
+
+            const filteredGames = GAMES.filter(game =>
+                game.name.toLowerCase().includes(search.toLowerCase())
+            );
+
+            const handleSelect = (game) => {
+                onChange(game);
+                setOpen(false);
+                setSearch('');
+            };
+
+            return (
+                <div className="select-box">
+                    <button
+                        type="button"
+                        className="select-display"
+                        onClick={() => setOpen(!open)}
+                    >
+                        {value || "Select game..."}
+                        <span style={{ position: 'absolute', right: '0.75rem' }}>▼</span>
+                    </button>
+                    {open && (
+                        <div className="select-dropdown">
+                            <input
+                                type="text"
+                                className="select-search"
+                                placeholder="Search game..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                autoFocus
+                            />
+                            {filteredGames.length === 0 ? (
+                                <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>
+                                    No game found
+                                </div>
+                            ) : (
+                                filteredGames.map((game) => (
+                                    <div
+                                        key={game.name}
+                                        className={`select-option ${value === game.name ? 'selected' : ''}`}
+                                        onClick={() => handleSelect(game)}
+                                    >
+                                        {value === game.name && '✓ '}
+                                        {game.name}
+                                    </div>
+                                ))
+                            )}
                         </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea id="description" name="description" placeholder="Describe your tournament..." required></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Game Information -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="game_name">Game Name</label>
-                                <input type="text" id="game_name" name="game_name" placeholder="e.g., League of Legends" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="game_type">Game Type</label>
-                                <select id="game_type" name="game_type" required>
-                                    <option value="">Select game type</option>
-                                    <option value="moba">MOBA</option>
-                                    <option value="fps">FPS</option>
-                                    <option value="battle_royale">Battle Royale</option>
-                                    <option value="sports">Sports</option>
-                                    <option value="fighting">Fighting</option>
-                                    <option value="strategy">Strategy</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tournament Format -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="match_type">Match Type</label>
-                                <select id="match_type" name="match_type" required>
-                                    <option value="">Select match type</option>
-                                    <option value="solo">Solo</option>
-                                    <option value="duo">Duo</option>
-                                    <option value="squad">Squad</option>
-                                    <option value="team_5v5">Team 5v5</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="format">Tournament Format</label>
-                                <select id="format" name="format" required>
-                                    <option value="">Select format</option>
-                                    <option value="single_elimination">Single Elimination</option>
-                                    <option value="double_elimination">Double Elimination</option>
-                                    <option value="round_robin">Round Robin</option>
-                                    <option value="swiss">Swiss</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Participants & Fee -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="max_participants">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="9" cy="7" r="4"/>
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                    </svg>
-                                    Max Participants
-                                </label>
-                                <input type="number" id="max_participants" name="max_participants" placeholder="e.g., 64" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="fee">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="12" y1="1" x2="12" y2="23"/>
-                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                                    </svg>
-                                    Entry Fee
-                                </label>
-                                <input type="number" id="fee" name="fee" step="0.01" placeholder="e.g., 10.00" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dates -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="registration_deadline">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                        <line x1="16" y1="2" x2="16" y2="6"/>
-                                        <line x1="8" y1="2" x2="8" y2="6"/>
-                                        <line x1="3" y1="10" x2="21" y2="10"/>
-                                    </svg>
-                                    Registration Deadline
-                                </label>
-                                <input type="date" id="registration_deadline" name="registration_deadline" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="start_date">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                        <line x1="16" y1="2" x2="16" y2="6"/>
-                                        <line x1="8" y1="2" x2="8" y2="6"/>
-                                        <line x1="3" y1="10" x2="21" y2="10"/>
-                                    </svg>
-                                    Start Date
-                                </label>
-                                <input type="date" id="start_date" name="start_date" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="form-section">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="status">Status</label>
-                                <select id="status" name="status" required>
-                                    <option value="draft">Draft</option>
-                                    <option value="published">Published</option>
-                                    <option value="registration_open">Registration Open</option>
-                                    <option value="ongoing">Ongoing</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Submit Buttons -->
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary-form">Create Tournament</button>
-                        <button type="button" class="btn-secondary-form" onclick="saveDraft()">Save as Draft</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Info Cards -->
-        <div class="info-cards">
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9"/>
-                        </svg>
-                    </div>
-                    <div class="info-text">
-                        <h3>Format</h3>
-                        <p>Choose your style</p>
-                    </div>
+                    )}
                 </div>
-            </div>
-
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="info-text">
-                        <h3>Participants</h3>
-                        <p>Set your limits</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                    </div>
-                    <div class="info-text">
-                        <h3>Schedule</h3>
-                        <p>Plan ahead</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Form submission handler
-        document.getElementById('tournamentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
-            console.log('Tournament Data:', data);
-            alert('Tournament created successfully!\n\nCheck console for details.');
-            
-            // You can add your API call or further processing here
-        });
-
-        // Save as draft function
-        function saveDraft() {
-            const formData = new FormData(document.getElementById('tournamentForm'));
-            const data = Object.fromEntries(formData.entries());
-            
-            console.log('Draft saved:', data);
-            alert('Tournament saved as draft!');
+            );
         }
+
+        // BracketPreview Component
+        function BracketPreview({ participants }) {
+            const rounds = Math.log2(participants);
+            
+            const renderRound = (roundNumber) => {
+                const matchesInRound = participants / Math.pow(2, roundNumber);
+                
+                return (
+                    <div key={roundNumber} className="bracket-round">
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', textAlign: 'center' }}>
+                            {roundNumber === rounds ? 'Final' : `Round ${roundNumber}`}
+                        </div>
+                        {Array.from({ length: matchesInRound }).map((_, matchIndex) => (
+                            <div key={matchIndex} className="bracket-match" style={{ height: '5rem' }}>
+                                <div className="bracket-player">
+                                    Player {matchIndex * 2 + 1}
+                                </div>
+                                <div className="bracket-player">
+                                    Player {matchIndex * 2 + 2}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="bracket-container">
+                    <div className="bracket-rounds">
+                        {Array.from({ length: rounds }).map((_, index) => (
+                            <React.Fragment key={index}>
+                                {renderRound(index + 1)}
+                                {index < rounds - 1 && (
+                                    <div className="round-arrow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 0.5rem' }}>
+                                        <svg width="28" height="56" viewBox="0 0 28 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                                            <path d="M4 4 L4 44 L12 36 L20 44 L20 4" stroke="#9CA3AF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', textAlign: 'center' }}>
+                                Winner
+                            </div>
+                            <div className="winner-box">
+                                🏆 Champion
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Step 1: Tournament Details
+        function TournamentDetailsStep({ formData, updateFormData, onNext }) {
+            const handleGameSelect = (game) => {
+                updateFormData({
+                    gameName: game.name,
+                    gameType: game.type
+                });
+            };
+
+            const isFormValid = formData.title && formData.description && formData.gameName;
+
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Tournament Title
+                        </label>
+                        <input
+                            type="text"
+                            className="input"
+                            placeholder="Enter tournament title"
+                            value={formData.title}
+                            onChange={(e) => updateFormData({ title: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Description
+                        </label>
+                        <textarea
+                            className="input"
+                            placeholder="Enter tournament description"
+                            value={formData.description}
+                            onChange={(e) => updateFormData({ description: e.target.value })}
+                            rows="4"
+                        />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Game Name
+                        </label>
+                        <GameSelector
+                            value={formData.gameName}
+                            onChange={handleGameSelect}
+                        />
+                    </div>
+
+                    {formData.gameType && (
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                                Game Type
+                            </label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={formData.gameType}
+                                disabled
+                            />
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button className="btn btn-primary" onClick={onNext} disabled={!isFormValid}>
+                            Next
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Step 2: Tournament Configuration
+        function TournamentConfigStep({ formData, updateFormData, onNext, onBack }) {
+            const PARTICIPANT_OPTIONS = [12, 16, 24];
+
+            const isFormValid = 
+                formData.maxParticipants !== null && 
+                formData.entryFee && 
+                formData.registrationStartDate && 
+                formData.registrationDeadline;
+
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Max Participants
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                            {PARTICIPANT_OPTIONS.map((count) => (
+                                <div
+                                    key={count}
+                                    className={`participant-card ${formData.maxParticipants === count ? 'selected' : ''}`}
+                                    onClick={() => updateFormData({ maxParticipants: count })}
+                                >
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{count}</div>
+                                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Participants</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {formData.maxParticipants && (
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                                Bracket Preview
+                            </label>
+                            <BracketPreview participants={formData.maxParticipants} />
+                            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                                This will create a {formData.maxParticipants}-player single-elimination bracket
+                            </p>
+                        </div>
+                    )}
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Entry Fee
+                        </label>
+                        <input
+                            type="number"
+                            className="input"
+                            placeholder="0.00"
+                            value={formData.entryFee}
+                            onChange={(e) => updateFormData({ entryFee: e.target.value })}
+                        />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                                Registration Start Date
+                            </label>
+                            <input
+                                type="datetime-local"
+                                className="input"
+                                value={formData.registrationStartDate}
+                                onChange={(e) => updateFormData({ registrationStartDate: e.target.value })}
+                            />
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                                Registration Deadline
+                            </label>
+                            <input
+                                type="datetime-local"
+                                className="input"
+                                value={formData.registrationDeadline}
+                                onChange={(e) => updateFormData({ registrationDeadline: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <button className="btn btn-outline" onClick={onBack}>
+                            Back
+                        </button>
+                        <button className="btn btn-primary" onClick={onNext} disabled={!isFormValid}>
+                            Next
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Step 3: Final Step
+        function TournamentFinalStep({ formData, updateFormData, onBack, onSaveDraft, onCreateTournament }) {
+            const STATUS_OPTIONS = [
+                { value: 'upcoming', label: 'Upcoming' },
+                { value: 'ongoing', label: 'Ongoing' },
+                { value: 'completed', label: 'Completed' },
+            ];
+
+            const isFormValid = formData.gameStartDate && formData.status;
+
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Game Start Date
+                        </label>
+                        <input
+                            type="datetime-local"
+                            className="input"
+                            value={formData.gameStartDate}
+                            onChange={(e) => updateFormData({ gameStartDate: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                            Tournament Status
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                            {STATUS_OPTIONS.map((option) => (
+                                <div
+                                    key={option.value}
+                                    className={`status-card ${option.value === 'upcoming' ? `status-${option.value}` : ''}`}
+                                    style={option.value !== 'upcoming' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                >
+                                    {option.label}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#f9fafb', borderRadius: '0.5rem', padding: '1.5rem' }}>
+                        <h3 style={{ fontWeight: '600', fontSize: '1.125rem', marginBottom: '1rem' }}>
+                            Tournament Summary
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.875rem' }}>
+                            <div>
+                                <span style={{ color: '#6b7280' }}>Title:</span>
+                                <p style={{ fontWeight: '500' }}>{formData.title || '-'}</p>
+                            </div>
+                            <div>
+                                <span style={{ color: '#6b7280' }}>Game:</span>
+                                <p style={{ fontWeight: '500' }}>{formData.gameName || '-'}</p>
+                            </div>
+                            <div>
+                                <span style={{ color: '#6b7280' }}>Game Type:</span>
+                                <p style={{ fontWeight: '500' }}>{formData.gameType || '-'}</p>
+                            </div>
+                            <div>
+                                <span style={{ color: '#6b7280' }}>Max Participants:</span>
+                                <p style={{ fontWeight: '500' }}>{formData.maxParticipants || '-'}</p>
+                            </div>
+                            <div>
+                                <span style={{ color: '#6b7280' }}>Entry Fee:</span>
+                                <p style={{ fontWeight: '500' }}>${formData.entryFee || '0'}</p>
+                            </div>
+                            <div>
+                                <span style={{ color: '#6b7280' }}>Status:</span>
+                                <p style={{ fontWeight: '500', textTransform: 'capitalize' }}>{formData.status}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                        <button className="btn btn-outline" onClick={onBack}>
+                            Back
+                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button className="btn btn-outline" onClick={onSaveDraft}>
+                                💾 Save as Draft
+                            </button>
+                            <button className="btn btn-primary" onClick={onCreateTournament} disabled={!isFormValid}>
+                                🏆 Create Tournament
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [currentStep, setCurrentStep] = useState(1);
+            const [formData, setFormData] = useState({
+                title: '',
+                description: '',
+                gameName: '',
+                gameType: '',
+                maxParticipants: null,
+                entryFee: '',
+                registrationStartDate: '',
+                registrationDeadline: '',
+                gameStartDate: '',
+                status: 'upcoming',
+            });
+
+            const totalSteps = 3;
+            const progress = (currentStep / totalSteps) * 100;
+
+            const updateFormData = (data) => {
+                setFormData((prev) => ({ ...prev, ...data }));
+            };
+
+            const handleNext = () => {
+                if (currentStep < totalSteps) {
+                    setCurrentStep(currentStep + 1);
+                }
+            };
+
+            const handleBack = () => {
+                if (currentStep > 1) {
+                    setCurrentStep(currentStep - 1);
+                }
+            };
+
+            const handleSaveDraft = () => {
+                console.log('Saving as draft:', formData);
+                alert('Tournament saved as draft!');
+            };
+
+            const handleCreateTournament = () => {
+                console.log('Creating tournament:', formData);
+                alert('Tournament created successfully!');
+            };
+
+            return (
+                <div style={{ minHeight: '100vh', padding: '2rem' }}>
+                    <div style={{ maxWidth: '56rem', margin: '0 auto' }}>
+                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2rem' }}>
+                            Create Tournament
+                        </h1>
+                        
+                        <div className="card">
+                            <div className="card-header">
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>
+                                    Step {currentStep} of {totalSteps}
+                                </h2>
+                                <div className="progress-bar">
+                                    <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+                                </div>
+                            </div>
+                            <div className="card-content">
+                                {currentStep === 1 && (
+                                    <TournamentDetailsStep
+                                        formData={formData}
+                                        updateFormData={updateFormData}
+                                        onNext={handleNext}
+                                    />
+                                )}
+                                {currentStep === 2 && (
+                                    <TournamentConfigStep
+                                        formData={formData}
+                                        updateFormData={updateFormData}
+                                        onNext={handleNext}
+                                        onBack={handleBack}
+                                    />
+                                )}
+                                {currentStep === 3 && (
+                                    <TournamentFinalStep
+                                        formData={formData}
+                                        updateFormData={updateFormData}
+                                        onBack={handleBack}
+                                        onSaveDraft={handleSaveDraft}
+                                        onCreateTournament={handleCreateTournament}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
 </html>

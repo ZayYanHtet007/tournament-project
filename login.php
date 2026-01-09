@@ -1,191 +1,148 @@
 <?php
-include('partial/header.php');
+include('partial/header.php'); ?>
+<?php
+session_start();
+
+require_once "database/dbConfig.php";
+
+$error = "";
+if (isset($_SESSION['error'])) {
+    $error = $_SESSION['error'];
+    unset($_SESSION['error']);
+}
+
+if (isset($_POST['btnlogin'])) {
+
+    $email = trim($_POST['txtemail']);
+    $password = $_POST['txtpwd'];
+
+    $sql = "SELECT * FROM users WHERE email = ? LIMIT 1";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "s", $email);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if ($user = mysqli_fetch_assoc($result)) {
+
+        if (!password_verify($password, $user['password'])) {
+            $_SESSION['error'] = "Invalid email or password";
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
+        /* ORGANIZER LOGIN */
+        if ((int)$user['is_organizer'] === 1) {
+
+            $status = strtolower(trim($user['organizer_status']));
+
+            if ($status !== 'approved') {
+                $_SESSION['error'] = "Organizer account not approved";
+                header("Location: " . $_SERVER['PHP_SELF']);
+                exit;
+            }
+
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['is_organizer'] = 1;
+            $_SESSION['organizer_status'] = $status;
+
+            header("Location: organizer/organizerDashboard.php");
+            exit;
+        }
+
+        /* PLAYER LOGIN */
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['is_organizer'] = 0;
+
+        header("Location: player/dashboard.php");
+        exit;
+    } else {
+        $_SESSION['error'] = "Invalid email or password";
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+}
 ?>
 
-<!-- 3D Animated Geometric Shapes -->
-    <div class="geometric-shape-1"></div>
-    <div class="geometric-shape-2"></div>
+<!-- ================= BACKGROUND EFFECTS ================= -->
+<div class="geometric-shape-1"></div>
+<div class="geometric-shape-2"></div>
 
-    <!-- Floating 3D Cards -->
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
+<div class="wave-container">
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+</div>
 
-    <!-- Animated Wave Lines -->
-    <div class="wave-container">
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-    </div>
+<div class="ring ring-1"></div>
+<div class="ring ring-2"></div>
 
-    <!-- Glowing Particles -->
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
+<div class="orb-signup orb-signup-1"></div>
+<div class="orb-signup orb-signup-2"></div>
 
-    <!-- 3D Rotating Rings -->
-    <div class="ring ring-1"></div>
-    <div class="ring ring-2"></div>
-    <div class="ring ring-3"></div>
+<div class="grid-overlay"></div>
 
-    <!-- Animated Background Orbs -->
-    <div class="orb-signup orb-signup-1"></div>
-    <div class="orb-signup orb-signup-2"></div>
-    <div class="orb-signup orb-signup-3"></div>
+<!-- ================= LOGIN CARD ================= -->
+<div class="card-container-signup">
+    <div class="card-signup">
+        <div class="card-header-signup">
+            <h1 class="card-title-signup">Sign In</h1>
+            <p class="card-description-signup">Login to join the competition</p>
+        </div>
 
-    <!-- Grid Overlay -->
-    <div class="grid-overlay"></div>
+        <div class="card-content-signup">
 
-    <!-- Registration Form Card -->
-    <div class="card-container-signup">
-        <div class="card-signup">
-            <div class="card-header-signup">
-                <h1 class="card-title-signup">Sign In</h1>
-                <p class="card-description-signup">Login to join the competition</p>
-            </div>
-            <div class="card-content-signup">
-                <form class="form" id="registrationForm">
+            <!-- ERROR MESSAGE -->
+            <?php if (!empty($error)) : ?>
+                <div class="error-message" style="color:#ff4d4d; margin-bottom:15px;">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
 
-                    <!-- Email -->
-                    <div class="form-field-signup">
-                        <label for="email">Email</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="email" 
-                                id="email" 
-                                name="email" 
-                                placeholder="Enter your email"
-                                required
-                            >
-                        </div>
-                        <span class="error-message" id="emailError" style="display: none;"></span>
-                    </div>
+            <form method="POST">
 
-                    <!-- Password -->
-                    <div class="form-field-signup">
-                        <label for="password">Password</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="Enter your password"
-                                required
-                                minlength="8"
-                            >
-                        </div>
-                        <span class="error-message" id="passwordError" style="display: none;"></span>
-                    </div>
+                <!-- EMAIL -->
+                <div class="form-field-signup">
+                    <label>Email</label>
+                    <input
+                        type="email"
+                        name="txtemail"
+                        placeholder="example@gmail.com"
+                        required>
+                </div>
 
-                    <label for="" class="loginlabel">Create New Account</label><a href="signup.php" class="signup_btn">SignUp</a><br> <br>
-                    <a href="forget_password.php" class="legacy-forget_btn">forget password?</a><br>
-                    
+                <!-- PASSWORD -->
+                <div class="form-field-signup">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        name="txtpwd"
+                        placeholder="********"
+                        required>
+                </div>
 
-                    <!-- Buttons -->
-                    <div class="button-group-signup">
-                        <div class="button-wrapper">
-                            <button type="submit" class="btn-primary-form btn-signup">Sign In</button>
-                        </div>
-                        <div class="button-wrapper">
-                            <button type="button" class="btn-secondary-form  btn-signup" id="cancelBtn">Cancel</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+                <br>
+                <label class="loginlabel">Create New Account</label>
+                <a href="signup.php" class="signup_btn">SignUp</a><br><br>
+
+                <a href="forget_password.php" class="legacy-forget_btn">Forget password?</a><br><br>
+                <!-- BUTTONS -->
+                <div class="button-group-signup">
+                    <button type="submit" name="btnlogin" class="btn-primary-form btn-signup">
+                        Sign In
+                    </button>
+
+                    <a href="index.php" class="btn-secondary-form btn-signup">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
         </div>
     </div>
+</div>
 
-    <script>
-        // Form validation and submission
-        const form = document.getElementById('registrationForm');
-        const cancelBtn = document.getElementById('cancelBtn');
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Clear previous errors
-            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-            
-            // Get form values
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const isOrganizer = document.getElementById('isOrganizer').checked;
-            
-            let isValid = true;
-            
-            // Validate username
-            if (username.length < 3) {
-                showError('usernameError', 'Username must be at least 3 characters');
-                isValid = false;
-            }
-            
-            // Validate email
-            const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-            if (!emailRegex.test(email)) {
-                showError('emailError', 'Invalid email address');
-                isValid = false;
-            }
-            
-            // Validate password
-            if (password.length < 8) {
-                showError('passwordError', 'Password must be at least 8 characters');
-                isValid = false;
-            }
-            
-            // Validate confirm password
-            if (password !== confirmPassword) {
-                showError('confirmPasswordError', 'Passwords do not match');
-                isValid = false;
-            }
-            
-            if (isValid) {
-                alert(`Registration successful!\nUsername: ${username}\nEmail: ${email}\nOrganizer: ${isOrganizer}`);
-                form.reset();
-            }
-        });
-
-        cancelBtn.addEventListener('click', function() {
-            form.reset();
-            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-        });
-
-        function showError(elementId, message) {
-            const errorElement = document.getElementById(elementId);
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-        }
-    </script>
-
-<?php
-        if(isset($_POST['btnlogin'])){
-        }
-    ?>
-<?php
-    include('partial/footer.php');
-?>
+<?php include('partial/footer.php'); ?>
