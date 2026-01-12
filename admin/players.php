@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
 
-
-$sql = "SELECT * FROM users WHERE is_organizer = 0 ORDER BY user_id ASC;";
+$searchTerm = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+$sql = "SELECT * FROM users WHERE is_organizer = 0  AND organizer_status IS NULL AND(  username LIKE '%$searchTerm%' OR email LIKE  '%$searchTerm%' OR user_id LIKE '%$searchTerm') ORDER BY user_id ASC;";
 $result = mysqli_query($conn, $sql);
 
 ?>
@@ -12,12 +12,24 @@ $result = mysqli_query($conn, $sql);
     <div class="main-content-container">
         <div class="tournament-header-section">
             <h2>Tournament Management</h2>
-            <p>View and manage all active and upcoming tournaments.</p>
+            <p>View and manage all players.</p>
         </div>
 
         <div class="search-wrapper">
-            <i class="ph ph-magnifying-glass"></i>
-            <input type="text" placeholder="Search tournament, games or IDs...">
+            <form method="GET" action="" class="search-form">
+                <button type="submit" class="search-btn">
+                    <i class="ph ph-magnifying-glass"></i>
+                </button>
+
+                <input type="text" name="search" placeholder="Search tournament, games or IDs..."
+                    value="<?= htmlspecialchars($searchTerm) ?>">
+
+                <?php if (!empty($searchTerm)): ?>
+                    <a href="players.php" class="reset-btn">
+                        <i class="ph ph-x-circle"></i>
+                    </a>
+                <?php endif; ?>
+            </form>
         </div>
 
 
@@ -28,6 +40,7 @@ $result = mysqli_query($conn, $sql);
                         <tr>
                             <th>ID</th>
                             <th>PlayerName</th>
+                            <th>Email</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -37,8 +50,15 @@ $result = mysqli_query($conn, $sql);
                             <tr onclick="window.location='playersDetail.php?id=<?= $row['user_id'] ?>'">
                                 <td><span class="id-badge">#<?= $row['user_id'] ?></span></td>
                                 <td class="fw-bold text-dark"><?= htmlspecialchars($row['username']) ?></td>
+                                <td class="fw-bold text"><?= htmlspecialchars($row['email']) ?></td>
                             </tr>
                         <?php endwhile; ?>
+
+                        <?php if (mysqli_num_rows($result) == 0): ?>
+                            <tr>
+                                <td colspan="9" class="text-center">No player found matching your search.</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
