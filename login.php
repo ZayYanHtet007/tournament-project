@@ -129,7 +129,6 @@ if (isset($_POST['btnlogin'])) {
                 <a href="signup.php" class="signup_btn">SignUp</a><br><br>
 
                 <a href="forget_password.php" class="legacy-forget_btn">Forget password?</a><br><br>
-
                 <!-- BUTTONS -->
                 <div class="button-group-signup">
                     <button type="submit" name="btnlogin" class="btn-primary-form btn-signup">
