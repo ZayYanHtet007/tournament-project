@@ -16,6 +16,11 @@
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    /*if(!isset($_SESSION['admin_id'])) {
+        header("Location: login.php");
+        exit;
+    }*/
+
     $adminName = $_SESSION['admin_name'] ?? 'Admin User';
     $adminEmail = $_SESSION['admin_email'] ?? 'admin@gmail.com';
     $adminInitial = substr($adminName, 0, 1);
@@ -45,11 +50,11 @@
                     <div class="popup-avatar-large"><?= $adminInitial ?></div>
                     <div class="popup-info">
                         <h4>Hi, <?= $adminName ?>!</h4>
-                        <button class="manage-btn">Customize Profile</button>
+                        <a href="customizeProfile.php" class="manage-btn" style="text-decoration: none;">Customize Profile</a>
                     </div>
                 </div>
                 <div class="popup-body">
-                    <div class="popup-item"><i class="fa fa-lock"></i><span>Change Password</span></div>
+                    <div class="popup-item"><a href="changePassword.php" style="text-decoration: none; color: #d1d1e6;"><i class="fa fa-lock"></i><span>Change Password</span></a></div>
                     <hr style="border-color: #45455e; margin: 5px 0;">
                     <a href="logout.php" class="popup-item logout-link">
                         <i class="fa fa-sign-out-alt"></i><span>Sign out</span>
@@ -70,7 +75,7 @@
         <div class="main">
             <header class="header">
                 <h3>Tournaments</h3>
-                <div class="admin-name"><?= $adminName ?></div>
+                <div class="admin-name"><?= $adminName  ?></div>
             </header>
 
             <div class="main-content">
@@ -89,7 +94,7 @@
                         if (!document.querySelector('.sidebar').contains(e.target)) {
                             document.getElementById('profilePopup').classList.remove('show');
                         }
-                        // Close sidebar on mobile when clicking outside
+                        
                         if (window.innerWidth <= 768 && !document.getElementById('sidebar').contains(e.target) && !e.target.closest('.mobile-toggle')) {
                             document.getElementById('sidebar').classList.remove('active');
                         }
