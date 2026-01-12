@@ -17,7 +17,7 @@
         $password = $_ENV["DB_PASSWORD"];
     //}
 
-    $databaseName = "tournaxdb";
+    $databaseName = "tourna_x";
 
     $conn = new mysqli($host, $username, $password, $databaseName, $port);
     if($conn->connect_error){
