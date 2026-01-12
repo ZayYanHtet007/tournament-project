@@ -75,7 +75,9 @@
         <div class="main">
             <header class="header">
                 <h3>Tournaments</h3>
-                <div class="admin-name"><?= $adminName  ?></div>
+                <div class="noti-btn">
+                    <i class="fa-regular fa-bell"></i>
+                </div>
             </header>
 
             <div class="main-content">
