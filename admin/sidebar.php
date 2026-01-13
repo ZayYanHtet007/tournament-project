@@ -75,8 +75,24 @@
         <div class="main">
             <header class="header">
                 <h3>Tournaments</h3>
-                <div class="noti-btn">
-                    <i class="fa-regular fa-bell"></i>
+                <div class="header-actions">
+                    <div class="notification-dropdown">
+                        <button class="noti-btn" id="notiBtn">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
+
+                        <div class="noti-content" id="notiContent">
+                            <div class="noti-header">Notifications </div>
+                            <div class="noti-body">
+                                <div class="noti-item unread">
+                                    <div class="noti-text">
+                                        <p>You have <strong></strong> new organizer requests waiting.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -96,9 +112,27 @@
                         if (!document.querySelector('.sidebar').contains(e.target)) {
                             document.getElementById('profilePopup').classList.remove('show');
                         }
-                        
+
                         if (window.innerWidth <= 768 && !document.getElementById('sidebar').contains(e.target) && !e.target.closest('.mobile-toggle')) {
                             document.getElementById('sidebar').classList.remove('active');
                         }
                     };
+
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const notiBtn = document.getElementById('notiBtn');
+                        const notiContent = document.getElementById('notiContent');
+
+                        // Toggle dropdown
+                        notiBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            notiContent.classList.toggle('show');
+                        });
+
+                        // Close when clicking outside
+                        document.addEventListener('click', function(e) {
+                            if (!notiContent.contains(e.target) && !notiBtn.contains(e.target)) {
+                                notiContent.classList.remove('show');
+                            }
+                        });
+                    });
                 </script>
