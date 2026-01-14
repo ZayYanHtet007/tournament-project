@@ -528,7 +528,7 @@ body {
 }
 .search-btn {
   position: absolute;
-  left: 14px; /* Matches your original icon placement */
+  left: 14px; 
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
@@ -538,7 +538,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2; /* Ensures button is clickable over the input */
+  z-index: 2; 
   outline: none;
 }
 .search-btn i {
@@ -549,11 +549,11 @@ body {
 
 /* Hover and Focus effects */
 .search-btn:hover i {
-  color: #6366f1; /* Icon turns primary color on hover */
+  color: #6366f1; 
 }
 
 .search-wrapper input:focus + .search-btn i {
-  color: #6366f1; /* Icon turns primary color when typing */
+  color: #6366f1; 
 }
 
 .reset-btn {
@@ -570,10 +570,9 @@ body {
 }
 
 .reset-btn:hover {
-  color: #ef4444; /* Turns red on hover to indicate "clear" */
+  color: #ef4444; 
 }
 
-/* Adjust input padding-right so text doesn't hide under the reset button */
 .search-wrapper input {
   padding-right: 40px;
 }
@@ -765,73 +764,6 @@ label {
   
     padding: 15px;
   }
-}
-
-/* tournament search bar */
-.search-wrapper {
-  position: relative;
-  width: 350px;
-  margin-bottom: 30px;
-}
-
-.search-wrapper input {
-  width: 100%;
-  padding: 12px 12px 12px 42px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  outline: none;
-  background: #fff;
-  font-family: inherit;
-  transition: 0.2s;
-}
-.search-btn {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  outline: none;
-}
-.search-btn i {
-  color: #64748b;
-  font-size: 1.1rem;
-  transition: color 0.2s ease;
-}
-
-.search-btn:hover i {
-  color: #6366f1;
-}
-
-.search-wrapper input:focus + .search-btn i {
-  color: #6366f1;
-}
-
-.reset-btn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  font-size: 1.2rem;
-  text-decoration: none;
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-}
-
-.reset-btn:hover {
-  color: #ef4444;
-}
-
-.search-wrapper input {
-  padding-right: 40px;
 }
 
 .tournament-container {
