@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
-require_once __DIR__ . '/approval_storage.php';
+
 
 $searchTerm = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
@@ -11,7 +11,7 @@ $result = mysqli_query($conn, $sql);
 
 $tournaments = [];
 while ($row = mysqli_fetch_assoc($result)) {
-    $row['calculated_approval'] = getApprovalStatus($row['tournament_id']) ?: 'pending';
+    $row['calculated_approval'] = ($row['admin_status']) ;
     $tournaments[] = $row;
 }
 
@@ -71,7 +71,7 @@ usort($tournaments, function ($a, $b) {
                     </thead>
                     <tbody>
                         <?php foreach ($tournaments as $row):
-                            $approval_status = $row['calculated_approval'];
+                            $approval_status = $row['admin_status'];
 
                             $statusClass = match ($row['status']) {
                                 'upcoming' => 'status-upcoming',
@@ -96,7 +96,7 @@ usort($tournaments, function ($a, $b) {
                                 <td class="fee-text">$<?= number_format($row['fee'], 2) ?></td>
                                 <td><?= date('d M Y', strtotime($row['start_date'])) ?></td>
                                 <td><span class="custom-badge <?= $statusClass ?>"><?= strtoupper($row['status']) ?></span></td>
-                                <td><span class="custom-badge <?= $approvalClass ?>"><?= strtoupper($approval_status) ?></span></td>
+                                <td><span class="custom-badge <?= $approvalClass ?>"><?= strtoupper($row['admin_status']) ?></span></td>
                             </tr>
                         <?php endforeach; ?>
 

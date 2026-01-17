@@ -3,25 +3,14 @@
 
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
-require_once __DIR__ . '/approval_storage.php';
-
-$tournament_id = isset($_GET['id']) ? intval($_GET['id']) : 1;
 
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['approve'])) {
-        if (saveApproval($tournament_id, 'approved')) {
+$tournament_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-            header("Location: tournamentsDetail.php?id=" . $tournament_id . "&success=approved");
-            exit();
-        }
-    } elseif (isset($_POST['reject'])) {
-        if (saveApproval($tournament_id, 'rejected')) {
-            header("Location: tournamentsDetail.php?id=" . $tournament_id . "&success=rejected");
-            exit();
-        }
-    }
+if ($tournament_id === 0) {
+    die("Invalid Tournament ID.");
 }
+
 function formatDate($date)
 {
     if (!$date || $date == '0000-00-00' || $date == '0000-00-00 00:00:00') {
@@ -34,10 +23,6 @@ function formatCurrency($amount)
 {
     return $amount == '0.00' || $amount == 0 ? 'Free' : '$' . number_format(floatval($amount), 2);
 }
-
-
-$approval_status = getApprovalStatus($tournament_id);
-
 
 $success_message = '';
 if (isset($_GET['success'])) {
@@ -64,6 +49,7 @@ if ($stmt) {
 if (!$tournament) {
     die("Tournament not found!");
 }
+$current_approval = $tournament['admin_status'];
 ?>
 
 <div class="container-fluid">
@@ -203,15 +189,14 @@ if (!$tournament) {
                 </div>
             </div>
 
-
             <div class="t-d-btn-box">
-                <button type="button" onclick="approveTournament()" class="t-d-btn"
-                    id="approveBtn" <?php echo $approval_status == 'approved' ? 'disabled' : ''; ?>>
+                <button type="button" onclick="handleApproval('approve')" class="t-d-btn"
+                    id="approveBtn" <?= ($current_approval === 'approved') ? 'disabled' : '' ?>>
                     Approve
                 </button>
 
-                <button type="button" onclick="rejectTournament()" class="t-d-btn"
-                    id="rejectBtn" <?php echo $approval_status == 'rejected' ? 'disabled' : ''; ?>>
+                <button type="button" onclick="handleApproval('reject')" class="t-d-btn"
+                    id="rejectBtn" <?= ($current_approval === 'rejected') ? 'disabled' : '' ?>>
                     Reject
                 </button>
 
@@ -219,175 +204,44 @@ if (!$tournament) {
                     Back
                 </a>
             </div>
+
+
         </div>
     </div>
+</div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Global state
-    let isProcessing = false;
-    const tournamentId = <?php echo $tournament_id; ?>;
-
-
     async function handleApproval(action) {
-        if (isProcessing) return;
-        isProcessing = true;
-
-        const isApprove = action === 'approve';
-        const newStatus = isApprove ? 'approved' : 'rejected';
-
-
-        updateUI(newStatus);
-
-        Swal.fire({
-            title: `${isApprove ? 'Approve' : 'Reject'} Tournament`,
+        const result = await Swal.fire({
+            title: `${action} tournament?`,
             text: `Are you sure you want to ${action} this tournament?`,
-            icon: isApprove ? 'question' : 'warning',
+            icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: isApprove ? '#3085d6' : '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: `Yes, ${action} it!`,
-            cancelButtonText: 'Cancel',
-            allowOutsideClick: false
-        }).then(async (result) => {
-            if (!result.isConfirmed) {
-                revertUI('<?php echo $approval_status; ?>');
-                isProcessing = false;
-                return;
-            }
+            confirmButtonColor: action === 'approve' ? '#198754' : '#dc3545',
+            confirmButtonText: 'Yes, Change it!'
+        });
 
-
-            Swal.fire({
-                title: 'Processing...',
-                text: 'Please wait',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
+        if (result.isConfirmed) {
             try {
-
                 const response = await fetch('update_approval.php', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: `tournament_id=${tournamentId}&action=${action}`
+                    body: `tournament_id=<?= $tournament_id ?>&action=${action}`
                 });
-
                 const data = await response.json();
-                Swal.close();
-
                 if (data.success) {
-
-                    showSuccessMessage(data.message);
-
-
-                    localStorage.setItem(`tournament_${tournamentId}_status`, newStatus);
-                    localStorage.setItem(`tournament_${tournamentId}_updated`, Date.now());
-
-
-                    broadcastUpdate(tournamentId, newStatus);
-
+                    Swal.fire('Success!', data.message, 'success').then(() => location.reload());
                 } else {
-
-                    revertUI('<?php echo $approval_status; ?>');
                     Swal.fire('Error!', data.message, 'error');
                 }
-
-            } catch (error) {
-                Swal.close();
-                revertUI('<?php echo $approval_status; ?>');
-                Swal.fire('Error!', 'Network error. Please try again.', 'error');
-                console.error('Error:', error);
-            } finally {
-                isProcessing = false;
-            }
-        });
-    }
-
-
-    function updateUI(newStatus) {
-        const approveBtn = document.getElementById('approveBtn');
-        const rejectBtn = document.getElementById('rejectBtn');
-
-
-
-
-        if (approveBtn) approveBtn.disabled = newStatus === 'approved';
-        if (rejectBtn) rejectBtn.disabled = newStatus === 'rejected';
-    }
-
-    function revertUI(originalStatus) {
-        updateUI(originalStatus);
-    }
-
-    function showSuccessMessage(message) {
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: message,
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true
-        });
-    }
-
-
-    function broadcastUpdate(tournamentId, status) {
-        if ('BroadcastChannel' in window) {
-            try {
-                const channel = new BroadcastChannel('tournament_approvals');
-                channel.postMessage({
-                    type: 'status_update',
-                    tournamentId: tournamentId,
-                    status: status,
-                    timestamp: Date.now()
-                });
             } catch (e) {
-                console.log('BroadcastChannel not supported');
+                Swal.fire('Error!', 'Something went wrong.', 'error');
             }
         }
-    }
-
-
-    if ('BroadcastChannel' in window) {
-        const channel = new BroadcastChannel('tournament_approvals');
-        channel.onmessage = (event) => {
-            if (event.data.type === 'status_update' &&
-                event.data.tournamentId === tournamentId) {
-                updateUI(event.data.status);
-            }
-        };
-    }
-
-    function checkLocalStorage() {
-        const storedStatus = localStorage.getItem(`tournament_${tournamentId}_status`);
-        const storedTime = localStorage.getItem(`tournament_${tournamentId}_updated`);
-
-        if (storedStatus && storedTime) {
-            const updateAge = Date.now() - parseInt(storedTime);
-
-            if (updateAge < 60 * 60 * 1000) {
-                updateUI(storedStatus);
-            }
-        }
-    }
-
-
-    document.addEventListener('DOMContentLoaded', function() {
-        checkLocalStorage();
-    });
-
-
-    function approveTournament() {
-        handleApproval('approve');
-    }
-
-    function rejectTournament() {
-        handleApproval('reject');
     }
 </script>
