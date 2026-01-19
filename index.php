@@ -1,46 +1,29 @@
 <?php
-include('partial/header.php');
+include('./partial/header.php');
 ?>
 
-<div class="main-wrapper">
-    <!-- Animated background gradient -->
-    <div class="bg-gradient"></div>
+<!-- LOADER -->
+<div id="loader">
+    <h1 class="logo">Tourna<span>X</span></h1>
 
-    <!-- Grid overlay -->
-    <div class="grid-overlay"></div>
-
-    <!-- Floating 3D elements -->
-    <div class="floating-elements">
-        <?php for ($i = 0; $i < 8; $i++): ?>
-            <div class="floating-cube cube-<?php echo $i; ?>">
-                <div class="cube-inner"></div>
-            </div>
-        <?php endfor; ?>
-
-        <?php for ($i = 0; $i < 5; $i++): ?>
-            <div class="glowing-orb orb-<?php echo $i; ?>"></div>
-        <?php endfor; ?>
-
-        <?php for ($i = 0; $i < 6; $i++): ?>
-            <div class="hexagon hex-<?php echo $i; ?>">
-                <svg viewBox="0 0 100 100">
-                    <polygon points="50 1 95 25 95 75 50 99 5 75 5 25" fill="none" stroke-width="2" opacity="0.3" />
-                </svg>
-            </div>
-        <?php endfor; ?>
+    <div class="progress-bar1">
+        <div class="progress"></div>
     </div>
 
+    <p class="loading-text">Initializing Arena…</p>
+</div>
+
+<!-- WEBSITE CONTENT -->
+<div id="site" class="hidden">
+        
+    <canvas id="bg"></canvas>
+
+    <main>  
+
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-bg">
-            <img src="https://images.unsplash.com/photo-1553492206-f609eddc33dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlc3BvcnRzJTIwZ2FtaW5nJTIwYXJlbmF8ZW58MXx8fHwxNzY2Mjg1MzkxfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="Gaming Arena">
-            <div class="hero-overlay"></div>
-        </div>
+    <section class="hero" id="hero3d">
 
-        <div class="hero-shape-1"></div>
-        <div class="hero-shape-2"></div>
-
-        <div class="container hero-container">
+        <div class="hero-container">
             <div class="hero-content">
 
                 <h1 class="hero-title">
@@ -102,11 +85,6 @@ include('partial/header.php');
             </div>
         </div>
 
-        <div class="scroll-indicator">
-            <div class="scroll-mouse">
-                <div class="scroll-wheel"></div>
-            </div>
-        </div>
     </section>
 
     <!-- Stats Section -->
@@ -119,12 +97,48 @@ include('partial/header.php');
 
                 <div class="stats-grid">
                     <?php
-                    $stats = [
-                        ['value' => '2.5M+', 'label' => 'Registered Players', 'gradient' => 'cyan', 'icon' => 'users'],
-                        ['value' => '15K+', 'label' => 'Tournaments Hosted', 'gradient' => 'purple', 'icon' => 'trophy'],
-                        ['value' => '50+', 'label' => 'Supported Games', 'gradient' => 'yellow', 'icon' => 'gamepad'],
-                        ['value' => '$100M+', 'label' => 'Total Prizes Awarded', 'gradient' => 'pink', 'icon' => 'zap']
-                    ];
+                    // DEBUG GUARD: set to true to force default data (skip DB queries)
+                    // Toggle to false to re-enable DB-driven stats once database is verified.
+                    $forceDefaultStats = true;
+
+                    // Try to load stats from database; fall back to defaults if unavailable
+                    $stats = [];
+                    if (!$forceDefaultStats && isset($conn) && $conn) {
+                        $playersCount = 0;
+                        $tournamentsCount = 0;
+                        $gamesCount = 0;
+                        $prizeTotal = null;
+
+                        $res = @$conn->query("SELECT COUNT(*) AS cnt FROM users");
+                        if ($res) { $r = $res->fetch_assoc(); $playersCount = intval($r['cnt'] ?? 0); }
+
+                        $res = @$conn->query("SELECT COUNT(*) AS cnt FROM tournaments");
+                        if ($res) { $r = $res->fetch_assoc(); $tournamentsCount = intval($r['cnt'] ?? 0); }
+
+                        $res = @$conn->query("SELECT COUNT(DISTINCT game) AS cnt FROM tournaments");
+                        if ($res) { $r = $res->fetch_assoc(); $gamesCount = intval($r['cnt'] ?? 0); }
+
+                        // Try numeric prize column first (common name: prize_amount)
+                        $res = @$conn->query("SELECT SUM(prize_amount) AS sum FROM tournaments");
+                        if ($res) { $r = $res->fetch_assoc(); $prizeTotal = $r['sum'] ?? null; }
+
+                        // Build display values with sensible fallbacks
+                        $stats = [
+                            ['value' => $prizeTotal ? ('$' . number_format($prizeTotal)) : '$2.5M+', 'label' => 'Total Prize Pool', 'gradient' => 'cyan', 'icon' => 'users'],
+                            ['value' => $playersCount ? number_format($playersCount) : '150K+', 'label' => 'Registered Players', 'gradient' => 'purple', 'icon' => 'trophy'],
+                            ['value' => $tournamentsCount ? number_format($tournamentsCount) : '500+', 'label' => 'Live Tournaments', 'gradient' => 'yellow', 'icon' => 'gamepad'],
+                            ['value' => $gamesCount ? number_format($gamesCount) : '50+', 'label' => 'Supported Games', 'gradient' => 'pink', 'icon' => 'zap']
+                        ];
+                    } else {
+                        // DB not available - keep original defaults
+                        $stats = [
+                            ['value' => '2.5M+', 'label' => 'Registered Players', 'gradient' => 'cyan', 'icon' => 'users'],
+                            ['value' => '15K+', 'label' => 'Tournaments Hosted', 'gradient' => 'purple', 'icon' => 'trophy'],
+                            ['value' => '50+', 'label' => 'Supported Games', 'gradient' => 'yellow', 'icon' => 'gamepad'],
+                            ['value' => '$100M+', 'label' => 'Total Prizes Awarded', 'gradient' => 'pink', 'icon' => 'zap']
+                        ];
+                    }
+
                     foreach ($stats as $index => $stat):
                     ?>
                         <div class="stats-item stats-item-<?php echo $index; ?>">
@@ -164,11 +178,6 @@ include('partial/header.php');
                             </div>
                             <div class="stats-value gradient-<?php echo $stat['gradient']; ?>"><?php echo $stat['value']; ?></div>
                             <div class="stats-label"><?php echo $stat['label']; ?></div>
-                            <div class="stats-particles">
-                                <div class="particle particle-1"></div>
-                                <div class="particle particle-2"></div>
-                                <div class="particle particle-3"></div>
-                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -188,38 +197,64 @@ include('partial/header.php');
 
             <div class="tournaments-grid">
                 <?php
-                $tournaments = [
-                    [
-                        'title' => 'Apex Legends Championship',
-                        'game' => 'Apex Legends',
-                        'prize' => '$50,000',
-                        'players' => '128/128',
-                        'date' => 'Dec 28, 2025',
-                        'status' => 'Live',
-                        'image' => 'https://images.unsplash.com/photo-1688377051459-aebb99b42bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBuZW9uJTIwY2l0eXxlbnwxfHx8fDE3NjYzNDI3MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-                        'gradient' => 'red-orange'
-                    ],
-                    [
-                        'title' => 'Valorant Masters',
-                        'game' => 'Valorant',
-                        'prize' => '$75,000',
-                        'players' => '64/64',
-                        'date' => 'Dec 30, 2025',
-                        'status' => 'Upcoming',
-                        'image' => 'https://images.unsplash.com/photo-1628089700970-0012c5718efc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnYW1pbmclMjBrZXlib2FyZCUyMGxpZ2h0c3xlbnwxfHx8fDE3NjYzNzI5NzF8MA&ixlib=rb-4.1.0&q=80&w=1080',
-                        'gradient' => 'pink-purple'
-                    ],
-                    [
-                        'title' => 'CS:GO Pro League',
-                        'game' => 'Counter-Strike',
-                        'prize' => '$100,000',
-                        'players' => '32/32',
-                        'date' => 'Jan 5, 2026',
-                        'status' => 'Registration Open',
-                        'image' => 'https://images.unsplash.com/photo-1553492206-f609eddc33dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlc3BvcnRzJTIwZ2FtaW5nJTIwYXJlbmF8ZW58MXx8fHwxNzY2Mjg1MzkxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                        'gradient' => 'cyan-blue'
-                    ]
-                ];
+                // DEBUG GUARD: reuse the same toggle above; when true we skip DB queries
+                // Try to load tournaments from DB; fall back to hardcoded list if unavailable
+                $tournaments = [];
+                if (!$forceDefaultStats && isset($conn) && $conn) {
+                    $sql = "SELECT title, game, prize, players, `date`, status, image FROM tournaments ORDER BY `date` DESC LIMIT 6";
+                    $res = @$conn->query($sql);
+                    if ($res && $res->num_rows > 0) {
+                        while ($row = $res->fetch_assoc()) {
+                            // Ensure expected keys exist
+                            $tournaments[] = [
+                                'title' => $row['title'] ?? 'Untitled',
+                                'game' => $row['game'] ?? 'Unknown',
+                                'prize' => $row['prize'] ?? '$0',
+                                'players' => $row['players'] ?? '0/0',
+                                'date' => $row['date'] ?? '',
+                                'status' => $row['status'] ?? 'Upcoming',
+                                'image' => $row['image'] ?? '',
+                                'gradient' => $row['gradient'] ?? 'cyan-blue'
+                            ];
+                        }
+                    }
+                }
+
+                if (empty($tournaments)) {
+                    $tournaments = [
+                        [
+                            'title' => 'Apex Legends Championship',
+                            'game' => 'Apex Legends',
+                            'prize' => '$50,000',
+                            'players' => '128/128',
+                            'date' => 'Dec 28, 2025',
+                            'status' => 'Live',
+                            'image' => 'https://images.unsplash.com/photo-1688377051459-aebb99b42bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBuZW9uJTIwY2l0eXxlbnwxfHx8fDE3NjYzNDI3MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+                            'gradient' => 'red-orange'
+                        ],
+                        [
+                            'title' => 'Valorant Masters',
+                            'game' => 'Valorant',
+                            'prize' => '$75,000',
+                            'players' => '64/64',
+                            'date' => 'Dec 30, 2025',
+                            'status' => 'Upcoming',
+                            'image' => 'https://images.unsplash.com/photo-1628089700970-0012c5718efc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnYW1pbmclMjBrZXlib2FyZCUyMGxpZ2h0c3xlbnwxfHx8fDE3NjYzNzI5NzF8MA&ixlib=rb-4.1.0&q=80&w=1080',
+                            'gradient' => 'pink-purple'
+                        ],
+                        [
+                            'title' => 'CS:GO Pro League',
+                            'game' => 'Counter-Strike',
+                            'prize' => '$100,000',
+                            'players' => '32/32',
+                            'date' => 'Jan 5, 2026',
+                            'status' => 'Registration Open',
+                            'image' => 'https://images.unsplash.com/photo-1553492206-f609eddc33dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlc3BvcnRzJTIwZ2FtaW5nJTIwYXJlbmF8ZW58MXx8fHwxNzY2Mjg1MzkxfDA&ixlib=rb-4.1.0&q=80&w=1080',
+                            'gradient' => 'cyan-blue'
+                        ]
+                    ];
+                }
+
                 foreach ($tournaments as $tournament):
                 ?>
                     <div class="tournament-card">
@@ -302,10 +337,12 @@ include('partial/header.php');
         <span class="closeBtn">&times;</span>
 
         <h2>Create Team</h2>
-        <div>
-            <img src="" alt="" class="legacy-upload_photo" id="img">
-            <input type="file" id="uploadInput" name="image" style="display: none;" onchange="previewImage(event)" required>
-        </div>
+        <div style="display: flex; align-items: center; gap: 16px; justify-content: center;">
+                <label for="uploadInput" style="cursor:pointer; margin:0;">
+                  <img src="images/gif9.gif" alt="" class="upload_photo" id="img">
+                </label>
+                <input type="file" name="image" id="uploadInput" style="display:none;" onchange="previewImage(event)" required>
+              </div>
         <input type="text" placeholder="Team Name (6-16 chars)">
         <input type="text" placeholder="Short Name (2-4 chars)">
         <textarea name="" id="" placeholder="Motto (Within 100 chars)"></textarea>
@@ -315,27 +352,172 @@ include('partial/header.php');
     </div>
 </div>
 
-<script>
-    const header = document.querySelector("header");
+</main>
+</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
-    window.addEventListener("scroll", () => {
-        if (window.scrollY > 50) {
-            header.classList.add("scrolled");
-        } else {
-            header.classList.remove("scrolled");
+    <script>
+    // --- THREE.JS SCENE SETUP ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#bg'), antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    // CORE 3D OBJECT
+    const geometry = new THREE.IcosahedronGeometry(10, 1);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00f3ff, wireframe: true, emissive: 0xbc13fe, emissiveIntensity: 0.5 });
+    const core = new THREE.Mesh(geometry, material);
+    scene.add(core);
+
+    // --- BACKGROUND LETTERS (T & X) WITH GLOW ---
+    const group = new THREE.Group();
+    const loader = new THREE.FontLoader();
+    
+    loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function (font) {
+        // Create glowing materials
+        const cyanGlow = new THREE.MeshStandardMaterial({ 
+            color: 0x00f3ff, 
+            emissive: 0x00f3ff, 
+            emissiveIntensity: 2,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const purpleGlow = new THREE.MeshStandardMaterial({ 
+            color: 0xbc13fe, 
+            emissive: 0xbc13fe, 
+            emissiveIntensity: 2,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const letters = ['T', 'O', 'U', 'R', 'N' , 'A' , 'X'];
+        
+        for(let i = 0; i < 200; i++) {
+            const char = letters[Math.floor(Math.random() * letters.length)];
+            const textGeo = new THREE.TextGeometry(char, { font: font, size: 0.8, height: 0.1 });
+            
+            // Randomly pick between cyan or purple glow
+            const material = Math.random() > 0.5 ? cyanGlow : purpleGlow;
+            const mesh = new THREE.Mesh(textGeo, material);
+            
+            mesh.position.set(
+                (Math.random() - 0.5) * 150,
+                (Math.random() - 0.5) * 150,
+                (Math.random() - 0.5) * 150
+            );
+            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+            group.add(mesh);
         }
     });
-    const heroBg = document.querySelector('.hero-bg');
-
-    window.addEventListener('scroll', () => {
-        const scrollPosition = window.scrollY;
-        // Move background up/down slowly relative to scroll
-        heroBg.style.transform = `translateY(${
-                scrollPosition * 0.3
-            }
-            px)`;
+    scene.add(group);
+    
+    // Using a hosted font for the letters
+    loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function (font) {
+        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 });
+        const letters = ['T', 'X'];
+        
+        for(let i = 0; i < 200; i++) {
+            const char = letters[Math.floor(Math.random() * letters.length)];
+            const textGeo = new THREE.TextGeometry(char, { font: font, size: 0.8, height: 0.1 });
+            const mesh = new THREE.Mesh(textGeo, textMaterial);
+            
+            mesh.position.set(
+                (Math.random() - 0.5) * 150,
+                (Math.random() - 0.5) * 150,
+                (Math.random() - 0.5) * 150
+            );
+            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+            group.add(mesh);
+        }
     });
+    scene.add(group);
+
+    const light = new THREE.PointLight(0x00f3ff, 2, 100);
+    light.position.set(10, 10, 10);
+    scene.add(light, new THREE.AmbientLight(0xffffff, 0.2));
+    camera.position.z = 30;
+
+    // --- GSAP & INTERACTION ---
+    gsap.registerPlugin(ScrollTrigger);
+    const tl = gsap.timeline({
+        scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: 1.5,
+            onUpdate: (self) => { document.getElementById('bar').style.height = (self.progress * 100) + "%"; }
+        }
+    });
+    tl.to(core.rotation, { y: Math.PI * 4, x: Math.PI }).to(camera.position, { z: 15 }, 0);
+
+    let mouseX = 0, mouseY = 0;
+    document.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth) - 0.5;
+        mouseY = (e.clientY / window.innerHeight) - 0.5;
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        core.rotation.z += 0.002;
+        group.rotation.y += 0.001; // Rotate the T/X cloud
+        camera.position.x += (mouseX * 20 - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY * 20 - camera.position.y) * 0.05;
+        camera.lookAt(scene.position);
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Fallback/explicit scroll handler: map page scroll to 3D scene values
+    // This ensures the 3D core and camera respond even if ScrollTrigger isn't active
+    function updateSceneByScroll() {
+        const scrollTop = window.scrollY || window.pageYOffset;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = docHeight > 0 ? scrollTop / docHeight : 0;
+
+        // Rotate core on X/Y based on scroll progress
+        core.rotation.x = progress * Math.PI * 2; // full two turns
+        core.rotation.y = progress * Math.PI * 4; // faster yaw
+
+        // Move camera closer as user scrolls down
+        camera.position.z = 30 - (progress * 15); // from 30 -> 15
+    }
+
+    // Use passive listener for performance
+    window.addEventListener('scroll', updateSceneByScroll, { passive: true });
+    // Initialize once on load
+    updateSceneByScroll();
+
+    // MODAL LOGIC
+    const openBtn = document.getElementById("openTeam");
+    const overlay = document.getElementById("teamOverlay");
+    const closeBtn = document.querySelector(".closeBtn");
+
+    openBtn.onclick = () => overlay.classList.add("active");
+    closeBtn.onclick = () => overlay.classList.remove("active");
+    window.onclick = (e) => { if(e.target == overlay) overlay.classList.remove("active"); }
+
+    function previewImage(event){
+        let img=document.getElementById("img");
+        img.src=URL.createObjectURL(event.target.files[0]);
+    }
 </script>
+
+
+<script>
+                    function previewImage(event){
+                        let img=document.getElementById("img");
+                        img.src=URL.createObjectURL(event.target.files[0]);
+                        img.onload=function(){
+                            URL.revokeObjectURL(img.src);
+                        }
+                    }
+                </script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -366,6 +548,49 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<script>
+    (function(){
+        try {
+            const loader1 = document.getElementById("loader");
+            const site = document.getElementById("site");
+            const firstVisit = !localStorage.getItem("tournax_loaded");
+
+            function revealSite() {
+                try {
+                    if (loader1) {
+                        loader1.style.opacity = "0";
+                        setTimeout(() => { if (loader1) loader1.style.display = "none"; }, 600);
+                    }
+                    if (site) {
+                        site.classList.remove("hidden");
+                        site.classList.add("loaded");
+                    }
+                } catch (e) { console.error('revealSite error', e); }
+            }
+
+            if (firstVisit) {
+                // Use both load event and timeout fallback in case load never fires
+                window.addEventListener("load", () => {
+                    try { localStorage.setItem("tournax_loaded", "true"); } catch (e) {}
+                    revealSite();
+                });
+
+                // Fallback: force reveal after 4s to avoid permanent loader
+                setTimeout(() => {
+                    if (!site || !site.classList.contains('loaded')) revealSite();
+                }, 4000);
+            } else {
+                revealSite();
+            }
+        } catch (err) {
+            console.error('Loader init error', err);
+            // Best-effort fallback
+            try { document.getElementById('loader') && (document.getElementById('loader').style.display = 'none'); } catch(e){}
+            try { document.getElementById('site') && document.getElementById('site').classList.remove('hidden'); } catch(e){}
+        }
+    })();
+
+</script>
 
 <?php
 include('partial/footer.php');

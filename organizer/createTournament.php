@@ -4,499 +4,269 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Tournament</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/organizer/createtour.css">
+    <link rel="stylesheet" href="../css/user/responsive.css">
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState } = React;
+<script>
+/* -------------------- DATA -------------------- */
 
-        // Mock game data
-        const GAMES = [
-            { name: 'League of Legends', type: 'MOBA' },
-            { name: 'Dota 2', type: 'MOBA' },
-            { name: 'Counter-Strike 2', type: 'FPS' },
-            { name: 'Valorant', type: 'FPS' },
-            { name: 'Overwatch 2', type: 'FPS' },
-            { name: 'Rocket League', type: 'Sports' },
-            { name: 'FIFA 24', type: 'Sports' },
-            { name: 'Street Fighter 6', type: 'Fighting' },
-            { name: 'Tekken 8', type: 'Fighting' },
-            { name: 'Fortnite', type: 'Battle Royale' },
-            { name: 'Apex Legends', type: 'Battle Royale' },
-            { name: 'Minecraft', type: 'Sandbox' },
-            { name: 'Starcraft II', type: 'RTS' },
-            { name: 'Age of Empires IV', type: 'RTS' },
-            { name: 'Hearthstone', type: 'Card Game' },
-            { name: 'Magic: The Gathering Arena', type: 'Card Game' },
-        ];
+const GAMES = [
+    { name: 'League of Legends', type: 'MOBA' },
+    { name: 'Dota 2', type: 'MOBA' },
+    { name: 'Counter-Strike 2', type: 'FPS' },
+    { name: 'Valorant', type: 'FPS' },
+    { name: 'Overwatch 2', type: 'FPS' },
+    { name: 'Rocket League', type: 'Sports' },
+    { name: 'FIFA 24', type: 'Sports' },
+    { name: 'Street Fighter 6', type: 'Fighting' },
+    { name: 'Tekken 8', type: 'Fighting' },
+    { name: 'Fortnite', type: 'Battle Royale' },
+    { name: 'Apex Legends', type: 'Battle Royale' },
+    { name: 'Minecraft', type: 'Sandbox' },
+    { name: 'Starcraft II', type: 'RTS' },
+    { name: 'Age of Empires IV', type: 'RTS' },
+    { name: 'Hearthstone', type: 'Card Game' },
+    { name: 'Magic: The Gathering Arena', type: 'Card Game' },
+];
 
-        // GameSelector Component
-        function GameSelector({ value, onChange, gameType }) {
-            const [open, setOpen] = useState(false);
-            const [search, setSearch] = useState('');
+let currentStep = 1;
 
-            const filteredGames = GAMES.filter(game =>
-                game.name.toLowerCase().includes(search.toLowerCase())
-            );
+const formData = {
+    title: '',
+    description: '',
+    gameName: '',
+    gameType: '',
+    maxParticipants: null,
+    entryFee: '',
+    registrationStartDate: '',
+    registrationDeadline: '',
+    gameStartDate: '',
+    status: 'upcoming'
+};
 
-            const handleSelect = (game) => {
-                onChange(game);
-                setOpen(false);
-                setSearch('');
-            };
+const root = document.getElementById('root');
 
-            return (
-                <div className="select-box">
-                    <button
-                        type="button"
-                        className="select-display"
-                        onClick={() => setOpen(!open)}
-                    >
-                        {value || "Select game..."}
-                        <span style={{ position: 'absolute', right: '0.75rem' }}>▼</span>
-                    </button>
-                    {open && (
-                        <div className="select-dropdown">
-                            <input
-                                type="text"
-                                className="select-search"
-                                placeholder="Search game..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                autoFocus
-                            />
-                            {filteredGames.length === 0 ? (
-                                <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>
-                                    No game found
-                                </div>
-                            ) : (
-                                filteredGames.map((game) => (
-                                    <div
-                                        key={game.name}
-                                        className={`select-option ${value === game.name ? 'selected' : ''}`}
-                                        onClick={() => handleSelect(game)}
-                                    >
-                                        {value === game.name && '✓ '}
-                                        {game.name}
-                                    </div>
-                                ))
-                            )}
+/* -------------------- RENDER -------------------- */
+
+function render() {
+    root.innerHTML = `
+        <div class="min-h-screen p-8">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-3xl font-bold text-center mb-8">Create Tournament</h1>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="text-xl font-semibold">Step ${currentStep} of 3</h2>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:${currentStep * 33.33}%"></div>
                         </div>
-                    )}
+                    </div>
+                    <div class="card-content" id="stepContent"></div>
                 </div>
-            );
-        }
+            </div>
+        </div>
+    `;
 
-        // BracketPreview Component
-        function BracketPreview({ participants }) {
-            const rounds = Math.log2(participants);
-            
-            const renderRound = (roundNumber) => {
-                const matchesInRound = participants / Math.pow(2, roundNumber);
-                
-                return (
-                    <div key={roundNumber} className="bracket-round">
-                        <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', textAlign: 'center' }}>
-                            {roundNumber === rounds ? 'Final' : `Round ${roundNumber}`}
-                        </div>
-                        {Array.from({ length: matchesInRound }).map((_, matchIndex) => (
-                            <div key={matchIndex} className="bracket-match" style={{ height: '5rem' }}>
-                                <div className="bracket-player">
-                                    Player {matchIndex * 2 + 1}
-                                </div>
-                                <div className="bracket-player">
-                                    Player {matchIndex * 2 + 2}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                );
-            };
+    renderStep();
+}
 
-            return (
-                <div className="bracket-container">
-                    <div className="bracket-rounds">
-                        {Array.from({ length: rounds }).map((_, index) => (
-                            <React.Fragment key={index}>
-                                {renderRound(index + 1)}
-                                {index < rounds - 1 && (
-                                    <div className="round-arrow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 0.5rem' }}>
-                                        <svg width="28" height="56" viewBox="0 0 28 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                                            <path d="M4 4 L4 44 L12 36 L20 44 L20 4" stroke="#9CA3AF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                    </div>
-                                )}
-                            </React.Fragment>
-                        ))}
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', textAlign: 'center' }}>
-                                Winner
-                            </div>
-                            <div className="winner-box">
-                                🏆 Champion
-                            </div>
-                        </div>
-                    </div>
+/* -------------------- STEP RENDERERS -------------------- */
+
+function renderStep() {
+    const container = document.getElementById('stepContent');
+
+    if (currentStep === 1) container.innerHTML = step1();
+    if (currentStep === 2) container.innerHTML = step2();
+    if (currentStep === 3) container.innerHTML = step3();
+
+}
+
+/* -------------------- STEP 1 -------------------- */
+
+function step1() {
+    return `
+        <div class="space-y-6">
+            <div>
+                <label class="block mb-2 font-medium">Tournament Title</label>
+                <input class="input" value="${formData.title}" 
+                    oninput="formData.title=this.value">
+            </div>
+
+            <div>
+                <label class="block mb-2 font-medium">Description</label>
+                <textarea class="input" rows="4"
+                    oninput="formData.description=this.value">${formData.description}</textarea>
+            </div>
+
+            <div>
+                <label class="block mb-2 font-medium">Game</label>
+                <select class="input" onchange="selectGame(this.value)">
+                    <option value="">Select game...</option>
+                    ${GAMES.map(g =>
+                        `<option value="${g.name}" ${g.name===formData.gameName?'selected':''}>${g.name}</option>`
+                    ).join('')}
+                </select>
+            </div>
+
+            ${formData.gameType ? `
+                <div>
+                    <label class="block mb-2 font-medium">Game Type</label>
+                    <input class="input" disabled value="${formData.gameType}">
                 </div>
-            );
-        }
+            ` : ''}
 
-        // Step 1: Tournament Details
-        function TournamentDetailsStep({ formData, updateFormData, onNext }) {
-            const handleGameSelect = (game) => {
-                updateFormData({
-                    gameName: game.name,
-                    gameType: game.type
-                });
-            };
+            <div class="flex justify-end">
+                <button class="btn btn-primary" onclick="nextStep()" 
+                    ${!formData.title || !formData.description || !formData.gameName ? 'disabled':''}>
+                    Next
+                </button>
+            </div>
+        </div>
+    `;
+}
 
-            const isFormValid = formData.title && formData.description && formData.gameName;
+function selectGame(name) {
+    const game = GAMES.find(g => g.name === name);
+    formData.gameName = game?.name || '';
+    formData.gameType = game?.type || '';
+    render();
+}
 
-            return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Tournament Title
-                        </label>
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="Enter tournament title"
-                            value={formData.title}
-                            onChange={(e) => updateFormData({ title: e.target.value })}
-                        />
-                    </div>
+/* -------------------- STEP 2 -------------------- */
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Description
-                        </label>
-                        <textarea
-                            className="input"
-                            placeholder="Enter tournament description"
-                            value={formData.description}
-                            onChange={(e) => updateFormData({ description: e.target.value })}
-                            rows="4"
-                        />
-                    </div>
+function step2() {
+    const options = [12, 16, 24];
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Game Name
-                        </label>
-                        <GameSelector
-                            value={formData.gameName}
-                            onChange={handleGameSelect}
-                        />
-                    </div>
-
-                    {formData.gameType && (
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                                Game Type
-                            </label>
-                            <input
-                                type="text"
-                                className="input"
-                                value={formData.gameType}
-                                disabled
-                            />
+    return `
+        <div class="space-y-6">
+            <div>
+                <label class="block mb-2 font-medium">Max Participants</label>
+                <div class="grid grid-cols-3 gap-4">
+                    ${options.map(o => `
+                        <div class="participant-card ${formData.maxParticipants===o?'selected':''}"
+                            onclick="setParticipants(${o})">
+                            <div class="text-2xl font-bold">${o}</div>
+                            <div class="text-sm text-gray-500">Participants</div>
                         </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button className="btn btn-primary" onClick={onNext} disabled={!isFormValid}>
-                            Next
-                        </button>
-                    </div>
+                    `).join('')}
                 </div>
-            );
-        }
+            </div>
 
-        // Step 2: Tournament Configuration
-        function TournamentConfigStep({ formData, updateFormData, onNext, onBack }) {
-            const PARTICIPANT_OPTIONS = [12, 16, 24];
+            ${formData.maxParticipants ? bracketPreview(formData.maxParticipants) : ''}
 
-            const isFormValid = 
-                formData.maxParticipants !== null && 
-                formData.entryFee && 
-                formData.registrationStartDate && 
-                formData.registrationDeadline;
+            <div>
+                <label class="block mb-2 font-medium">Entry Fee</label>
+                <input class="input" type="number" value="${formData.entryFee}"
+                    oninput="formData.entryFee=this.value">
+            </div>
 
-            return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Max Participants
-                        </label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                            {PARTICIPANT_OPTIONS.map((count) => (
-                                <div
-                                    key={count}
-                                    className={`participant-card ${formData.maxParticipants === count ? 'selected' : ''}`}
-                                    onClick={() => updateFormData({ maxParticipants: count })}
-                                >
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{count}</div>
-                                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Participants</div>
-                                </div>
-                            ))}
-                        </div>
+            <div class="grid grid-cols-2 gap-4">
+                <input class="input" type="datetime-local"
+                    value="${formData.registrationStartDate}"
+                    onchange="formData.registrationStartDate=this.value">
+                <input class="input" type="datetime-local"
+                    value="${formData.registrationDeadline}"
+                    onchange="formData.registrationDeadline=this.value">
+            </div>
+
+            <div class="flex justify-between">
+                <button class="btn btn-outline" onclick="prevStep()">Back</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next</button>
+            </div>
+        </div>
+    `;
+}
+
+function setParticipants(n) {
+    formData.maxParticipants = n;
+    render();
+}
+
+/* -------------------- BRACKET -------------------- */
+
+function bracketPreview(players) {
+    const rounds = Math.log2(players);
+
+    return `
+        <div>
+            <label class="block mb-2 font-medium">Bracket Preview</label>
+            <div class="bracket-container">
+                ${Array.from({length: rounds}).map((_, i) => `
+                    <div class="bracket-round">
+                        <strong>${i+1===rounds?'Final':`Round ${i+1}`}</strong>
+                        ${Array.from({length: players / (2 ** (i+1))}).map(() =>
+                            `<div class="bracket-match">
+                                <div class="bracket-player">Player</div>
+                                <div class="bracket-player">Player</div>
+                            </div>`
+                        ).join('')}
                     </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
 
-                    {formData.maxParticipants && (
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                                Bracket Preview
-                            </label>
-                            <BracketPreview participants={formData.maxParticipants} />
-                            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                                This will create a {formData.maxParticipants}-player single-elimination bracket
-                            </p>
-                        </div>
-                    )}
+/* -------------------- STEP 3 -------------------- */
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Entry Fee
-                        </label>
-                        <input
-                            type="number"
-                            className="input"
-                            placeholder="0.00"
-                            value={formData.entryFee}
-                            onChange={(e) => updateFormData({ entryFee: e.target.value })}
-                        />
-                    </div>
+function step3() {
+    return `
+        <div class="space-y-6">
+            <div>
+                <label class="block mb-2 font-medium">Game Start Date</label>
+                <input class="input" type="datetime-local"
+                    value="${formData.gameStartDate}"
+                    onchange="formData.gameStartDate=this.value">
+            </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                                Registration Start Date
-                            </label>
-                            <input
-                                type="datetime-local"
-                                className="input"
-                                value={formData.registrationStartDate}
-                                onChange={(e) => updateFormData({ registrationStartDate: e.target.value })}
-                            />
-                        </div>
+            <div class="bg-gray-50 p-6 rounded">
+                <h3 class="font-semibold mb-4">Summary</h3>
+                <p><strong>${formData.title}</strong></p>
+                <p>${formData.gameName} (${formData.gameType})</p>
+                <p>Participants: ${formData.maxParticipants}</p>
+                <p>Entry Fee: $${formData.entryFee || 0}</p>
+            </div>
 
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                                Registration Deadline
-                            </label>
-                            <input
-                                type="datetime-local"
-                                className="input"
-                                value={formData.registrationDeadline}
-                                onChange={(e) => updateFormData({ registrationDeadline: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <button className="btn btn-outline" onClick={onBack}>
-                            Back
-                        </button>
-                        <button className="btn btn-primary" onClick={onNext} disabled={!isFormValid}>
-                            Next
-                        </button>
-                    </div>
+            <div class="flex justify-between">
+                <button class="btn btn-outline" onclick="prevStep()">Back</button>
+                <div class="flex gap-2">
+                    <button class="btn btn-outline" onclick="saveDraft()">💾 Save Draft</button>
+                    <button class="btn btn-primary" onclick="createTournament()">🏆 Create</button>
                 </div>
-            );
-        }
+            </div>
+        </div>
+    `;
+}
 
-        // Step 3: Final Step
-        function TournamentFinalStep({ formData, updateFormData, onBack, onSaveDraft, onCreateTournament }) {
-            const STATUS_OPTIONS = [
-                { value: 'upcoming', label: 'Upcoming' },
-                { value: 'ongoing', label: 'Ongoing' },
-                { value: 'completed', label: 'Completed' },
-            ];
+/* -------------------- NAV -------------------- */
 
-            const isFormValid = formData.gameStartDate && formData.status;
+function nextStep() {
+    if (currentStep < 3) currentStep++;
+    render();
+}
 
-            return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Game Start Date
-                        </label>
-                        <input
-                            type="datetime-local"
-                            className="input"
-                            value={formData.gameStartDate}
-                            onChange={(e) => updateFormData({ gameStartDate: e.target.value })}
-                        />
-                    </div>
+function prevStep() {
+    if (currentStep > 1) currentStep--;
+    render();
+}
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                            Tournament Status
-                        </label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                            {STATUS_OPTIONS.map((option) => (
-                                <div
-                                    key={option.value}
-                                    className={`status-card ${option.value === 'upcoming' ? `status-${option.value}` : ''}`}
-                                    style={option.value !== 'upcoming' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-                                >
-                                    {option.label}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+function saveDraft() {
+    console.log('Draft:', formData);
+    alert('Saved as draft');
+}
 
-                    <div style={{ backgroundColor: '#f9fafb', borderRadius: '0.5rem', padding: '1.5rem' }}>
-                        <h3 style={{ fontWeight: '600', fontSize: '1.125rem', marginBottom: '1rem' }}>
-                            Tournament Summary
-                        </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.875rem' }}>
-                            <div>
-                                <span style={{ color: '#6b7280' }}>Title:</span>
-                                <p style={{ fontWeight: '500' }}>{formData.title || '-'}</p>
-                            </div>
-                            <div>
-                                <span style={{ color: '#6b7280' }}>Game:</span>
-                                <p style={{ fontWeight: '500' }}>{formData.gameName || '-'}</p>
-                            </div>
-                            <div>
-                                <span style={{ color: '#6b7280' }}>Game Type:</span>
-                                <p style={{ fontWeight: '500' }}>{formData.gameType || '-'}</p>
-                            </div>
-                            <div>
-                                <span style={{ color: '#6b7280' }}>Max Participants:</span>
-                                <p style={{ fontWeight: '500' }}>{formData.maxParticipants || '-'}</p>
-                            </div>
-                            <div>
-                                <span style={{ color: '#6b7280' }}>Entry Fee:</span>
-                                <p style={{ fontWeight: '500' }}>${formData.entryFee || '0'}</p>
-                            </div>
-                            <div>
-                                <span style={{ color: '#6b7280' }}>Status:</span>
-                                <p style={{ fontWeight: '500', textTransform: 'capitalize' }}>{formData.status}</p>
-                            </div>
-                        </div>
-                    </div>
+function createTournament() {
+    console.log('Created:', formData);
+    alert('Tournament created!');
+}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                        <button className="btn btn-outline" onClick={onBack}>
-                            Back
-                        </button>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button className="btn btn-outline" onClick={onSaveDraft}>
-                                💾 Save as Draft
-                            </button>
-                            <button className="btn btn-primary" onClick={onCreateTournament} disabled={!isFormValid}>
-                                🏆 Create Tournament
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+/* -------------------- INIT -------------------- */
 
-        // Main App Component
-        function App() {
-            const [currentStep, setCurrentStep] = useState(1);
-            const [formData, setFormData] = useState({
-                title: '',
-                description: '',
-                gameName: '',
-                gameType: '',
-                maxParticipants: null,
-                entryFee: '',
-                registrationStartDate: '',
-                registrationDeadline: '',
-                gameStartDate: '',
-                status: 'upcoming',
-            });
-
-            const totalSteps = 3;
-            const progress = (currentStep / totalSteps) * 100;
-
-            const updateFormData = (data) => {
-                setFormData((prev) => ({ ...prev, ...data }));
-            };
-
-            const handleNext = () => {
-                if (currentStep < totalSteps) {
-                    setCurrentStep(currentStep + 1);
-                }
-            };
-
-            const handleBack = () => {
-                if (currentStep > 1) {
-                    setCurrentStep(currentStep - 1);
-                }
-            };
-
-            const handleSaveDraft = () => {
-                console.log('Saving as draft:', formData);
-                alert('Tournament saved as draft!');
-            };
-
-            const handleCreateTournament = () => {
-                console.log('Creating tournament:', formData);
-                alert('Tournament created successfully!');
-            };
-
-            return (
-                <div style={{ minHeight: '100vh', padding: '2rem' }}>
-                    <div style={{ maxWidth: '56rem', margin: '0 auto' }}>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2rem' }}>
-                            Create Tournament
-                        </h1>
-                        
-                        <div className="card">
-                            <div className="card-header">
-                                <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>
-                                    Step {currentStep} of {totalSteps}
-                                </h2>
-                                <div className="progress-bar">
-                                    <div className="progress-fill" style={{ width: `${progress}%` }}></div>
-                                </div>
-                            </div>
-                            <div className="card-content">
-                                {currentStep === 1 && (
-                                    <TournamentDetailsStep
-                                        formData={formData}
-                                        updateFormData={updateFormData}
-                                        onNext={handleNext}
-                                    />
-                                )}
-                                {currentStep === 2 && (
-                                    <TournamentConfigStep
-                                        formData={formData}
-                                        updateFormData={updateFormData}
-                                        onNext={handleNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
-                                {currentStep === 3 && (
-                                    <TournamentFinalStep
-                                        formData={formData}
-                                        updateFormData={updateFormData}
-                                        onBack={handleBack}
-                                        onSaveDraft={handleSaveDraft}
-                                        onCreateTournament={handleCreateTournament}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // Render the app
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
+render();
+</script>
 </body>
 </html>

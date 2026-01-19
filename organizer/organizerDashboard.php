@@ -10,39 +10,29 @@ require_once "../database/dbConfig.php";
    ACCESS CONTROL
 ====================== */
 if (
-    !isset($_SESSION['user_id']) ||
-    !isset($_SESSION['is_organizer']) ||
-    $_SESSION['is_organizer'] != 1
+  !isset($_SESSION['user_id']) ||
+  !isset($_SESSION['is_organizer']) ||
+  $_SESSION['is_organizer'] != 1
 ) {
-    header("Location: ../login.php");
-    exit;
+  header("Location: ../login.php");
+  exit;
 }
 
-/* ======================
-   USER INFO
-====================== */
+$organizer_id = $_SESSION['user_id'];
 $username = $_SESSION['username'] ?? 'Organizer';
-$isLoggedIn = true;
 
 /* ======================
-   FETCH LATEST TOURNAMENT
+   FETCH ORGANIZER TOURNAMENTS
 ====================== */
-$tournament_id = null;
-
 $stmt = $conn->prepare("
-    SELECT tournament_id
+    SELECT tournament_id, title, game_name, status, created_at
     FROM tournaments
     WHERE organizer_id = ?
     ORDER BY created_at DESC
-    LIMIT 1
 ");
-$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->bind_param("i", $organizer_id);
 $stmt->execute();
 $result = $stmt->get_result();
-
-if ($row = $result->fetch_assoc()) {
-    $tournament_id = $row['tournament_id'];
-}
 ?>
 
 
@@ -64,47 +54,38 @@ if ($row = $result->fetch_assoc()) {
         }
     </script>
 
-    <div class="neon-line line-1"></div>
-    <div class="neon-line line-2"></div>
+<section class="hero">
+    <div class="hero-content">
+      <h1>My Tournaments</h1>
+      <p>Select a tournament to manage</p>
+    </div>
+  </section>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Welcome, <?= htmlspecialchars($username) ?> 🎮</h1>
-            <p>Compete. Manage. Dominate the Tournament Arena.</p>
+  <section class="dashboard">
 
-            <div class="hero-buttons">
-                <a href="createTournament.php" class="btn primary">
-                    Create Tournament
-                </a>
+    <?php if ($result->num_rows === 0): ?>
+      <div class="card">
+        <p>No tournaments created yet.</p>
+        <a href="createTournament.php" class="btn primary">Create Tournament</a>
+      </div>
+    <?php endif; ?>
 
-                <?php if ($tournament_id): ?>
-                    <a href="tournaments.php" class="btn secondary">
-                        Manage Tournaments
-                    </a>
+    <?php while ($row = $result->fetch_assoc()): ?>
+      <div class="card">
+        <h3><?= htmlspecialchars($row['title']) ?></h3>
+        <p>🎮 <?= htmlspecialchars($row['game_name']) ?></p>
+        <p>Status: <strong><?= $row['status'] ?></strong></p>
+        <p>Created: <?= date('d M Y', strtotime($row['created_at'])) ?></p>
 
-                    </a>
-                <?php else: ?>
-                    <a href="createTournament.php" class="btn secondary">
-                        No Tournament Yet
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </section>
+        <a href="manageTournament.php?id=<?= $row['tournament_id'] ?>"
+          class="btn secondary">
+          Edit Tournament
+        </a>
+      </div>
+    <?php endwhile; ?>
 
-    <section class="dashboard">
-        <div class="card">🏆 Tournament Detail</div>
-        <div class="card">📊 Bracket Management</div>
-        <div class="card">✅ Result Management</div>
-        <div class="card">⏱ Deadline Management</div>
-        <div class="card">💬 Chat</div>
-        <div class="card">🧾 History</div>
-    </section>
+  </section>
 
-    <footer class="footer">
-        © 2025 TournaX. All rights reserved.
-    </footer>
-
-</body>
-
-</html>
+<?php
+include('footer.php');
+?>

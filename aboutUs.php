@@ -16,7 +16,7 @@ include('partial/header.php');
                 </p>
             </div>
             <div class="legacy-hero-image">
-                <img src="img/esport.png" alt="TournaX Team working on tournament management">
+                <img src="images/esport.png" alt="TournaX Team working on tournament management">
             </div>
         </section>
     </div>
@@ -42,7 +42,7 @@ include('partial/header.php');
             </div>
 
             <div class="legacy-hero-image2">
-                <img src="ValorantViper.png" alt="TournaX Values">
+                <img src="images/ValorantViper.png" alt="TournaX Values">
             </div>
         </section>
     </div>

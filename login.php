@@ -1,16 +1,16 @@
-<?php
-include('partial/header.php'); ?>
+
 <?php
 session_start();
-
 require_once "database/dbConfig.php";
 
+/* ================= ERROR HANDLING ================= */
 $error = "";
 if (isset($_SESSION['error'])) {
     $error = $_SESSION['error'];
     unset($_SESSION['error']);
 }
 
+/* ================= LOGIN LOGIC ================= */
 if (isset($_POST['btnlogin'])) {
 
     $email = trim($_POST['txtemail']);
@@ -26,7 +26,7 @@ if (isset($_POST['btnlogin'])) {
 
         if (!password_verify($password, $user['password'])) {
             $_SESSION['error'] = "Invalid email or password";
-            header("Location: " . $_SERVER['PHP_SELF']);
+            header("Location: login.php");
             exit;
         }
 
@@ -37,7 +37,7 @@ if (isset($_POST['btnlogin'])) {
 
             if ($status !== 'approved') {
                 $_SESSION['error'] = "Organizer account not approved";
-                header("Location: " . $_SERVER['PHP_SELF']);
+                header("Location: login.php");
                 exit;
             }
 
@@ -57,14 +57,18 @@ if (isset($_POST['btnlogin'])) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['is_organizer'] = 0;
 
-        header("Location: player/dashboard.php");
-        exit;
-    } else {
-        $_SESSION['error'] = "Invalid email or password";
-        header("Location: " . $_SERVER['PHP_SELF']);
+        header("Location: index.php");
         exit;
     }
+
+    $_SESSION['error'] = "Invalid email or password";
+    header("Location: login.php");
+    exit;
 }
+?>
+
+<?php
+include('partial/header.php'); 
 ?>
 
 <!-- ================= BACKGROUND EFFECTS ================= -->

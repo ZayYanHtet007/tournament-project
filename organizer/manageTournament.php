@@ -367,29 +367,6 @@ include('header.php');
             renderStats();
         }
 
-        // Render stats
-        function renderStats() {
-            const statsGrid = document.getElementById('statsGrid');
-            statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-value cyan">${categoryData['Tournaments']?.length || 0}</div>
-                    <div class="stat-label">Active Tournaments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value purple">${categoryData['Teams']?.length || 0}</div>
-                    <div class="stat-label">Registered Teams</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value blue">${categoryData['Players']?.length || 0}</div>
-                    <div class="stat-label">Total Players</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value green">${categoryData['Matches']?.length || 0}</div>
-                    <div class="stat-label">Scheduled Matches</div>
-                </div>
-            `;
-        }
-
         // Initialize on load
         init();
     </script>
