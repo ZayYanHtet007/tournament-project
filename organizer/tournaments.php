@@ -43,19 +43,37 @@ $result = $stmt->get_result();
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Tournaments</title>
   <link rel="stylesheet" href="../css/organizer/tournaments.css">
+  <link rel="stylesheet" href="../css/user/responsive.css">
 </head>
 
 <body>
 
   <header class="legacy-header">
     <div class="legacy-logo">Tourna<span>X</span></div>
+    <button id="mobileMenuBtn" class="mobile-menu-button" aria-label="Open menu" aria-expanded="false">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
     <nav class="legacy-signnav">
       <a href="organizer-home.php">Dashboard</a>
       <a href="../logout.php">Logout</a>
     </nav>
   </header>
+
+  <!-- Mobile off-canvas sidebar -->
+  <aside id="mobileSidebar" class="mobile-sidebar" aria-hidden="true">
+    <nav class="mobile-nav">
+      <a href="organizer-home.php">Dashboard</a>
+      <a href="createTournament.php">Create Tournament</a>
+      <a href="manageTournament.php">Manage Tournaments</a>
+      <a href="../logout.php">Logout</a>
+    </nav>
+  </aside>
+  <div id="mobileOverlay" class="mobile-overlay" tabindex="-1"></div>
 
   <section class="hero">
     <div class="hero-content">
@@ -93,6 +111,30 @@ $result = $stmt->get_result();
     © 2025 TournaX. All rights reserved.
   </footer>
 
+  <script>
+    (function(){
+      const btn = document.getElementById('mobileMenuBtn');
+      const sidebar = document.getElementById('mobileSidebar');
+      const overlay = document.getElementById('mobileOverlay');
+
+      function openMenu(){
+        document.body.classList.add('mobile-menu-open');
+        btn.setAttribute('aria-expanded','true');
+        sidebar.setAttribute('aria-hidden','false');
+      }
+      function closeMenu(){
+        document.body.classList.remove('mobile-menu-open');
+        btn.setAttribute('aria-expanded','false');
+        sidebar.setAttribute('aria-hidden','true');
+      }
+
+      btn && btn.addEventListener('click', function(e){
+        if(document.body.classList.contains('mobile-menu-open')) closeMenu(); else openMenu();
+      });
+      overlay && overlay.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+    })();
+  </script>
 </body>
 
 </html>

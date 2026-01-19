@@ -58,6 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
   } elseif ($start_ts <= $reg_end_ts) {
     $message = "❌ Tournament start date must be after registration deadline.";
   } else {
+    if ($canEditAll) {
+      $title = clean($_POST['title']);
+      $description = clean($_POST['description']);
+      $max_participants = (int)$_POST['max_participants'];
+      $team_size = (int)$_POST['team_size'];
+      $fee = (float)$_POST['fee'];
 
     if ($canEditAll) {
       $title = clean($_POST['title']);
@@ -107,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     $tournament = $stmt->get_result()->fetch_assoc();
   }
 }
+}
 ?>
 
 <!DOCTYPE html>
@@ -117,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
   <title>Edit Tournament</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/user/responsive.css">
   <style>
     .input {
       width: 100%;

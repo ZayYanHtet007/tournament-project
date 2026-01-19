@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TournaX | Home</title>
     <link rel="stylesheet" href="../css/organizer/organizer.css">
+    <link rel="stylesheet" href="../css/organizer/tournaments.css">
+    <link rel="stylesheet" href="../css/organizer/managetour.css">
+    <link rel="stylesheet" href="../css/organizer/scheduletour.css">
+    <link rel="stylesheet" href="../css/organizer/resulttour.css">
+    <link rel="stylesheet" href="../css/user/responsive.css">
+    <link rel="stylesheet" href="../css/organizer/brscore.css">
 
 </head>
 <body>
