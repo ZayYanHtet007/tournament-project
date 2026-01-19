@@ -2,7 +2,7 @@
 session_start();
 require_once "../database/dbConfig.php";
 
-
+/* ---------- ACCESS CONTROL ---------- */
 if (
   !isset($_SESSION['user_id']) ||
   !$_SESSION['is_organizer'] ||
@@ -12,96 +12,99 @@ if (
   exit;
 }
 
-if (!isset($_GET['id'])) {
-  die("Invalid request");
+/* ---------- HELPERS ---------- */
+function clean($v)
+{
+  return htmlspecialchars(trim($v), ENT_QUOTES);
+}
+function valid_date($d)
+{
+  return preg_match('/^\d{4}-\d{2}-\d{2}$/', $d);
 }
 
+/* ---------- FETCH TOURNAMENT ---------- */
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) die("Invalid request");
 $tournament_id = (int)$_GET['id'];
-$organizer_id = $_SESSION['user_id'];
-$message = "";
+$organizer_id = (int)$_SESSION['user_id'];
 
-
-$stmt = $conn->prepare("
-    SELECT *
-    FROM tournaments
-    WHERE tournament_id = ?
-      AND organizer_id = ?
-    LIMIT 1
-");
+$stmt = $conn->prepare("SELECT * FROM tournaments WHERE tournament_id=? AND organizer_id=? LIMIT 1");
 $stmt->bind_param("ii", $tournament_id, $organizer_id);
 $stmt->execute();
-$result = $stmt->get_result();
+$tournament = $stmt->get_result()->fetch_assoc();
+if (!$tournament) die("Tournament not found or access denied");
 
-if ($result->num_rows === 0) {
-  die("Tournament not found or access denied");
-}
+/* ---------- PERMISSIONS ---------- */
+$status = $tournament['status'];
+$canEditAll   = ($status === 'upcoming');
+$canEditDates = in_array($status, ['upcoming', 'approved', 'ongoing']);
+$isLocked     = ($status === 'completed');
 
-$tournament = $result->fetch_assoc();
+$message = "";
 
+/* ---------- FORM SUBMIT ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
+  $reg_start = $_POST['registration_start_date'];
+  $reg_end   = $_POST['registration_deadline'];
+  $start     = $_POST['start_date'];
 
-if ($tournament['status'] !== 'upcoming') {
-  die("You can only edit upcoming tournaments.");
-}
+  $reg_start_ts = strtotime($reg_start);
+  $reg_end_ts   = strtotime($reg_end);
+  $start_ts     = strtotime($start);
 
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-  $title = trim($_POST['title']);
-  $description = trim($_POST['description']);
-  $game_name = trim($_POST['game_name']);
-  $game_type = $_POST['game_type'];
-  $match_type = $_POST['match_type'];
-  $format = $_POST['format'];
-  $max_participants = (int)$_POST['max_participants'];
-  $fee = (float)$_POST['fee'];
-  $registration_deadline = $_POST['registration_deadline'];
-  $start_date = $_POST['start_date'];
-
-  if (
-    empty($title) || empty($description) || empty($game_name) ||
-    empty($registration_deadline) || empty($start_date)
-  ) {
-    $message = "❌ Please fill all required fields";
+  if (!$reg_start_ts || !$reg_end_ts || !$start_ts) {
+    $message = "❌ Invalid date format.";
+  } elseif ($reg_start_ts >= $reg_end_ts) {
+    $message = "❌ Registration start must be before registration deadline.";
+  } elseif ($start_ts <= $reg_end_ts) {
+    $message = "❌ Tournament start date must be after registration deadline.";
   } else {
 
-    $update = $conn->prepare("
+    if ($canEditAll) {
+      $title = clean($_POST['title']);
+      $description = clean($_POST['description']);
+      $max_participants = (int)$_POST['max_participants'];
+      $team_size = (int)$_POST['team_size'];
+      $fee = (float)$_POST['fee'];
+
+      /* -------- MIN 12 VALIDATION -------- */
+      if ($max_participants < 12) {
+        $message = "❌ Minimum participants must be at least 12.";
+      } else {
+        $update = $conn->prepare("
             UPDATE tournaments SET
-                title = ?,
-                description = ?,
-                game_name = ?,
-                game_type = ?,
-                match_type = ?,
-                format = ?,
-                max_participants = ?,
-                fee = ?,
-                registration_deadline = ?,
-                start_date = ?,
-                last_update = NOW()
-            WHERE tournament_id = ?
-              AND organizer_id = ?
+                title=?, description=?, max_participants=?, team_size=?, fee=?,
+                registration_start_date=?, registration_deadline=?, start_date=?, last_update=NOW()
+            WHERE tournament_id=? AND organizer_id=?
         ");
-
-    $update->bind_param(
-      "isssssidssii",
-      $title,
-      $description,
-      $game_name,
-      $game_type,
-      $match_type,
-      $format,
-      $max_participants,
-      $fee,
-      $registration_deadline,
-      $start_date,
-      $tournament_id,
-      $organizer_id
-    );
-
-    if ($update->execute()) {
-      $message = "✅ Tournament updated successfully";
-    } else {
-      $message = "❌ Failed to update tournament";
+        $update->bind_param(
+          "ssiidsssii",
+          $title,
+          $description,
+          $max_participants,
+          $team_size,
+          $fee,
+          $reg_start,
+          $reg_end,
+          $start,
+          $tournament_id,
+          $organizer_id
+        );
+        $update->execute();
+        $message = "✅ Tournament updated successfully.";
+      }
+    } elseif ($canEditDates) {
+      $update = $conn->prepare("
+            UPDATE tournaments SET
+                registration_start_date=?, registration_deadline=?, start_date=?, last_update=NOW()
+            WHERE tournament_id=? AND organizer_id=?
+        ");
+      $update->bind_param("sssii", $reg_start, $reg_end, $start, $tournament_id, $organizer_id);
+      $update->execute();
+      $message = "✅ Dates updated successfully.";
     }
+
+    $stmt->execute();
+    $tournament = $stmt->get_result()->fetch_assoc();
   }
 }
 ?>
@@ -112,125 +115,143 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <title>Edit Tournament</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="../css/organizer/edittour.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .input {
+      width: 100%;
+      padding: .5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: .375rem;
+    }
+
+    .btn {
+      padding: .5rem .75rem;
+      border-radius: .375rem;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+    }
+
+    .btn-outline {
+      border: 1px solid #d1d5db;
+      background: #fff;
+    }
+
+    .bracket {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding: 10px;
+    }
+
+    .round {
+      min-width: 160px;
+    }
+
+    .match {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 6px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    input[readonly],
+    textarea[readonly] {
+      background: #f3f4f6;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 
-<body>
-  <div class="container">
-
-    <div class="header">
-      <h1>Edit Tournament</h1>
-      <p>Update your tournament details</p>
-    </div>
+<body class="bg-gray-50">
+  <div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-4 text-center">Edit Tournament</h1>
 
     <?php if ($message): ?>
-      <div style="margin-bottom:15px;color:#fff;background:#333;padding:10px;border-radius:6px;">
-        <?= htmlspecialchars($message) ?>
-      </div>
+      <div class="text-green-600 mb-4"><?= $message ?></div>
     <?php endif; ?>
 
-    <div class="card">
-      <div class="card-content">
+    <form method="post" class="bg-white p-6 rounded shadow">
+      <?php if ($canEditAll): ?>
+        <label>Title *</label>
+        <input type="text" name="title" class="input mb-4" value="<?= htmlspecialchars($tournament['title']) ?>">
 
-        <form method="post">
+        <label>Description *</label>
+        <textarea name="description" class="input mb-4"><?= htmlspecialchars($tournament['description']) ?></textarea>
 
-          <!-- Title -->
-          <div class="form-group">
-            <label>Tournament Title</label>
-            <input type="text" name="title" required
-              value="<?= htmlspecialchars($tournament['title']) ?>">
-          </div>
+        <label>Max Participants *</label>
+        <input type="number" name="max_participants" id="max_participants" class="input mb-4"
+          value="<?= $tournament['max_participants'] ?>" min="12">
 
-          <!-- Description -->
-          <div class="form-group">
-            <label>Description</label>
-            <textarea name="description" required><?= htmlspecialchars($tournament['description']) ?></textarea>
-          </div>
+        <label>Team Size *</label>
+        <input type="number" name="team_size" class="input mb-4" value="<?= $tournament['team_size'] ?>" min="1">
 
-          <!-- Game Info -->
-          <div class="form-row two-cols">
-            <div class="form-group">
-              <label>Game Name</label>
-              <input type="text" name="game_name" required
-                value="<?= htmlspecialchars($tournament['game_name']) ?>">
-            </div>
+        <label>Entry Fee</label>
+        <input type="number" step="0.01" name="fee" class="input mb-4" value="<?= $tournament['fee'] ?>" min="0">
+      <?php endif; ?>
 
-            <div class="form-group">
-              <label>Game Type</label>
-              <select name="game_type" required>
-                <?php
-                $types = ['esport', 'board'];
-                foreach ($types as $type) {
-                  $selected = ($tournament['game_type'] === $type) ? "selected" : "";
-                  echo "<option value='$type' $selected>$type</option>";
-                }
-                ?>
-              </select>
-            </div>
-          </div>
+      <label>Registration Start *</label>
+      <input type="date" name="registration_start_date" class="input mb-4" value="<?= $tournament['registration_start_date'] ?>">
 
-          <!-- Match Info -->
-          <div class="form-row two-cols">
-            <div class="form-group">
-              <label>Match Type</label>
-              <select name="match_type" required>
-                <option value="solo" <?= $tournament['match_type'] == 'solo' ? 'selected' : '' ?>>Solo</option>
-                <option value="team" <?= $tournament['match_type'] == 'team' ? 'selected' : '' ?>>Team</option>
-              </select>
-            </div>
+      <label>Registration Deadline *</label>
+      <input type="date" name="registration_deadline" class="input mb-4" value="<?= $tournament['registration_deadline'] ?>">
 
-            <div class="form-group">
-              <label>Format</label>
-              <select name="format" required>
-                <option value="single_elimination" <?= $tournament['format'] == 'single_elimination' ? 'selected' : '' ?>>Single Elimination</option>
-                <option value="round_robin" <?= $tournament['format'] == 'round_robin' ? 'selected' : '' ?>>Round Robin</option>
-                <option value="swiss" <?= $tournament['format'] == 'swiss' ? 'selected' : '' ?>>Swiss</option>
-              </select>
-            </div>
-          </div>
+      <label>Start Date *</label>
+      <input type="date" name="start_date" class="input mb-4" value="<?= $tournament['start_date'] ?>">
 
-          <!-- Participants & Fee -->
-          <div class="form-row two-cols">
-            <div class="form-group">
-              <label>Max Participants</label>
-              <input type="number" name="max_participants" min="1" required
-                value="<?= $tournament['max_participants'] ?>">
-            </div>
+      <h2 class="font-semibold mb-2">Bracket / Group Stage Preview</h2>
+      <div id="bracketPreview" class="bracket bg-gray-100 rounded p-2 mb-4"></div>
 
-            <div class="form-group">
-              <label>Entry Fee</label>
-              <input type="number" name="fee" step="0.01" min="0" required
-                value="<?= $tournament['fee'] ?>">
-            </div>
-          </div>
-
-          <!-- Dates -->
-          <div class="form-row two-cols">
-            <div class="form-group">
-              <label>Registration Deadline</label>
-              <input type="date" name="registration_deadline" required
-                value="<?= $tournament['registration_deadline'] ?>">
-            </div>
-
-            <div class="form-group">
-              <label>Start Date</label>
-              <input type="date" name="start_date" required
-                value="<?= $tournament['start_date'] ?>">
-            </div>
-          </div>
-
-          <!-- Buttons -->
-          <div class="button-group">
-            <button type="submit" class="btn-primary">Update Tournament</button>
-            <a href="tournament-view.php?id=<?= $tournament_id ?>" class="btn-secondary">Back</a>
-          </div>
-
-        </form>
-
-      </div>
-    </div>
+      <button type="submit" class="btn btn-primary">Update Tournament</button>
+    </form>
   </div>
+
+  <script>
+    const bracketPreview = document.getElementById('bracketPreview');
+    const maxInput = document.getElementById('max_participants');
+
+    function generateBracket(teams) {
+      bracketPreview.innerHTML = '';
+      teams = parseInt(teams);
+
+      if (!teams || teams < 12) {
+        bracketPreview.innerHTML = '<p class="text-sm text-gray-500">Minimum 12 teams required</p>';
+        return;
+      }
+
+      let groupCount;
+      if (teams <= 16) groupCount = 4;
+      else groupCount = 8;
+
+      let baseSize = Math.floor(teams / groupCount);
+      let extra = teams % groupCount;
+
+      for (let g = 1; g <= groupCount; g++) {
+        let size = baseSize + (extra > 0 ? 1 : 0);
+        if (extra > 0) extra--;
+
+        let col = document.createElement('div');
+        col.className = 'round';
+        col.innerHTML = `<h3>Group ${g} (${size} teams)</h3>`;
+        for (let i = 1; i <= size; i++) {
+          col.innerHTML += `<div class="match">Team TBD</div>`;
+        }
+        bracketPreview.appendChild(col);
+      }
+    }
+
+    if (maxInput) {
+      maxInput.addEventListener('input', () => generateBracket(maxInput.value));
+      document.addEventListener('DOMContentLoaded', () => generateBracket(maxInput.value));
+    }
+  </script>
 </body>
 
 </html>
