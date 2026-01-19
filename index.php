@@ -520,32 +520,32 @@ include('./partial/header.php');
                 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
 
-    const openBtn = document.getElementById("openTeam");
-    const overlay = document.getElementById("teamOverlay");
-    const closeBtn = document.querySelector(".closeBtn");
+        const openBtn = document.getElementById("openTeam");
+        const overlay = document.getElementById("teamOverlay");
+        const closeBtn = document.querySelector(".closeBtn");
 
-    if (!openBtn || !overlay || !closeBtn) {
-        console.error("Create Team modal elements not found");
-        return;
-    }
-
-    openBtn.addEventListener("click", function () {
-        overlay.classList.add("active");
-    });
-
-    closeBtn.addEventListener("click", function () {
-        overlay.classList.remove("active");
-    });
-
-    overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) {
-            overlay.classList.remove("active");
+        if (!openBtn || !overlay || !closeBtn) {
+            console.error("Create Team modal elements not found");
+            return;
         }
-    });
 
-});
+        openBtn.addEventListener("click", function() {
+            overlay.classList.add("active");
+        });
+
+        closeBtn.addEventListener("click", function() {
+            overlay.classList.remove("active");
+        });
+
+        overlay.addEventListener("click", function(e) {
+            if (e.target === overlay) {
+                overlay.classList.remove("active");
+            }
+        });
+
+    });
 </script>
 
 <script>

@@ -50,10 +50,25 @@ require_once __DIR__ . "/init.php";
             </div>
             <a href="#">Contact</a>
         </nav>
-        <?php
-        if (isset($_SESSION['user_id'])) :
-            $uid = $_SESSION['user_id'];
 
+        <?php
+        if (isset($_SESSION['user_id'])) {
+            $uid = $_SESSION['user_id'];
+            $sql = "select * from users where user_id=$uid";
+            $result = mysqli_query($conn, $sql);
+            $user = mysqli_fetch_assoc($result);
+        ?>
+            <a href=""><img src="images/<?= $user['profile_img'] ?>" alt="" class="profilegif"><?= $user['username'] ?></a>
+            <a href="logout.php">LogOut</a>
+        <?php } else { ?>
+            <nav class="legacy-signnav">
+                <a href="login.php">Login</a>
+                <button class="btn-primary">Join Now</button>
+            </nav>
+        <?php } ?>
+    </header>
+    <?php
+        if (isset($_SESSION['user_id'])) :
             $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE user_id = ? AND is_organizer = 0");
             mysqli_stmt_bind_param($stmt, "i", $uid);
             mysqli_stmt_execute($stmt);

@@ -21,10 +21,17 @@ $username = $_SESSION['username'] ?? 'Organizer';
    FETCH ORGANIZER TOURNAMENTS
 ====================== */
 $stmt = $conn->prepare("
-    SELECT tournament_id, title, game_name, status, created_at
-    FROM tournaments
-    WHERE organizer_id = ?
-    ORDER BY created_at DESC
+    SELECT 
+        t.tournament_id,
+        t.title,
+        g.name AS game_name,
+        t.status,
+        t.admin_status,
+        t.created_at
+    FROM tournaments t
+    JOIN games g ON t.game_id = g.game_id
+    WHERE t.organizer_id = ?
+    ORDER BY t.created_at DESC
 ");
 $stmt->bind_param("i", $organizer_id);
 $stmt->execute();

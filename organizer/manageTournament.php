@@ -1,6 +1,43 @@
 <?php
 include('header.php');
 ?>
+<?php
+session_start();
+require_once "../database/dbConfig.php";
+
+if (
+    !isset($_SESSION['user_id']) ||
+    !isset($_SESSION['is_organizer']) ||
+    $_SESSION['is_organizer'] != 1
+) {
+    header("Location: ../login.php");
+    exit;
+}
+
+$organizer_id = $_SESSION['user_id'];
+
+/* FETCH ORGANIZER TOURNAMENTS */
+$stmt = $conn->prepare("
+    SELECT tournament_id, title, status
+    FROM tournaments
+    WHERE organizer_id = ?
+    ORDER BY created_at DESC
+");
+$stmt->bind_param("i", $organizer_id);
+$stmt->execute();
+$res = $stmt->get_result();
+
+$tournaments = [];
+while ($row = $res->fetch_assoc()) {
+    $tournaments[] = [
+        'id' => $row['tournament_id'],
+        'name' => $row['title'],
+        'details' => 'Status: ' . $row['status'],
+        'status' => ucfirst($row['status'])
+    ];
+}
+?>
+    
 
 <body class="manage-tournament-body">
     <!-- Animated background effects -->
@@ -29,21 +66,21 @@ include('header.php');
                     </div>
                     <button class="close-btn" onclick="closePanel()">
                         <svg class="icon" viewBox="0 0 24 24">
-                            <path d="M18 6L6 18M6 6l12 12"/>
+                            <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
                 <div class="panel-controls">
                     <div class="search-wrapper">
                         <svg class="search-icon" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8"/>
-                            <path d="m21 21-4.35-4.35"/>
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
                         </svg>
                         <input type="text" class="search-input" id="searchInput" placeholder="Search..." oninput="filterItems()">
                     </div>
                     <button class="add-btn" onclick="showForm()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14"/>
+                            <path d="M12 5v14M5 12h14" />
                         </svg>
                         Add New
                     </button>
@@ -80,8 +117,7 @@ include('header.php');
 
     <script>
         // Data structure
-        const categories = [
-            {
+        const categories = [{
                 id: 'tournaments',
                 title: 'Tournaments',
                 description: 'Manage tournament events and competitions',
@@ -148,45 +184,157 @@ include('header.php');
         ];
 
         const mockData = {
-            'Tournaments': [
-                { id: '1', name: 'Summer Championship 2026', details: 'Battle Royale - 128 players', status: 'Active' },
-                { id: '2', name: 'Winter League Finals', details: 'Team-based competition', status: 'Upcoming' },
-                { id: '3', name: 'Spring Invitational', details: 'Invitation only event', status: 'Completed' }
+            'Tournaments': [{
+                    id: '1',
+                    name: 'Summer Championship 2026',
+                    details: 'Battle Royale - 128 players',
+                    status: 'Active'
+                },
+                {
+                    id: '2',
+                    name: 'Winter League Finals',
+                    details: 'Team-based competition',
+                    status: 'Upcoming'
+                },
+                {
+                    id: '3',
+                    name: 'Spring Invitational',
+                    details: 'Invitation only event',
+                    status: 'Completed'
+                }
             ],
-            'Teams': [
-                { id: '1', name: 'Cyber Dragons', details: '5 members - Rank #3', status: 'Active' },
-                { id: '2', name: 'Shadow Wolves', details: '5 members - Rank #7', status: 'Active' },
-                { id: '3', name: 'Phoenix Rising', details: '4 members - Rank #12', status: 'Recruiting' }
+            'Teams': [{
+                    id: '1',
+                    name: 'Cyber Dragons',
+                    details: '5 members - Rank #3',
+                    status: 'Active'
+                },
+                {
+                    id: '2',
+                    name: 'Shadow Wolves',
+                    details: '5 members - Rank #7',
+                    status: 'Active'
+                },
+                {
+                    id: '3',
+                    name: 'Phoenix Rising',
+                    details: '4 members - Rank #12',
+                    status: 'Recruiting'
+                }
             ],
-            'Players': [
-                { id: '1', name: 'ProGamer123', details: 'Level 45 - 2.3K/D Ratio', status: 'Online' },
-                { id: '2', name: 'ShadowNinja', details: 'Level 38 - 1.8K/D Ratio', status: 'Offline' },
-                { id: '3', name: 'EliteSniper', details: 'Level 52 - 3.1K/D Ratio', status: 'In Match' }
+            'Players': [{
+                    id: '1',
+                    name: 'ProGamer123',
+                    details: 'Level 45 - 2.3K/D Ratio',
+                    status: 'Online'
+                },
+                {
+                    id: '2',
+                    name: 'ShadowNinja',
+                    details: 'Level 38 - 1.8K/D Ratio',
+                    status: 'Offline'
+                },
+                {
+                    id: '3',
+                    name: 'EliteSniper',
+                    details: 'Level 52 - 3.1K/D Ratio',
+                    status: 'In Match'
+                }
             ],
-            'Matches': [
-                { id: '1', name: 'Dragons vs Wolves', details: 'Best of 5 - Map: Inferno', status: 'Live' },
-                { id: '2', name: 'Phoenix vs Knights', details: 'Best of 3 - Map: Desert Storm', status: 'Scheduled' },
-                { id: '3', name: 'Titans vs Legends', details: 'Best of 5 - Map: Arctic Base', status: 'Completed' }
+            'Matches': [{
+                    id: '1',
+                    name: 'Dragons vs Wolves',
+                    details: 'Best of 5 - Map: Inferno',
+                    status: 'Live'
+                },
+                {
+                    id: '2',
+                    name: 'Phoenix vs Knights',
+                    details: 'Best of 3 - Map: Desert Storm',
+                    status: 'Scheduled'
+                },
+                {
+                    id: '3',
+                    name: 'Titans vs Legends',
+                    details: 'Best of 5 - Map: Arctic Base',
+                    status: 'Completed'
+                }
             ],
-            'Events': [
-                { id: '1', name: 'Monthly Cup', details: 'Jan 15, 2026 - Online', status: 'Upcoming' },
-                { id: '2', name: 'LAN Finals', details: 'Feb 20-22, 2026 - New York', status: 'Registration Open' },
-                { id: '3', name: 'Community Tournament', details: 'Dec 10, 2025 - Online', status: 'Completed' }
+            'Events': [{
+                    id: '1',
+                    name: 'Monthly Cup',
+                    details: 'Jan 15, 2026 - Online',
+                    status: 'Upcoming'
+                },
+                {
+                    id: '2',
+                    name: 'LAN Finals',
+                    details: 'Feb 20-22, 2026 - New York',
+                    status: 'Registration Open'
+                },
+                {
+                    id: '3',
+                    name: 'Community Tournament',
+                    details: 'Dec 10, 2025 - Online',
+                    status: 'Completed'
+                }
             ],
-            'Brackets': [
-                { id: '1', name: 'Main Championship', details: 'Single Elimination - 32 teams', status: 'In Progress' },
-                { id: '2', name: 'Losers Bracket', details: 'Double Elimination - 16 teams', status: 'Round 2' },
-                { id: '3', name: 'Qualifiers', details: 'Swiss System - 64 teams', status: 'Completed' }
+            'Brackets': [{
+                    id: '1',
+                    name: 'Main Championship',
+                    details: 'Single Elimination - 32 teams',
+                    status: 'In Progress'
+                },
+                {
+                    id: '2',
+                    name: 'Losers Bracket',
+                    details: 'Double Elimination - 16 teams',
+                    status: 'Round 2'
+                },
+                {
+                    id: '3',
+                    name: 'Qualifiers',
+                    details: 'Swiss System - 64 teams',
+                    status: 'Completed'
+                }
             ],
-            'Leaderboards': [
-                { id: '1', name: 'Global Rankings', details: 'All regions - Weekly reset', status: 'Active' },
-                { id: '2', name: 'Regional Standings', details: 'NA/EU/ASIA divisions', status: 'Active' },
-                { id: '3', name: 'Season 5 Final', details: 'End of season rankings', status: 'Archived' }
+            'Leaderboards': [{
+                    id: '1',
+                    name: 'Global Rankings',
+                    details: 'All regions - Weekly reset',
+                    status: 'Active'
+                },
+                {
+                    id: '2',
+                    name: 'Regional Standings',
+                    details: 'NA/EU/ASIA divisions',
+                    status: 'Active'
+                },
+                {
+                    id: '3',
+                    name: 'Season 5 Final',
+                    details: 'End of season rankings',
+                    status: 'Archived'
+                }
             ],
-            'Sponsors': [
-                { id: '1', name: 'TechGear Pro', details: 'Hardware Partner - $50K', status: 'Active' },
-                { id: '2', name: 'Energy Drink X', details: 'Beverage Sponsor - $30K', status: 'Active' },
-                { id: '3', name: 'Gaming Chairs Inc', details: 'Furniture Partner - $20K', status: 'Pending' }
+            'Sponsors': [{
+                    id: '1',
+                    name: 'TechGear Pro',
+                    details: 'Hardware Partner - $50K',
+                    status: 'Active'
+                },
+                {
+                    id: '2',
+                    name: 'Energy Drink X',
+                    details: 'Beverage Sponsor - $30K',
+                    status: 'Active'
+                },
+                {
+                    id: '3',
+                    name: 'Gaming Chairs Inc',
+                    details: 'Furniture Partner - $20K',
+                    status: 'Pending'
+                }
             ]
         };
 
@@ -242,7 +390,7 @@ include('header.php');
         function renderItems() {
             const items = categoryData[currentCategory] || [];
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const filteredItems = items.filter(item => 
+            const filteredItems = items.filter(item =>
                 item.name.toLowerCase().includes(searchQuery) ||
                 item.details.toLowerCase().includes(searchQuery)
             );
@@ -250,7 +398,7 @@ include('header.php');
             document.getElementById('panelInfo').textContent = `${items.length} ${items.length === 1 ? 'item' : 'items'} total`;
 
             const listEl = document.getElementById('itemsList');
-            
+
             if (filteredItems.length === 0) {
                 listEl.innerHTML = `
                     <div class="empty-state">
@@ -361,7 +509,7 @@ include('header.php');
         // Delete item
         function deleteItem(id) {
             if (!confirm('Are you sure you want to delete this item?')) return;
-            
+
             categoryData[currentCategory] = categoryData[currentCategory].filter(i => i.id !== id);
             renderItems();
             renderStats();

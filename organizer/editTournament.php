@@ -65,33 +65,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
       $team_size = (int)$_POST['team_size'];
       $fee = (float)$_POST['fee'];
 
-      $update = $conn->prepare("
-                UPDATE tournaments SET
-                    title=?, description=?, max_participants=?, team_size=?, fee=?,
-                    registration_start_date=?, registration_deadline=?, start_date=?, last_update=NOW()
-                WHERE tournament_id=? AND organizer_id=?
-            ");
-      $update->bind_param(
-        "ssiidsssii",
-        $title,
-        $description,
-        $max_participants,
-        $team_size,
-        $fee,
-        $reg_start,
-        $reg_end,
-        $start,
-        $tournament_id,
-        $organizer_id
-      );
-      $update->execute();
-      $message = "✅ Tournament updated successfully.";
+    if ($canEditAll) {
+      $title = clean($_POST['title']);
+      $description = clean($_POST['description']);
+      $max_participants = (int)$_POST['max_participants'];
+      $team_size = (int)$_POST['team_size'];
+      $fee = (float)$_POST['fee'];
+
+      /* -------- MIN 12 VALIDATION -------- */
+      if ($max_participants < 12) {
+        $message = "❌ Minimum participants must be at least 12.";
+      } else {
+        $update = $conn->prepare("
+            UPDATE tournaments SET
+                title=?, description=?, max_participants=?, team_size=?, fee=?,
+                registration_start_date=?, registration_deadline=?, start_date=?, last_update=NOW()
+            WHERE tournament_id=? AND organizer_id=?
+        ");
+        $update->bind_param(
+          "ssiidsssii",
+          $title,
+          $description,
+          $max_participants,
+          $team_size,
+          $fee,
+          $reg_start,
+          $reg_end,
+          $start,
+          $tournament_id,
+          $organizer_id
+        );
+        $update->execute();
+        $message = "✅ Tournament updated successfully.";
+      }
     } elseif ($canEditDates) {
       $update = $conn->prepare("
-                UPDATE tournaments SET
-                    registration_start_date=?, registration_deadline=?, start_date=?, last_update=NOW()
-                WHERE tournament_id=? AND organizer_id=?
-            ");
+            UPDATE tournaments SET
+                registration_start_date=?, registration_deadline=?, start_date=?, last_update=NOW()
+            WHERE tournament_id=? AND organizer_id=?
+        ");
       $update->bind_param("sssii", $reg_start, $reg_end, $start, $tournament_id, $organizer_id);
       $update->execute();
       $message = "✅ Dates updated successfully.";
@@ -100,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     $stmt->execute();
     $tournament = $stmt->get_result()->fetch_assoc();
   }
+}
 }
 ?>
 
@@ -176,13 +189,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     <form method="post" class="bg-white p-6 rounded shadow">
       <?php if ($canEditAll): ?>
         <label>Title *</label>
-        <input type="text" name="title" class="input mb-4" value="<?= htmlspecialchars($tournament['title']) ?>" <?= $isLocked ? 'readonly' : '' ?>>
+        <input type="text" name="title" class="input mb-4" value="<?= htmlspecialchars($tournament['title']) ?>">
 
         <label>Description *</label>
-        <textarea name="description" class="input mb-4" <?= $isLocked ? 'readonly' : '' ?>><?= htmlspecialchars($tournament['description']) ?></textarea>
+        <textarea name="description" class="input mb-4"><?= htmlspecialchars($tournament['description']) ?></textarea>
 
         <label>Max Participants *</label>
-        <input type="number" name="max_participants" id="max_participants" class="input mb-4" value="<?= $tournament['max_participants'] ?>" min="2">
+        <input type="number" name="max_participants" id="max_participants" class="input mb-4"
+          value="<?= $tournament['max_participants'] ?>" min="12">
 
         <label>Team Size *</label>
         <input type="number" name="team_size" class="input mb-4" value="<?= $tournament['team_size'] ?>" min="1">
@@ -214,13 +228,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     function generateBracket(teams) {
       bracketPreview.innerHTML = '';
       teams = parseInt(teams);
-      if (!teams || teams < 2) return;
 
-      // Determine group count dynamically
+      if (!teams || teams < 12) {
+        bracketPreview.innerHTML = '<p class="text-sm text-gray-500">Minimum 12 teams required</p>';
+        return;
+      }
+
       let groupCount;
-      if (teams <= 4) groupCount = 1;
-      else if (teams <= 8) groupCount = 2;
-      else if (teams <= 16) groupCount = 4;
+      if (teams <= 16) groupCount = 4;
       else groupCount = 8;
 
       let baseSize = Math.floor(teams / groupCount);
@@ -240,11 +255,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
       }
     }
 
-    // Update bracket when max participants changes
-    maxInput.addEventListener('input', () => generateBracket(maxInput.value));
-
-    // Initial bracket
-    document.addEventListener('DOMContentLoaded', () => generateBracket(maxInput.value));
+    if (maxInput) {
+      maxInput.addEventListener('input', () => generateBracket(maxInput.value));
+      document.addEventListener('DOMContentLoaded', () => generateBracket(maxInput.value));
+    }
   </script>
 </body>
 
