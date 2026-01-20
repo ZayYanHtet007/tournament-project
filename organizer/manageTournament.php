@@ -18,8 +18,8 @@ $organizer_id = $_SESSION['user_id'];
 
 /* FETCH ORGANIZER TOURNAMENTS */
 $stmt = $conn->prepare("
-    SELECT tournament_id, title, status
-    FROM tournaments
+    SELECT t.tournament_id, t.title, t.status, g.name as game_name
+    FROM tournaments join games g on t.game_id = g.game_id
     WHERE organizer_id = ?
     ORDER BY created_at DESC
 ");
@@ -119,8 +119,8 @@ while ($row = $res->fetch_assoc()) {
         // Data structure
         const categories = [{
                 id: 'tournaments',
-                title: 'Tournaments',
-                description: 'Manage tournament events and competitions',
+                title: 'Edit Tournaments',
+                description: 'Edit tournament',
                 icon: 'M8 21l4-4m0 0l4 4m-4-4v9m9-20h2a2 2 0 012 2v16a2 2 0 01-2 2H3a2 2 0 01-2-2V3a2 2 0 012-2h2m16 0v4H3V1m18 0h-2m-7 4h2',
                 gradient: 'linear-gradient(to bottom right, #eab308, #f97316)',
                 color: 'cyan'

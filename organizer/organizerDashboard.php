@@ -1,5 +1,5 @@
 <?php
-    include("header.php");
+include("header.php");
 ?>
 
 <?php
@@ -18,74 +18,93 @@ if (
   exit;
 }
 
-$organizer_id = $_SESSION['user_id'];
+/* ======================
+   USER INFO
+====================== */
 $username = $_SESSION['username'] ?? 'Organizer';
+$isLoggedIn = true;
 
 /* ======================
-   FETCH ORGANIZER TOURNAMENTS
+   FETCH LATEST TOURNAMENT
 ====================== */
+$tournament_id = null;
+
 $stmt = $conn->prepare("
-    SELECT tournament_id, title, game_name, status, created_at
+    SELECT tournament_id
     FROM tournaments
     WHERE organizer_id = ?
     ORDER BY created_at DESC
+    LIMIT 1
 ");
-$stmt->bind_param("i", $organizer_id);
+$stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+  $tournament_id = $row['tournament_id'];
+}
 ?>
 
 
 
-    <!-- Background -->
-    <div class="grid-background"></div>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
+<!-- Background -->
 
-    <!-- Particles -->
-    <script>
-        for (let i = 0; i < 20; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 8 + 's';
-            particle.style.animationDuration = (6 + Math.random() * 4) + 's';
-            document.body.appendChild(particle);
-        }
-    </script>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- Particles -->
+<script>
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 8 + 's';
+    particle.style.animationDuration = (6 + Math.random() * 4) + 's';
+    document.body.appendChild(particle);
+  }
+</script>
+
+<div class="neon-line line-1"></div>
+<div class="neon-line line-2"></div>
 
 <section class="hero">
-    <div class="hero-content">
-      <h1>My Tournaments</h1>
-      <p>Select a tournament to manage</p>
-    </div>
-  </section>
+  <div class="hero-content">
+    <h1>Welcome, <?= htmlspecialchars($username) ?> 🎮</h1>
+    <p>Compete. Manage. Dominate the Tournament Arena.</p>
 
-  <section class="dashboard">
+    <div class="hero-buttons">
+      <a href="createTournament.php" class="btn primary">
+        Create Tournament
+      </a>
 
-    <?php if ($result->num_rows === 0): ?>
-      <div class="card">
-        <p>No tournaments created yet.</p>
-        <a href="createTournament.php" class="btn primary">Create Tournament</a>
-      </div>
-    <?php endif; ?>
-
-    <?php while ($row = $result->fetch_assoc()): ?>
-      <div class="card">
-        <h3><?= htmlspecialchars($row['title']) ?></h3>
-        <p>🎮 <?= htmlspecialchars($row['game_name']) ?></p>
-        <p>Status: <strong><?= $row['status'] ?></strong></p>
-        <p>Created: <?= date('d M Y', strtotime($row['created_at'])) ?></p>
-
-        <a href="manageTournament.php?id=<?= $row['tournament_id'] ?>"
-          class="btn secondary">
-          Edit Tournament
+      <?php if ($tournament_id): ?>
+        <a href="tournaments.php" class="btn secondary">
+          Manage Tournaments
         </a>
-      </div>
-    <?php endwhile; ?>
 
-  </section>
+        </a>
+      <?php else: ?>
+        <a href="createTournament.php" class="btn secondary">
+          No Tournament Yet
+        </a>
+      <?php endif; ?>
+    </div>
+  </div>  
+</section>
 
-<?php
-include('footer.php');
-?>
+<section class="dashboard">
+  <div class="card">🏆 Tournament Detail</div>
+  <div class="card">📊 Bracket Management</div>
+  <div class="card">✅ Result Management</div>
+  <div class="card">⏱ Deadline Management</div>
+  <div class="card">💬 Chat</div>
+  <div class="card">🧾 History</div>
+</section>
+
+<footer class="footer">
+  © 2025 TournaX. All rights reserved.
+</footer>
+
+</body>
+
+</html>
