@@ -1,228 +1,177 @@
-<?php
-include('partial/header.php');
+<?php include('partial/header.php');
 ?>
-
 <?php
+session_start();
+
+require_once "database/dbConfig.php";
+
+$error = "";
+$success = "";
+
 if (isset($_POST['btnsave'])) {
+
+    $username = trim($_POST['username']);
+    $email    = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirm  = $_POST['confirmPassword'];
+
+    // Checkbox
+    $isOrganizerChecked = isset($_POST['isOrganizer']);
+
+    /* ===== PHP VALIDATION ===== */
+    if (strlen($username) < 3) {
+        $error = "Username must be at least 3 characters";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address";
+    } elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters";
+    } elseif ($password !== $confirm) {
+        $error = "Passwords do not match";
+    } else {
+
+        /* ===== DUPLICATE CHECK ===== */
+        $check = "SELECT user_id FROM users WHERE username = ? OR email = ?";
+        $stmt = mysqli_prepare($conn, $check);
+        mysqli_stmt_bind_param($stmt, "ss", $username, $email);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
+
+        if (mysqli_stmt_num_rows($stmt) > 0) {
+            $error = "Username or Email already exists";
+        } else {
+
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            if ($isOrganizerChecked) {
+                $is_organizer = 1;
+                $organizer_status = "pending";
+            } else {
+                $is_organizer = 0;
+                $organizer_status = NULL;
+            }
+
+            /* ===== INSERT USER ===== */
+            $sql = "INSERT INTO users 
+                    (username, email, password, is_organizer, organizer_status)
+                    VALUES (?, ?, ?, ?, ?)";
+
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param(
+                $stmt,
+                "sssis",
+                $username,
+                $email,
+                $hashed_password,
+                $is_organizer,
+                $organizer_status
+            );
+
+            if (mysqli_stmt_execute($stmt)) {
+                $success = "Signup successful. You can now login.";
+            } else {
+                $error = "Signup failed. Please try again.";
+            }
+        }
+    }
 }
 ?>
 
-<!-- 3D Animated Geometric Shapes -->
-    <div class="geometric-shape-1"></div>
-    <div class="geometric-shape-2"></div>
+<!-- ================= BACKGROUND EFFECTS ================= -->
+<div class="geometric-shape-1"></div>
+<div class="geometric-shape-2"></div>
 
-    <!-- Floating 3D Cards -->
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
-    <div class="floating-card-signup"></div>
+<div class="floating-card-signup"></div>
+<div class="floating-card-signup"></div>
+<div class="floating-card-signup"></div>
 
-    <!-- Animated Wave Lines -->
-    <div class="wave-container">
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-        <div class="wave-line"></div>
-    </div>
+<div class="wave-container">
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+</div>
 
-    <!-- Glowing Particles -->
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
-    <div class="particle-signup"></div>
+<div class="ring ring-1"></div>
+<div class="ring ring-2"></div>
 
-    <!-- 3D Rotating Rings -->
-    <div class="ring ring-1"></div>
-    <div class="ring ring-2"></div>
-    <div class="ring ring-3"></div>
+<div class="orb-signup orb-signup-1"></div>
+<div class="orb-signup orb-signup-2"></div>
 
-    <!-- Animated Background Orbs -->
-    <div class="orb-signup orb-signup-1"></div>
-    <div class="orb-signup orb-signup-2"></div>
-    <div class="orb-signup orb-signup-3"></div>
+<div class="grid-overlay"></div>
 
-    <!-- Grid Overlay -->
-    <div class="grid-overlay"></div>
+<!-- ================= SIGNUP CARD ================= -->
+<div class="card-container-signup">
+    <div class="card-signup">
+        <div class="card-header-signup">
+            <h1 class="card-title-signup">Tournament Registration</h1>
+            <p class="card-description-signup">
+                Create your account to join the competition
+            </p>
+        </div>
 
-    <!-- Registration Form Card -->
-    <div class="card-container-signup">
-        <div class="card-signup">
-            <div class="card-header-signup">
-                <h1 class="card-title-signup">Tournament Registration</h1>
-                <p class="card-description-signup">Create your account to join the competition</p>
-            </div>
-            <div class="card-content-signup">
-                <form class="form" id="registrationForm">
-                    <!-- Username -->
-                    <div class="form-field-signup">
-                        <label for="username">Username</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="text" 
-                                id="username" 
-                                name="username" 
-                                placeholder="Enter your username"
-                                required
-                                minlength="3"
-                            >
-                        </div>
-                        <span class="error-message" id="usernameError" style="display: none;"></span>
-                    </div>
+        <div class="card-content-signup">
 
-                    <!-- Email -->
-                    <div class="form-field-signup">
-                        <label for="email">Email</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="email" 
-                                id="email" 
-                                name="email" 
-                                placeholder="Enter your email"
-                                required
-                            >
-                        </div>
-                        <span class="error-message" id="emailError" style="display: none;"></span>
-                    </div>
+            <!-- ERROR / SUCCESS -->
+            <?php if ($error): ?>
+                <div class="error-message" style="color:#ff4d4d; margin-bottom:15px;">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
 
-                    <!-- Password -->
-                    <div class="form-field-signup">
-                        <label for="password">Password</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="Enter your password"
-                                required
-                                minlength="8"
-                            >
-                        </div>
-                        <span class="error-message" id="passwordError" style="display: none;"></span>
-                    </div>
+            <?php if ($success): ?>
+                <div class="success-message" style="color:#4caf50; margin-bottom:15px;">
+                    <?= htmlspecialchars($success) ?>
+                </div>
+            <?php endif; ?>
 
-                    <!-- Confirm Password -->
-                    <div class="form-field-signup">
-                        <label for="confirmPassword">Confirm Password</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="password" 
-                                id="confirmPassword" 
-                                name="confirmPassword" 
-                                placeholder="Confirm your password"
-                                required
-                            >
-                        </div>
-                        <span class="error-message" id="confirmPasswordError" style="display: none;"></span>
-                    </div>
+            <form method="POST">
 
-                    <!-- Is Organizer Checkbox -->
-                    <div class="checkbox-field-signup">
-                        <input 
-                            type="checkbox" 
-                            id="isOrganizer" 
-                            name="isOrganizer"
-                        >
-                        <label for="isOrganizer">I am a tournament organizer</label>
-                    </div>
+                <!-- Username -->
+                <div class="form-field-signup">
+                    <label>Username</label>
+                    <input type="text" name="username" required minlength="3"
+                        value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+                </div>
 
-                    <!-- Buttons -->
-                    <div class="button-group-signup">
-                        <div class="button-wrapper">
-                            <button type="submit" class="btn-primary-form btn-signup">Register</button>
-                        </div>
-                        <div class="button-wrapper">
-                            <button type="button" class="btn-secondary-form  btn-signup" id="cancelBtn">Cancel</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+                <!-- Email -->
+                <div class="form-field-signup">
+                    <label>Email</label>
+                    <input type="email" name="email" required
+                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                </div>
+
+                <!-- Password -->
+                <div class="form-field-signup">
+                    <label>Password</label>
+                    <input type="password" name="password" required minlength="8">
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-field-signup">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirmPassword" required>
+                </div>
+
+                <!-- Organizer -->
+                <div class="checkbox-field-signup">
+                    <input type="checkbox" name="isOrganizer"
+                        <?= isset($_POST['isOrganizer']) ? 'checked' : '' ?>>
+                    <label>I am a tournament organizer</label>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group-signup">
+                    <button type="submit" name="btnsave" class="btn-primary-form btn-signup">
+                        Register
+                    </button>
+
+                    <a href="index.php" class="btn-secondary-form btn-signup">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
         </div>
     </div>
+</div>
 
-    <script>
-        // Form validation and submission
-        const form = document.getElementById('registrationForm');
-        const cancelBtn = document.getElementById('cancelBtn');
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Clear previous errors
-            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-            
-            // Get form values
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const isOrganizer = document.getElementById('isOrganizer').checked;
-            
-            let isValid = true;
-            
-            // Validate username
-            if (username.length < 3) {
-                showError('usernameError', 'Username must be at least 3 characters');
-                isValid = false;
-            }
-            
-            // Validate email
-            const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-            if (!emailRegex.test(email)) {
-                showError('emailError', 'Invalid email address');
-                isValid = false;
-            }
-            
-            // Validate password
-            if (password.length < 8) {
-                showError('passwordError', 'Password must be at least 8 characters');
-                isValid = false;
-            }
-            
-            // Validate confirm password
-            if (password !== confirmPassword) {
-                showError('confirmPasswordError', 'Passwords do not match');
-                isValid = false;
-            }
-            
-            if (isValid) {
-                alert(`Registration successful!\nUsername: ${username}\nEmail: ${email}\nOrganizer: ${isOrganizer}`);
-                form.reset();
-            }
-        });
-
-        cancelBtn.addEventListener('click', function() {
-            form.reset();
-            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-        });
-
-        function showError(elementId, message) {
-            const errorElement = document.getElementById(elementId);
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-        }
-    </script>
-
-<?php
-include('partial/footer.php');
-?>
+<?php include('partial/footer.php'); ?>

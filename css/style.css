@@ -1,4 +1,4 @@
-﻿* {
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -1664,7 +1664,7 @@ body {
     margin-top: 10px;
 }
 
-.legacy-mainlogo{
+.legacy-mainlogo {
     height: 80px;
     width: 80px;
     top: -10px;
@@ -2188,8 +2188,9 @@ textarea {
         padding: 15px 20px;
     }
 }
+
 /* LOgin */
-.loginlabel{
+.loginlabel {
     display: inline-block;
     padding: 10px 5px;
     margin-top: 20px;
@@ -2197,6 +2198,7 @@ textarea {
     font-size: 0.875rem;
     color: #a855f7;
 }
+
 .signup_btn {
     display: inline-block;
     padding: 8px 12px;
@@ -2765,10 +2767,10 @@ textarea {
     animation: slideUp 0.8s ease-out;
     perspective: 1000px;
     display: flex;
-    align-items: center;      
-    justify-content: center;  
-    margin-top: 20px; 
-    margin-bottom: 40px;  
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
 }
 
 @keyframes slideUp {
