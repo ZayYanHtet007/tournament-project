@@ -52,7 +52,7 @@ $id = isset($_GET['id']) ? $_GET['id'] : 5;
 
     <div class="managecard">
         <a href="editTournament.php?id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box blue"><i class="fa-solid fa-download"></i></div>
+            <div class="icon-box red"><i class="fa-solid fa-trophy"></i></div>
             <h3>Tournament</h3>
             <p>Edit Tournament</p>
         </a>
