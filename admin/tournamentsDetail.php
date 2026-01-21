@@ -34,7 +34,11 @@ if (isset($_GET['success'])) {
 }
 
 
-$sql = "SELECT * FROM tournaments WHERE tournament_id = ?";
+$sql = "SELECT t.*, g.name AS game_name, g.genre 
+        FROM tournaments t
+        INNER JOIN games g ON t.game_id = g.game_id 
+        WHERE t.tournament_id = ?";
+
 $stmt = $conn->prepare($sql);
 if ($stmt) {
     $stmt->bind_param("i", $tournament_id);
@@ -109,36 +113,13 @@ $current_approval = $tournament['admin_status'];
                 </div>
 
                 <div class="col-md-6">
-                    <label>Game Type</label>
+                    <label>Game genre</label>
                     <div class="t-d-card">
-                        <?php
-                        $game_type = $tournament['game_type'] ?? '';
-                        echo $display_data['game_type'][$game_type] ?? ucfirst($game_type) ?? 'N/A';
-                        ?>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <label>Match Type</label>
-                    <div class="t-d-card">
-                        <?php
-                        $match_type = $tournament['match_type'] ?? '';
-                        echo $display_data['match_type'][$match_type] ?? ucfirst($match_type) ?? 'N/A';
-                        ?>
+                        <?php echo htmlspecialchars($tournament['genre'] ?? 'N/A'); ?>
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <label>Tournament Format</label>
-                    <div class="t-d-card">
-                        <?php
-                        $format = $tournament['format'] ?? 'single_elimination';
-                        echo $display_data['format'][$format] ?? ucfirst(str_replace('_', ' ', $format)) ?? 'Single Elimination';
-                        ?>
-                    </div>
-                </div>
+
             </div>
 
             <div class="row">
