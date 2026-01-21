@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Admin Login</title>
@@ -7,21 +8,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/admin.css">
 </head>
+
 <body>
 
-<div class="login-box">
-    <h2>Admin Login</h2>
+    <div class="login-box">
+        <h2>Admin Login</h2>
 
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Sign In</button>
-    </form>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Sign In</button>
+        </form>
 
-    <div class="footer">
-        Tournament Admin Panel
+        <div class="footer">
+            Tournament Admin Panel
+        </div>
     </div>
+<<<<<<< HEAD
 </div>
+=======
+>>>>>>> ZayYanHtet
 
 </body>
+
 </html>
