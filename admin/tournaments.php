@@ -1,17 +1,27 @@
 <?php
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
-require_once __DIR__ . '/approval_storage.php';
+
 
 $searchTerm = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
-$sql = "SELECT * FROM tournaments WHERE (title LIKE '%$searchTerm%' OR game_name LIKE '%$searchTerm%' OR tournament_id LIKE '%$searchTerm%') ORDER BY CASE WHEN status = 'pending' THEN 1 ELSE 2 END ASC, tournament_id ASC;";
+$sql = "SELECT t.*, g.name AS game_name 
+        FROM tournaments t
+        INNER JOIN games g ON t.game_id = g.game_id 
+        WHERE (t.title LIKE '%$searchTerm%' 
+           OR g.name LIKE '%$searchTerm%' 
+           OR t.tournament_id LIKE '%$searchTerm%') 
+        ORDER BY CASE WHEN t.admin_status = 'pending' THEN 1 ELSE 2 END ASC, t.tournament_id ASC";
 
 $result = mysqli_query($conn, $sql);
 
+if (!$result) {
+    die("Query Failed: " . mysqli_error($conn));
+}
+
 $tournaments = [];
 while ($row = mysqli_fetch_assoc($result)) {
-    $row['calculated_approval'] = getApprovalStatus($row['tournament_id']) ?: 'pending';
+    $row['calculated_approval'] = $row['admin_status'];
     $tournaments[] = $row;
 }
 
@@ -61,7 +71,6 @@ usort($tournaments, function ($a, $b) {
                             <th>ID</th>
                             <th>Tournament Title</th>
                             <th>Game</th>
-                            <th>Format</th>
                             <th>Participants</th>
                             <th>Entry Fee</th>
                             <th>Start Date</th>
@@ -71,7 +80,7 @@ usort($tournaments, function ($a, $b) {
                     </thead>
                     <tbody>
                         <?php foreach ($tournaments as $row):
-                            $approval_status = $row['calculated_approval'];
+                            $approval_status = $row['admin_status'];
 
                             $statusClass = match ($row['status']) {
                                 'upcoming' => 'status-upcoming',
@@ -91,12 +100,11 @@ usort($tournaments, function ($a, $b) {
                                 <td><span class="id-badge">#<?= $row['tournament_id'] ?></span></td>
                                 <td class="fw-bold text-dark"><?= htmlspecialchars($row['title']) ?></td>
                                 <td><?= htmlspecialchars($row['game_name']) ?></td>
-                                <td><span class="format-tag"><?= str_replace('_', ' ', htmlspecialchars($row['format'])) ?></span></td>
                                 <td><?= number_format($row['max_participants']) ?> Players</td>
                                 <td class="fee-text">$<?= number_format($row['fee'], 2) ?></td>
                                 <td><?= date('d M Y', strtotime($row['start_date'])) ?></td>
                                 <td><span class="custom-badge <?= $statusClass ?>"><?= strtoupper($row['status']) ?></span></td>
-                                <td><span class="custom-badge <?= $approvalClass ?>"><?= strtoupper($approval_status) ?></span></td>
+                                <td><span class="custom-badge <?= $approvalClass ?>"><?= strtoupper($row['admin_status']) ?></span></td>
                             </tr>
                         <?php endforeach; ?>
 
