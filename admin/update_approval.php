@@ -11,15 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-<<<<<<< HEAD
     
     $new_status = ($action === 'approve') ? 'approved' : 'rejected';
     
-=======
-
-    $new_status = ($action === 'approve') ? 'approved' : 'rejected';
-
->>>>>>> ZayYanHtet
     $sql = "UPDATE tournaments SET admin_status = ? WHERE tournament_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("si", $new_status, $tournament_id);
@@ -31,11 +25,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 }
-<<<<<<< HEAD
-?>
-
-
-
-
-=======
->>>>>>> ZayYanHtet
