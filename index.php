@@ -5,6 +5,21 @@ include('./partial/header.php');
 $isLoggedIn = isset($_SESSION['user_id']);
 $user_id = $isLoggedIn ? $_SESSION['user_id'] : null;
 
+// If logged in, try to fetch the user's team (first membership found)
+$userTeam = null;
+if ($isLoggedIn && isset($conn) && $conn) {
+    $stmt = $conn->prepare("SELECT t.team_id, t.team_name FROM team_members tm JOIN teams t ON tm.team_id = t.team_id WHERE tm.user_id = ? LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res && $row = $res->fetch_assoc()) {
+            $userTeam = $row; // ['team_id' => ..., 'team_name' => ...]
+        }
+        $stmt->close();
+    }
+}
+
 
 $errors = [];
 
@@ -84,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 $stmt->close();
 
                 $conn->commit();
-                header("Location: team.php?team_id=" . $team_id);
+                header("Location: index.php?team_id=" . $team_id);
                 exit;
             } catch (Exception $e) {
                 $conn->rollback();
@@ -135,7 +150,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                         <button class="btn-large btn-gradient">
                             <span>Join Tournament</span>
                         </button>
-                        <button id="openTeam" class="btn-large btn-outline">Create Team</button>
+                        <?php if (! $isLoggedIn): ?>
+                            <a href="login.php" class="btn-large btn-outline">Create Team</a>
+                        <?php elseif ($userTeam): ?>
+                            <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="btn-large btn-outline">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
+                        <?php else: ?>
+                            <button id="openTeam" class="btn-large btn-outline">Create Team</button>
+                        <?php endif; ?>
                     </div>
 
                     <div class="hero-stats">
@@ -442,18 +463,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
     <div class="teamCard">
         <span class="closeBtn">&times;</span>
         <h2>Create Team</h2>
-    
+
         <form method="POST" enctype="multipart/form-data" action="">
 
-            <div style="display:flex; justify-content:center;">
-                <label for="uploadInput" style="cursor:pointer;">
-                    <img src="images/gif9.gif" class="upload_photo" id="img">
-                </label>
-                <input type="file" name="image" id="uploadInput" hidden required onchange="previewImage(event)">
-            </div>
+            <div class="form-row-top">
+                <div class="upload-section">
+                    <label for="uploadInput" style="cursor:pointer;">
+                        <img src="images/gif9.gif" class="upload_photo" id="img">
+                    </label>
+                    <input type="file" name="image" id="uploadInput" hidden required onchange="previewImage(event)">
+                </div>
 
-            <input type="text" name="teamName" placeholder="Team Name (6-16 chars)" required>
-            <input type="text" name="shortName" placeholder="Short Name (2-4 chars)" required>
+                <div class="name-fields">
+                    <input type="text" name="teamName" placeholder="Team Name (6-16 chars)" required>
+                    <input type="text" name="shortName" placeholder="Short Name (2-4 chars)" required>
+                </div>
+            </div>
             <textarea name="motto" placeholder="Motto (Within 100 chars)"></textarea>
             <input type="number" name="players" placeholder="Players" min="1" required>
 
@@ -647,8 +672,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
     const overlay = document.getElementById("teamOverlay");
     const closeBtn = document.querySelector(".closeBtn");
 
-    openBtn.onclick = () => overlay.classList.add("active");
-    closeBtn.onclick = () => overlay.classList.remove("active");
+    if (openBtn) {
+        openBtn.onclick = () => overlay.classList.add("active");
+    }
+    if (closeBtn) {
+        closeBtn.onclick = () => overlay.classList.remove("active");
+    }
     window.onclick = (e) => {
         if (e.target == overlay) overlay.classList.remove("active");
     }
@@ -677,19 +706,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         const overlay = document.getElementById("teamOverlay");
         const closeBtn = document.querySelector(".closeBtn");
 
-        openBtn.addEventListener("click", () => {
-            overlay.classList.add("active");
-        });
+        if (openBtn) {
+            openBtn.addEventListener("click", () => {
+                overlay.classList.add("active");
+            });
+        }
 
-        closeBtn.addEventListener("click", () => {
-            overlay.classList.remove("active");
-        });
-
-        overlay.addEventListener("click", (e) => {
-            if (e.target === overlay) {
+        if (closeBtn) {
+            closeBtn.addEventListener("click", () => {
                 overlay.classList.remove("active");
-            }
-        });
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove("active");
+                }
+            });
+        }
     });
 
     function previewImage(event) {

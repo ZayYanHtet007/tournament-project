@@ -18,11 +18,7 @@ if (!$team_id) {
 
 /* Fetch team, tournament, members, invitations, join requests */
 $stmt = $conn->prepare("
-    SELECT t.team_id, t.team_name, t.leader_id, tr.tournament_id, tr.title, tr.team_size
-    FROM teams t
-    JOIN tournaments tr ON t.tournament_id = tr.tournament_id
-    WHERE t.team_id = ?
-    LIMIT 1
+    select * from teams where team_id=? limit 1
 ");
 $stmt->bind_param("i", $team_id);
 $stmt->execute();
