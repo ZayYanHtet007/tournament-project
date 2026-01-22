@@ -3,7 +3,7 @@ require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
 
 $searchTerm = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
-$sql = "SELECT * FROM users WHERE is_organizer = 0  AND organizer_status IS NULL AND(  username LIKE '%$searchTerm%' OR email LIKE  '%$searchTerm%' OR user_id LIKE '%$searchTerm') ORDER BY user_id ASC;";
+$sql = "SELECT * FROM users WHERE is_organizer = 1  AND organizer_status = 'approved' AND(  username LIKE '%$searchTerm%' OR email LIKE  '%$searchTerm%' OR user_id LIKE '%$searchTerm') ORDER BY user_id ASC;";
 $result = mysqli_query($conn, $sql);
 
 ?>
@@ -25,7 +25,7 @@ $result = mysqli_query($conn, $sql);
                     value="<?= htmlspecialchars($searchTerm) ?>">
 
                 <?php if (!empty($searchTerm)): ?>
-                    <a href="players.php" class="reset-btn">
+                    <a href="organizers.php" class="reset-btn">
                         <i class="ph ph-x-circle"></i>
                     </a>
                 <?php endif; ?>
@@ -38,15 +38,15 @@ $result = mysqli_query($conn, $sql);
                 <table class="table table-hover align-middle custom-tournament-table">
                     <thead>
                         <tr>
-                            <th>Player ID</th>
-                            <th>Player Name</th>
+                            <th>Organizer ID</th>
+                            <th>Organizer Name</th>
                             <th>Email</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php while ($row = mysqli_fetch_assoc($result)):
                         ?>
-                            <tr onclick="window.location='playersDetail.php?id=<?= $row['user_id'] ?>'">
+                            <tr onclick="window.location='organizerDetail.php?id=<?= $row['user_id'] ?>'">
                                 <td><span class="id-badge">#<?= $row['user_id'] ?></span></td>
                                 <td class="fw-bold text-dark"><?= htmlspecialchars($row['username']) ?></td>
                                 <td class="fw-bold text"><?= htmlspecialchars($row['email']) ?></td>
