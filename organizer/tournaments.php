@@ -17,9 +17,7 @@ if (
 $organizer_id = $_SESSION['user_id'];
 $username = $_SESSION['username'] ?? 'Organizer';
 
-/* ======================
-   FETCH ORGANIZER TOURNAMENTS
-====================== */
+
 $stmt = $conn->prepare("
     SELECT 
         t.tournament_id,
@@ -102,6 +100,7 @@ $result = $stmt->get_result();
           class="btn secondary">
           Manage Tournament
         </a>
+        
       </div>
     <?php endwhile; ?>
 

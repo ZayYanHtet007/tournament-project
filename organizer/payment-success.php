@@ -49,7 +49,7 @@ if (!isset($_SESSION['user_id'])) {
     <p>Your tournament has been created.</p>
     <p><strong>Status:</strong> Waiting for admin approval</p>
     <br>
-    <a href="my-tournaments.php">Go to My Tournaments</a>
+    <a href="tournaments.php">Go to My Tournaments</a>
   </div>
 
 </body>

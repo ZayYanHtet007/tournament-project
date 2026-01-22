@@ -16,6 +16,7 @@ if (
 
 $organizer_id = $_SESSION['user_id'];
 
+
 /* FETCH ORGANIZER TOURNAMENTS */
 $stmt = $conn->prepare("
     SELECT tournament_id, title, status
