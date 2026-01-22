@@ -17,9 +17,7 @@ if (
 $organizer_id = $_SESSION['user_id'];
 $username = $_SESSION['username'] ?? 'Organizer';
 
-/* ======================
-   FETCH ORGANIZER TOURNAMENTS
-====================== */
+
 $stmt = $conn->prepare("
     SELECT 
         t.tournament_id,
@@ -98,10 +96,11 @@ $result = $stmt->get_result();
         <p>Status: <strong><?= $row['status'] ?></strong></p>
         <p>Created: <?= date('d M Y', strtotime($row['created_at'])) ?></p>
 
-        <a href="editTournament.php?id=<?= $row['tournament_id'] ?>"
+        <a href="manageTournament.php?id=<?= $row['tournament_id'] ?>"
           class="btn secondary">
-          Edit Tournament
+          Manage Tournament
         </a>
+        
       </div>
     <?php endwhile; ?>
 

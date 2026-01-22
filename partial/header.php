@@ -51,26 +51,13 @@ require_once __DIR__ . "/init.php";
             <a href="#">Contact</a>
         </nav>
 
+
         <?php
-        if (isset($_SESSION['user_id'])) {
-            $uid = $_SESSION['user_id'];
-            $sql = "select * from users where user_id=$uid";
-            $result = mysqli_query($conn, $sql);
-            $user = mysqli_fetch_assoc($result);
-        ?>
-            <a href=""><img src="images/<?= $user['profile_img'] ?>" alt="" class="profilegif"><?= $user['username'] ?></a>
-            <a href="logout.php">LogOut</a>
-        <?php } else { ?>
-            <nav class="legacy-signnav">
-                <a href="login.php">Login</a>
-                <button class="btn-primary">Join Now</button>
-            </nav>
-        <?php } ?>
-    </header>
-    <?php
         if (isset($_SESSION['user_id'])) :
             $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE user_id = ? AND is_organizer = 0");
+            $uid = (int)$_SESSION['user_id'];
             mysqli_stmt_bind_param($stmt, "i", $uid);
+
             mysqli_stmt_execute($stmt);
             $result = mysqli_stmt_get_result($stmt);
             $user = mysqli_fetch_assoc($result);
@@ -81,7 +68,7 @@ require_once __DIR__ . "/init.php";
                 </a>
                 <a href="logout.php" class="btn-primary">LogOut</a>
             </nav>
-        <?php  else : ?>
+        <?php else : ?>
             <nav class="legacy-signnav">
                 <a href="login.php">Login</a>
                 <a href="#" class="btn-primary">Join Now</a>
@@ -100,38 +87,41 @@ require_once __DIR__ . "/init.php";
         </nav>
     </div>
     <div id="mobileHeaderOverlay" class="mobile-header-overlay" tabindex="-1"></div>
-    <?php if(isset($_SESSION["user_id"])): ?>
-    <div class="profile-container">
+    <?php if (isset($_SESSION["user_id"])): ?>
+        <div class="profile-container">
 
-        <div id="profileDropdown" class="dropdown-menu"
-            onmouseenter="disableScroll()"
-            onmouseleave="enableScroll()">
-            <div class="profile-header">
-                <img src="images/<?= $user['image'] ?>" alt="" class="large-avatar">
-                <div class="user-info">
-                    <span class="name"><?= $user['username'] ?></span>
-                    <span class="email"><?= $user['email'] ?></span>
+            <div id="profileDropdown" class="dropdown-menu"
+                onmouseenter="disableScroll()"
+                onmouseleave="enableScroll()">
+                <div class="profile-header">
+                    <img src="images/<?= htmlspecialchars($user['image'] ?? 'default.png') ?>" alt="" class="large-avatar">
+
+                    <div class="user-info">
+                        <span class="name"><?= htmlspecialchars($user['username'] ?? '') ?></span>
+                        <span class="email"><?= htmlspecialchars($user['email'] ?? '') ?></span>
+
+                    </div>
                 </div>
+
+                <ul class="menu-list">
+                    <li><span class="icon">🔑</span> <a href="">Change Password</a></li>
+                    <li><span class="icon">⚙️</span> <a href="">Change Email</a></li>
+                    <li><span class="icon">G</span> <a href="">My Team</a></li>
+                    <li><span class="icon">✏️</span> <a href="userprofile.php">Customize profile</a></li>
+                    <li><span class="icon">🔄</span> <a href="">Inbox</a></li>
+                </ul>
+
+                <hr class="divider">
+
+                <ul class="menu-list">
+                </ul>
             </div>
-
-            <ul class="menu-list">
-                <li><span class="icon">🔑</span> <a href="">Change Password</a></li>
-                <li><span class="icon">⚙️</span> <a href="">Change Email</a></li>
-                <li><span class="icon">G</span> <a href="">My Team</a></li>
-                <li><span class="icon">✏️</span> <a href="userprofile.php">Customize profile</a></li>
-                <li><span class="icon">🔄</span> <a href="">Inbox</a></li>
-            </ul>
-
-            <hr class="divider">
-
-            <ul class="menu-list">
-            </ul>
         </div>
-    </div>
     <?php endif; ?>
 
     <script>
         console.log("Dropdown script loaded");
+
         function toggleDropdown() {
             document.getElementById("profileDropdown").classList.toggle("show");
         }
@@ -176,30 +166,34 @@ require_once __DIR__ . "/init.php";
 
     <script>
         // Mobile header toggle: clicking the TX logo shows/hides header links on small screens
-        (function(){
+        (function() {
             const logo = document.querySelector('.legacy-mainlogo');
             const panel = document.getElementById('mobileHeaderPanel');
             const overlay = document.getElementById('mobileHeaderOverlay');
 
-            function open(){
+            function open() {
                 document.body.classList.add('mobile-header-open');
-                panel && panel.setAttribute('aria-hidden','false');
-            }
-            function close(){
-                document.body.classList.remove('mobile-header-open');
-                panel && panel.setAttribute('aria-hidden','true');
+                panel && panel.setAttribute('aria-hidden', 'false');
             }
 
-            if(logo){
-                logo.addEventListener('click', function(e){
+            function close() {
+                document.body.classList.remove('mobile-header-open');
+                panel && panel.setAttribute('aria-hidden', 'true');
+            }
+
+            if (logo) {
+                logo.addEventListener('click', function(e) {
                     // only toggle on small screens
-                    if(window.innerWidth <= 768){
-                        if(document.body.classList.contains('mobile-header-open')) close(); else open();
+                    if (window.innerWidth <= 768) {
+                        if (document.body.classList.contains('mobile-header-open')) close();
+                        else open();
                     }
                 });
             }
 
             overlay && overlay.addEventListener('click', close);
-            document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') close();
+            });
         })();
     </script>
