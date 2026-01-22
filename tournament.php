@@ -2,6 +2,11 @@
 include('partial/header.php');
 ?>
 
+<div class="strike-overlay">
+        <div class="strike strike-1"></div>
+        <div class="strike strike-2"></div>
+    </div>
+
 <div class="main-wrapper">
     <!-- Animated background gradient -->
     <div class="bg-gradient"></div>
@@ -42,12 +47,15 @@ include('partial/header.php');
         <div class="games-grid">
             <?php
             $games = [
-                ['name' => 'Valorant', 'image' => 'valorant.png', 'tournaments' => 45, 'players' => '25K+', 'gradient' => 'red-pink'],
-                ['name' => 'League of Legends', 'image' => 'lol.png', 'tournaments' => 78, 'players' => '50K+', 'gradient' => 'blue-cyan'],
+                ['name' => 'Mobile Legends Bang Bang', 'image' => 'mlbb.png', 'tournaments' => 45, 'players' => '25K+', 'gradient' => 'red-pink'],
+                ['name' => 'PUBG Mobile', 'image' => 'pubgmobile.png', 'tournaments' => 78, 'players' => '50K+', 'gradient' => 'blue-cyan'],
                 ['name' => 'CS:GO', 'image' => 'csgo.png', 'tournaments' => 62, 'players' => '35K+', 'gradient' => 'orange-yellow'],
                 ['name' => 'Dota 2', 'image' => 'dota2.png', 'tournaments' => 34, 'players' => '18K+', 'gradient' => 'purple-indigo'],
-                ['name' => 'Apex Legends', 'image' => 'valorant.png', 'tournaments' => 28, 'players' => '15K+', 'gradient' => 'rose-orange'],
-                ['name' => 'Rocket League', 'image' => 'valorant.png', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'cyan-indigo']
+                ['name' => 'Valorant', 'image' => 'valorant.png', 'tournaments' => 28, 'players' => '15K+', 'gradient' => 'rose-orange'],
+                ['name' => 'PUBG', 'image' => 'pubg.png', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'cyan-indigo'],
+                ['name' => 'PUBG', 'image' => 'pubg.png', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'black-white'],
+                ['name' => 'PUBG', 'image' => 'pubg.png', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'green-teal'],
+                ['name' => 'PUBG', 'image' => 'pubg.png', 'tournaments' => 19, 'players' => '12K+', 'gradient' => 'yellow-green']
             ];
             foreach ($games as $index => $game):
             ?>

@@ -1,9 +1,8 @@
-<<<<<<< HEAD
-=======
 <?php
 session_start();
 require_once "../database/dbConfig.php";
 
+/* ---------- ACCESS CONTROL ---------- */
 if (
     !isset($_SESSION['user_id']) ||
     !$_SESSION['is_organizer'] ||
@@ -13,320 +12,359 @@ if (
     exit;
 }
 
+/* ---------- HELPERS ---------- */
+function clean($v)
+{
+    return htmlspecialchars(trim($v), ENT_QUOTES);
+}
+
+function valid_date($d)
+{
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $d);
+}
+
+function calculateStatus($reg_start, $start)
+{
+    $today = date('Y-m-d');
+    if ($today < $reg_start) return 'upcoming';
+    if ($today >= $reg_start && $today <= $start) return 'ongoing';
+    if ($today > $start) return 'completed';
+    return 'upcoming';
+}
+
 $message = "";
+$currentStep = 1;
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['btnCreate'])) {
+/* ---------- FETCH GAMES ---------- */
+$games = [];
+$q = $conn->query("SELECT game_id, name, genre FROM games ORDER BY name");
+while ($row = $q->fetch_assoc()) {
+    $games[] = $row;
+}
 
-    $organizer_id = $_SESSION['user_id'];
+/* ---------- FORM SUBMIT ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
 
-    $title = trim($_POST['title']);
-    $description = trim($_POST['description']);
-    $game_name = trim($_POST['game_name']);
-    $game_type = $_POST['game_type'];
-    $match_type = $_POST['match_type'];
-    $format = $_POST['format'];
-    $max_participants = (int)$_POST['max_participants'];
-    $fee = (float)$_POST['fee'];
-    $registration_deadline = $_POST['registration_deadline'];
-    $start_date = $_POST['start_date'];
+    $currentStep = isset($_POST['current_step']) ? (int)$_POST['current_step'] : 1;
 
-    if (empty($title) || empty($description) || empty($game_name)) {
-        $message = "❌ Please fill all required fields";
+    $organizer_id = (int)$_SESSION['user_id'];
+    $game_id = (int)($_POST['game_id'] ?? 0);
+    $title = clean($_POST['title'] ?? '');
+    $description = clean($_POST['description'] ?? '');
+    $max_participants = (int)($_POST['max_participants'] ?? 0);
+    $team_size = (int)($_POST['team_size'] ?? 0);
+    $fee = (float)($_POST['fee'] ?? 0);
+    $prize_pool = (float)($_POST['proie_pool'] ?? 0);
+    $reg_start = $_POST['registration_start_date'] ?? '';
+    $reg_end   = $_POST['registration_deadline'] ?? '';
+    $start     = $_POST['start_date'] ?? '';
+
+    /* ---------- SERVER VALIDATION (MIN 12 ENFORCED) ---------- */
+    if (
+        !$game_id || !$title || !$description ||
+        $max_participants < 12 ||
+        !$team_size ||
+        !valid_date($reg_start) ||
+        !valid_date($reg_end) ||
+        !valid_date($start)
+    ) {
+        $message = "❌ Minimum participants must be at least 12.";
+        $currentStep = 2;
+    } elseif ($reg_start >= $reg_end) {
+        $message = "❌ Registration start must be before registration deadline.";
+        $currentStep = 2;
+    } elseif ($start <= $reg_end) {
+        $message = "❌ Tournament start date must be after registration deadline.";
+        $currentStep = 3;
     } else {
+
+        $status = calculateStatus($reg_start, $start);
 
         $stmt = $conn->prepare("
             INSERT INTO tournaments
-            (organizer_id, title, description, game_name, game_type, match_type, format,
-             max_participants, fee, registration_deadline, start_date,
-             status, admin_status, created_at, last_update)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', 'pending', NOW(), NOW())
+            (organizer_id, game_id, title, description,
+             max_participants, team_size, fee,
+             registration_start_date, registration_deadline, start_date,
+             status, admin_status,prize_pool)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending',?)
         ");
 
         $stmt->bind_param(
-            "issssssidss",
+            "iissiiissssi",
             $organizer_id,
+            $game_id,
             $title,
             $description,
-            $game_name,
-            $game_type,
-            $match_type,
-            $format,
             $max_participants,
+            $team_size,
             $fee,
-            $registration_deadline,
-            $start_date
+            $reg_start,
+            $reg_end,
+            $start,
+            $status,
+            $prize_pool
         );
 
         if ($stmt->execute()) {
-            $tournament_id = $stmt->insert_id;
-            header("Location: stripe-payment.php?tournament_id=$tournament_id");
+            header("Location: stripe-payment.php?tournament_id=" . $stmt->insert_id);
             exit;
         } else {
-            $message = "❌ Database error";
+            $message = "❌ DB Error: " . $stmt->error;
         }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Tournament</title>
-    <link rel="stylesheet" href="../css/createtour.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .input {
+            width: 100%;
+            padding: .5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: .375rem
+        }
+
+        .btn {
+            padding: .5rem .75rem;
+            border-radius: .375rem;
+            cursor: pointer
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+            border: none
+        }
+
+        .btn-outline {
+            border: 1px solid #d1d5db;
+            background: #fff
+        }
+
+        .hidden {
+            display: none
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            padding: .75rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: .375rem
+        }
+
+        .card.selected {
+            background: #eff6ff;
+            border-color: #2563eb
+        }
+
+        .bracket {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 10px
+        }
+
+        .round {
+            min-width: 160px
+        }
+
+        .match {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 12px;
+            text-align: center
+        }
+    </style>
 </head>
 
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9" />
-                </svg>
-            </div>
-            <h1>Create Tournament</h1>
-            <p>Set up your gaming tournament and start competing</p>
-        </div>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4 text-center">Create Tournament</h1>
 
+        <?php if ($message): ?>
+            <div class="text-red-600 mb-4"><?= $message ?></div>
+        <?php endif; ?>
 
+        <form method="post">
+            <input type="hidden" name="current_step" id="current_step" value="<?= $currentStep ?>">
 
-        <!-- Form Card -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Tournament Details</h2>
-                <p class="card-description">Fill in the information below to create your tournament</p>
-            </div>
-            <div class="card-content">
-                <form method="post" action="">
-                    <!-- Basic Information -->
-                    <div class="form-section">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="title">Tournament Title</label>
-                                <input type="text" id="title" name="title" placeholder="e.g., Summer Championship 2024" required>
-                            </div>
-                        </div>
+            <div class="bg-white p-6 rounded shadow">
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea id="description" name="description" placeholder="Describe your tournament..." required></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Game Information -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="game_name">Game Name</label>
-                                <input type="text" id="game_name" name="game_name" placeholder="e.g., League of Legends" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="game_type">Game Type</label>
-                                <select id="game_type" name="game_type" required>
-                                    <option value="moba">MOBA</option>
-                                    <option value="fps">FPS</option>
-                                    <option value="battle_royale">Battle Royale</option>
-                                    <option value="sports">Sports</option>
-                                    <option value="fighting">Fighting</option>
-                                    <option value="strategy">Strategy</option>
-                                    <option value="esport">Esport</option>
-                                </select>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tournament Format -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="match_type">Match Type</label>
-                                <select id="match_type" name="match_type" required>
-                                    <option value="solo">Solo</option>
-                                    <option value="team">Team</option>
-
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="format">Tournament Format</label>
-                                <select id="format" name="format" required>
-                                    <option value="">Select format</option>
-                                    <option value="single_elimination">Single Elimination</option>
-                                    <option value="double_elimination">Double Elimination</option>
-                                    <option value="round_robin">Round Robin</option>
-                                    <option value="swiss">Swiss</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Participants & Fee -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="max_participants">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                        <circle cx="9" cy="7" r="4" />
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                    </svg>
-                                    Max Participants
-                                </label>
-                                <input type="number" id="max_participants" name="max_participants" placeholder="e.g., 64" required min="1">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="fee">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="12" y1="1" x2="12" y2="23" />
-                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                                    </svg>
-                                    Entry Fee
-                                </label>
-                                <input type="number" id="fee" name="fee" step="0.01" placeholder="e.g., 10.00" required min="1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dates -->
-                    <div class="form-section">
-                        <div class="form-row two-cols">
-                            <div class="form-group">
-                                <label for="registration_deadline">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                        <line x1="16" y1="2" x2="16" y2="6" />
-                                        <line x1="8" y1="2" x2="8" y2="6" />
-                                        <line x1="3" y1="10" x2="21" y2="10" />
-                                    </svg>
-                                    Registration Deadline
-                                </label>
-                                <input type="date" id="registration_deadline" name="registration_deadline" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="start_date">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                        <line x1="16" y1="2" x2="16" y2="6" />
-                                        <line x1="8" y1="2" x2="8" y2="6" />
-                                        <line x1="3" y1="10" x2="21" y2="10" />
-                                    </svg>
-                                    Start Date
-                                </label>
-                                <input type="date" id="start_date" name="start_date" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="form-section">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="status">Status</label>
-                                <select id="status" name="status" required>
-                                    <option value="upcoming">Upcoming</option>
-                                    <option value="ongoing">Ongoing</option>
-                                    <option value="completed">Completed</option>
-
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Submit Buttons -->
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary" name="btnCreate">Create Tournament</button>
-                        <button type="submit" name="status" value="upcoming">Save as Draft</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Info Cards -->
-        <div class="info-cards">
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M6 9H4.5a2.5 2.5 0 1 0 0 5H6m0-5v5m0-5h3m-3 5h3m9-5h1.5a2.5 2.5 0 0 1 0 5H18m0-5v5m0-5h-3m3 5h-3m-3-5v5m0 0v7a2 2 0 1 1-4 0v-7m4 0H9" />
-                        </svg>
-                    </div>
-                    <div class="info-text">
-                        <h3>Format</h3>
-                        <p>Choose your style</p>
+                <!-- STEP INDICATOR -->
+                <div class="flex items-center mb-4">
+                    Step <span id="stepNum" class="mx-1"><?= $currentStep ?></span> / 3
+                    <div class="flex-1 ml-4 bg-gray-200 h-2 rounded">
+                        <div id="progress" class="bg-blue-600 h-2 rounded" style="width:<?= $currentStep / 3 * 100 ?>%"></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                    </div>
-                    <div class="info-text">
-                        <h3>Participants</h3>
-                        <p>Set your limits</p>
-                    </div>
-                </div>
-            </div>
+                <!-- STEP 1 -->
+                <section id="step1" class="<?= $currentStep !== 1 ? 'hidden' : '' ?>">
+                    <label>Title *</label>
+                    <input name="title" class="input mb-4" value="<?= $_POST['title'] ?? '' ?>">
 
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
+                    <label>Description *</label>
+                    <textarea name="description" class="input mb-4"><?= $_POST['description'] ?? '' ?></textarea>
+
+                    <label>Game *</label>
+                    <select name="game_id" id="game" class="input mb-4">
+                        <option value="">Select game</option>
+                        <?php foreach ($games as $g): ?>
+                            <option value="<?= $g['game_id'] ?>" data-genre="<?= $g['genre'] ?>" <?= (($_POST['game_id'] ?? '') == $g['game_id'] ? 'selected' : '') ?>>
+                                <?= htmlspecialchars($g['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label>Game Type</label>
+                    <input id="gameType" class="input mb-4 bg-gray-100" readonly>
+
+                    <button type="button" class="btn btn-primary" onclick="go(2)">Next</button>
+                </section>
+
+                <!-- STEP 2 -->
+                <section id="step2" class="<?= $currentStep !== 2 ? 'hidden' : '' ?>">
+                    <label>Max Participants *</label>
+                    <div class="grid grid-cols-4 gap-3 mb-4">
+                        <?php foreach ([12, 16, 24] as $p): ?>
+                            <div class="card <?= (($_POST['max_participants'] ?? '') == $p ? 'selected' : '') ?>" onclick="pick(<?= $p ?>)">
+                                <?= $p ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                    <div class="info-text">
-                        <h3>Schedule</h3>
-                        <p>Plan ahead</p>
-                    </div>
-                </div>
+
+                    <input type="number" name="max_participants" id="max_participants" class="input mb-4"
+                        value="<?= $_POST['max_participants'] ?? 12 ?>" min="12" step="1">
+
+                    <label>Team Size *</label>
+                    <input type="number" name="team_size" class="input mb-4" value="<?= $_POST['team_size'] ?? 5 ?>" min="1">
+
+                    <label>Entry Fee</label>
+                    <input type="number" step="0.01" name="fee" class="input mb-4" min="0" value="<?= $_POST['fee'] ?? 0 ?>">
+
+                    <label>Prize Pool</label>
+                    <input type="number" step="0.01" name="fee" class="input mb-4" min="0" value="<?= $_POST['prize_pool'] ?? 0 ?>">
+
+                    <label>Registration Start *</label>
+                    <input type="date" id="regStart" name="registration_start_date" class="input mb-4" value="<?= $_POST['registration_start_date'] ?? '' ?>">
+
+                    <label>Registration Deadline *</label>
+                    <input type="date" id="regEnd" name="registration_deadline" class="input mb-4" value="<?= $_POST['registration_deadline'] ?? '' ?>">
+
+                    <button type="button" class="btn btn-outline" onclick="go(1)">Back</button>
+                    <button type="button" class="btn btn-primary float-right" onclick="go(3)">Next</button>
+                </section>
+
+                <!-- STEP 3 -->
+                <section id="step3" class="<?= $currentStep !== 3 ? 'hidden' : '' ?>">
+                    <label>Start Date *</label>
+                    <input type="date" id="startDate" name="start_date" class="input mb-4" value="<?= $_POST['start_date'] ?? '' ?>">
+
+                    <label>Status</label>
+                    <input type="text" class="input mb-4 bg-gray-100" value="Will auto-update" readonly>
+
+                    <h2 class="font-semibold mb-2">Bracket Preview</h2>
+                    <div id="bracketPreview" class="bracket bg-gray-100 rounded mb-4"></div>
+
+                    <button type="button" class="btn btn-outline" onclick="go(2)">Back</button>
+                    <button type="submit" name="btnCreate" class="btn btn-primary float-right">Create</button>
+                </section>
+
             </div>
-        </div>
+        </form>
     </div>
 
-    <!-- <script>
-        // Form submission handler
-        document.getElementById('tournamentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+    <script>
+        let step = <?= $currentStep ?>;
+        const today = new Date().toISOString().split('T')[0];
 
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
+        const regStart = document.getElementById('regStart');
+        const regEnd = document.getElementById('regEnd');
+        const startDate = document.getElementById('startDate');
+        const stepNum = document.getElementById('stepNum');
+        const progress = document.getElementById('progress');
+        const game = document.getElementById('game');
+        const gameType = document.getElementById('gameType');
+        const maxParticipantsInput = document.getElementById('max_participants');
+        const bracketPreview = document.getElementById('bracketPreview');
 
-            console.log('Tournament Data:', data);
-            alert('Tournament created successfully!\n\nCheck console for details.');
+        regStart.min = today;
+        regEnd.min = today;
+        startDate.min = today;
 
-            // You can add your API call or further processing here
+        function go(n) {
+            step = n;
+            document.getElementById('current_step').value = step;
+            ['step1', 'step2', 'step3'].forEach((id, i) => {
+                document.getElementById(id).classList.toggle('hidden', i + 1 !== step);
+            });
+            stepNum.textContent = step;
+            progress.style.width = (step / 3 * 100) + '%';
+        }
+
+        game.addEventListener('change', () => {
+            gameType.value = game.options[game.selectedIndex].dataset.genre || '';
         });
 
-        // Save as draft function
-        function saveDraft() {
-            const formData = new FormData(document.getElementById('tournamentForm'));
-            const data = Object.fromEntries(formData.entries());
+        regStart.addEventListener('change', () => {
+            regEnd.min = regStart.value;
+        });
+        regEnd.addEventListener('change', () => {
+            startDate.min = regEnd.value;
+        });
 
-            console.log('Draft saved:', data);
-            alert('Tournament saved as draft!');
+        function pick(v) {
+            maxParticipantsInput.value = v;
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            event.target.classList.add('selected');
+            generateBracket(v);
         }
-    </script> -->
+
+        function generateBracket(teams) {
+            bracketPreview.innerHTML = '';
+            teams = parseInt(teams);
+
+            if (!teams || teams < 12) {
+                bracketPreview.innerHTML = '<p class="text-sm text-gray-500">Minimum 12 teams required</p>';
+                return;
+            }
+
+            let groupCount = teams > 8 ? 4 : 2;
+            let baseGroupSize = Math.floor(teams / groupCount);
+            let extra = teams % groupCount;
+
+            for (let g = 1; g <= groupCount; g++) {
+                let size = baseGroupSize + (extra > 0 ? 1 : 0);
+                if (extra > 0) extra--;
+
+                let col = document.createElement('div');
+                col.className = 'round';
+                col.innerHTML = `<h3>Group ${g} (${size} teams)</h3>`;
+                for (let i = 1; i <= size; i++) {
+                    col.innerHTML += `<div class="match">Team TBD</div>`;
+                }
+                bracketPreview.appendChild(col);
+            }
+        }
+
+        maxParticipantsInput.addEventListener('input', () => {
+            generateBracket(maxParticipantsInput.value);
+        });
+
+        if (maxParticipantsInput.value) {
+            generateBracket(maxParticipantsInput.value);
+        }
+    </script>
 </body>
 
-
 </html>
->>>>>>> 5e47652805dec721eb6593317e65ca170fad2b63

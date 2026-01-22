@@ -1,0 +1,267 @@
+/* ================= ROOT ================= */
+:root {
+    --txg-neon: #00f7ff;
+    --txg-card: #0f1a30;
+    --txg-accent: #ff2f6d;
+    --txg-gold: #ffd54a;
+    --txg-soft: #ffffff22;
+}
+
+/* ================= CONTAINER ================= */
+.txg-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: auto;
+    padding: 30px 40px;
+}
+
+/* ================= HEADER ================= */
+.txg-header {
+    margin-top: 70px;
+    margin-bottom: 30px;
+}
+
+.txg-header h1 {
+    font-size: 2.6rem;
+    color: var(--txg-neon);
+    text-shadow: 0 0 18px var(--txg-neon);
+}
+
+.tx-date-wrap {
+    margin-left: auto;
+    position: relative;
+}
+
+/* Score input */
+.tx-score1 {
+    width: 44px;
+    height: 32px;
+    font-weight: bold;
+    background: #000;
+    color: white;
+    border: 1px solid var(--tx-neon);
+    border-radius: 6px;
+    margin-left: 130px;
+    text-align: center;
+}
+
+.tx-score2 {
+    width: 44px;
+    height: 32px;
+    font-weight: bold;
+    background: #000;
+    color: white;
+    border: 1px solid var(--tx-neon);
+    border-radius: 6px;
+    margin-right: 130px;
+    text-align: center;
+}
+
+/* ================= GRID ================= */
+/* A B */
+/* C D */
+.txg-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 35px 45px;
+    align-items: start;
+}
+
+.duration {
+    align-self: center;
+    width: 50px;
+}
+
+/* ================= CARD ================= */
+.txg-card {
+    background: linear-gradient(145deg, #0e1833, #131f44);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow:
+        0 0 28px rgba(0, 247, 255, .22),
+        inset 0 0 35px rgba(0, 0, 0, .45);
+}
+
+.text {
+    margin-right: 120px;
+}
+
+/* ================= TITLE ================= */
+.txg-title {
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+    color: var(--txg-accent);
+    text-align: center;
+    letter-spacing: .8px;
+}
+
+/* ================= TABLE ================= */
+.txg-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* HEADER */
+.txg-table th {
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--txg-neon);
+    padding: 12px 8px;
+    border-bottom: 2px solid rgba(255, 255, 255, .2);
+}
+
+/* CELL */
+.txg-table td {
+    padding: 12px 8px;
+    text-align: center;
+    font-size: .95rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+}
+
+/* TEAM COLUMN */
+.txg-team {
+    text-align: left;
+    font-weight: 600;
+}
+
+/* ================= SORT VISUAL ================= */
+.txg-sorted-pts tr:first-child,
+.txg-sorted-net tr:first-child,
+.txg-sorted-time tr:first-child {
+    background: rgba(0, 247, 255, .18);
+}
+
+/* ================= RESULT UPDATE ================= */
+.txg-updated {
+    animation: txgPulse 1.2s ease;
+}
+
+@keyframes txgPulse {
+    0% {
+        box-shadow: 0 0 0 rgba(0, 247, 255, 0)
+    }
+
+    50% {
+        box-shadow: 0 0 22px rgba(0, 247, 255, .9)
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(0, 247, 255, 0)
+    }
+}
+
+/* ================= WIN / LOSE ================= */
+.txg-win {
+    color: #7CFF8B;
+    font-weight: 700;
+}
+
+.txg-lose {
+    color: #FF6B6B;
+}
+
+/* ================= QUALIFIED ================= */
+.txg-qualified {
+    background: linear-gradient(90deg,
+            rgba(255, 213, 74, .25),
+            rgba(0, 247, 255, .18));
+}
+
+.txg-qualified .txg-team {
+    color: var(--txg-gold);
+    text-shadow: 0 0 8px var(--txg-gold);
+}
+
+.txg-qualified::after {
+    content: "🏆";
+    float: right;
+    font-size: .9rem;
+    color: var(--txg-gold);
+}
+
+/* ================= HOVER ================= */
+.txg-table tbody tr:hover {
+    background: rgba(0, 247, 255, .12);
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:900px) {
+    .txg-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ================= PRINT ================= */
+@media print {
+    .txg-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .txg-card {
+        box-shadow: none;
+        border: 1px solid #000;
+        page-break-inside: avoid;
+    }
+
+    .txg-header h1,
+    .txg-title {
+        color: #000;
+        text-shadow: none;
+    }
+
+    .txg-table th {
+        color: #000;
+        border-bottom: 2px solid #000;
+    }
+
+    .txg-qualified {
+        background: #eee;
+    }
+}
+
+/* SAVE BUTTON */
+.tx-save-wrap {
+    text-align: center;
+    margin: 50px 0 20px;
+}
+
+.tx-save-btn {
+    background: linear-gradient(135deg, var(--tx-neon), var(--tx-accent));
+    border: none;
+    padding: 14px 45px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(0, 247, 255, 0.6);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.tx-save-btn:hover {
+    transform: scale(1.05);
+}
+
+/* DATE PICKER */
+.tx-date-wrap{
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.tx-date-icon{
+    font-size:18px;
+    cursor:pointer;
+}
+.tx-date{
+    opacity:0;
+    width:0;
+}
+.tx-date-text{
+    display:none;
+    font-weight:bold;
+}
