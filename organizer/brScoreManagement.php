@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['match_id'])) {
         header("Location: brScoreManagement.php?tournament_id=$tournament_id");
         exit;
     }
-}
+}  
 
 /* ================= TOURNAMENT ================= */
 $tournament = $pdo->prepare("SELECT * FROM tournaments WHERE tournament_id=?");
@@ -190,6 +190,8 @@ if ($isFinished) {
     ")->execute([$tournament_id]);
 }
 ?>
+
+
 
 
 <!DOCTYPE html>

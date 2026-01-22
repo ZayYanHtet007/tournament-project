@@ -32,4 +32,5 @@ try {
     ]);
 } catch (PDOException $e) {
     die("PDO connection failed: " . $e->getMessage());
+    
 }
