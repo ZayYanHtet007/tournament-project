@@ -24,6 +24,8 @@
             Tournament Admin Panel
         </div>
     </div>
+</div>
+
 
 </body>
 

@@ -9,6 +9,11 @@ include('sidebar.php');
             <h4>Total Tournaments</h4>
             <span>12</span>
         </div>
+            <div class="cards">
+                <div class="card">
+                    <h4>Total Tournaments</h4>
+                    <span>12</span>
+                </div>
 
         <div class="card">
             <h4>Total Players</h4>
@@ -25,6 +30,7 @@ include('sidebar.php');
             <span>30</span>
         </div>
     </div>
+
 </div>
 
 <?php
