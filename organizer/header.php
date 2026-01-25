@@ -33,7 +33,7 @@
 
         <nav class="legacy-signnav">
             <a href="#">Profile</a>
-            <a href="#">Logout</a>
+            <a href="../logout.php">Logout</a>
         </nav>
     </header>
 
