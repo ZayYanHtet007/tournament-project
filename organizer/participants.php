@@ -253,7 +253,7 @@ max-width: 360px;
 <div class="br-team-card"
      data-name="<?= strtolower($t['team_name']) ?>"
      data-team='<?= json_encode($membersByTeam[$t["team_id"]] ?? []) ?>'>
-    <img src="<?= $t['logo'] ?: 'https://via.placeholder.com/80?text=TEAM' ?>">
+    <img src="<?= $t['logo'] ?: '../images/games/project-icon.jpg' ?>">
     <h3><?= htmlspecialchars($t['team_name']) ?></h3>
 </div>
 <?php endforeach; ?>
