@@ -8,41 +8,59 @@ $error = $_SESSION['error'] ?? '';
 unset($_SESSION['error']);
 
 if (isset($_POST['btnlogin'])) {
-    $email = strtolower(trim($_POST['txtemail']));
+
+    $email = trim($_POST['txtemail']);
     $password = $_POST['txtpwd'];
 
-    $sql = "SELECT user_id, username, password, is_organizer, organizer_status FROM users WHERE email = ? LIMIT 1";
+    $sql = "SELECT * FROM users WHERE email = ? LIMIT 1";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "s", $email);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    $user = mysqli_fetch_assoc($result);
 
-    $hash = $user['password'] ?? '$2y$10$invalidhashinvalidhashinvalidhash';
+    if ($user = mysqli_fetch_assoc($result)) {
 
-    if (!password_verify($password, $hash)) {
-        $_SESSION['error'] = "Invalid email or password";
-        header("Location: login.php");
-        exit;
-    }
-
-    if ((int)$user['is_organizer'] === 1) {
-        if (strtolower(trim($user['organizer_status'])) !== 'approved') {
-            $_SESSION['error'] = "Organizer account not approved";
+        if (!password_verify($password, $user['password'])) {
+            $_SESSION['error'] = "Invalid email or password";
             header("Location: login.php");
             exit;
         }
+
+        /* ORGANIZER LOGIN */
+        if ((int)$user['is_organizer'] === 1) {
+
+            $status = strtolower(trim($user['organizer_status']));
+
+            if ($status !== 'approved') {
+                $_SESSION['error'] = "Organizer account not approved";
+                header("Location: login.php");
+                exit;
+            }
+
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['is_organizer'] = 1;
+            $_SESSION['organizer_status'] = $status;
+
+            header("Location: organizer/organizerDashboard.php");
+            exit;
+        }
+
+        /* PLAYER LOGIN */
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['is_organizer'] = 0;
+
+        header("Location: index.php");
+        exit;
     }
 
-    session_regenerate_id(true);
-    $_SESSION['user_id'] = $user['user_id'];
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['is_organizer'] = (int)$user['is_organizer'];
-
-    header("Location: " . ($user['is_organizer'] ? "organizer/organizerDashboard.php" : "index.php"));
+    $_SESSION['error'] = "Invalid email or password";
+    header("Location: login.php");
     exit;
 }
-
 // 1. INCLUDE YOUR ORIGINAL HEADER
 include('partial/header.php'); 
 ?>

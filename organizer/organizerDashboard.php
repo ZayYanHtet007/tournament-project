@@ -18,10 +18,25 @@ if (
      USER INFO
 ====================== */
 $username = $_SESSION['username'] ?? 'Organizer';
-$isLoggedIn = true;
 
 /* ======================
      FETCH LATEST TOURNAMENT
+====================== */
+$tournament_id = null;
+
+$stmt = $conn->prepare("SELECT tournament_id FROM tournaments WHERE organizer_id = ? ORDER BY created_at DESC LIMIT 1");
+if ($stmt) {
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $tournament_id = $row['tournament_id'];
+    }
+} else {
+    error_log('DB prepare failed: ' . $conn->error);
+}
+
+include("header.php");
 ?>
 
 <!DOCTYPE html>

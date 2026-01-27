@@ -257,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
         }
         bracketPreview.appendChild(col);
       }
-    }   
+    }
 
     if (maxInput) {
       generateBracket(maxInput.value);

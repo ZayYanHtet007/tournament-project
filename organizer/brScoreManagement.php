@@ -7,8 +7,9 @@ $errors = [];
 $successMessage = '';
 
 /* ================= POINT CALC ================= */
-function calcPoints($rank, $kills) {
-    $rankPoints = [1=>20,2=>16,3=>14,4=>12,5=>10,6=>8,7=>6,8=>4];
+function calcPoints($rank, $kills)
+{
+    $rankPoints = [1 => 20, 2 => 16, 3 => 14, 4 => 12, 5 => 10, 6 => 8, 7 => 6, 8 => 4];
     return ($rankPoints[$rank] ?? 1) + $kills;
 }
 
@@ -49,7 +50,7 @@ if (!$tournament) die("Tournament not found");
 
 /* ================= TEAM COUNT ================= */
 $totalTeams = $pdo->query("SELECT COUNT(*) FROM tournament_teams WHERE tournament_id=$tournament_id")->fetchColumn();
-$canStart = in_array($totalTeams, [16,25]);
+$canStart = in_array($totalTeams, [16, 25]);
 
 /* ================= STANDINGS ================= */
 $standings = $pdo->query("
@@ -123,154 +124,167 @@ if ($isFinished) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Battle Royal Score</title>
-   <link rel="stylesheet" href="../css/organizer/brscore.css">
+    <link rel="stylesheet" href="../css/organizer/brscore.css">
 </head>
+
 <body class="br-body">
-<div class="br-container">
+    <div class="br-container">
 
-<!-- TITLE -->
-<div class="br-title">
-    <h1>🔥 Battle Royale</h1>
-    <p><?= htmlspecialchars($tournament['title']) ?></p>
-</div>
-
-<!-- INLINE MESSAGES -->
-<?php if ($successMessage): ?>
-<div class="br-message success"><?= $successMessage ?></div>
-<?php endif; ?>
-
-<?php if (!$canStart): ?>
-<div class="br-message info">
-    Tournament needs <?= $totalTeams < 16 ? (16-$totalTeams) : (25-$totalTeams) ?> more teams to start
-</div>
-<?php endif; ?>
-
-<?php if (!$currentMatch && !$isFinished && $canStart): ?>
-<div class="br-message info">Next match schedule not set or previous match not finished.</div>
-<?php elseif ($isFinished): ?>
-<div class="br-message success">Tournament Completed!</div>
-<?php endif; ?>
-
-<!-- STANDINGS -->
-<div class="br-table-wrapper">
-<table class="br-table">
-<thead>
-<tr><th>#</th><th>Team</th><th>Points</th><th>Kills</th></tr>
-</thead>
-<tbody>
-<?php $r=1; foreach ($standings as $s): ?>
-<tr>
-    <td><?= $r++ ?></td>
-    <td><?= htmlspecialchars($s['team_name']) ?></td>
-    <td><?= $s['points'] ?? 0 ?></td>
-    <td><?= $s['kills'] ?? 0 ?></td>
-</tr>
-<?php endforeach; ?>
-</tbody>
-</table>
-</div>
-
-<!-- PENDING MATCH -->
-<div class="br-match-grid">
-<?php if ($currentMatch): ?>
-<div class="br-match-card">
-    <div class="br-match-round"><?= ucfirst(strtolower($currentMatch['round'])) ?> Match</div>
-    <div style="text-align:center; margin-bottom:10px; color:#10b981;">
-        Scheduled: <?= date('Y-m-d h:i A', strtotime($currentMatch['scheduled_time'])) ?>
-    </div>
-    <form method="POST" onsubmit="return validateMatch();">
-        <input type="hidden" name="match_id" value="<?= $currentMatch['match_id'] ?>">
-        <input type="hidden" name="tournament_id" value="<?= $tournament_id ?>">
-        <div class="br-input-group">
-        <?php foreach ($participants as $p): ?>
-            <label><?= htmlspecialchars($p['team_name']) ?></label>
-            <input type="number" name="rank[<?= $p['participation_id'] ?>]" min="1" placeholder="Rank">
-            <input type="number" name="kills[<?= $p['participation_id'] ?>]" min="0" placeholder="Kills">
-        <?php endforeach; ?>
+        <!-- TITLE -->
+        <div class="br-title">
+            <h1>🔥 Battle Royale</h1>
+            <p><?= htmlspecialchars($tournament['title']) ?></p>
         </div>
-        <div class="br-btn-wrapper">
-            <button type="submit" class="br-btn">Save Match</button>
+
+        <!-- INLINE MESSAGES -->
+        <?php if ($successMessage): ?>
+            <div class="br-message success"><?= $successMessage ?></div>
+        <?php endif; ?>
+
+        <?php if (!$canStart): ?>
+            <div class="br-message info">
+                Tournament needs <?= $totalTeams < 16 ? (16 - $totalTeams) : (25 - $totalTeams) ?> more teams to start
+            </div>
+        <?php endif; ?>
+
+        <?php if (!$currentMatch && !$isFinished && $canStart): ?>
+            <div class="br-message info">Next match schedule not set or previous match not finished.</div>
+        <?php elseif ($isFinished): ?>
+            <div class="br-message success">Tournament Completed!</div>
+        <?php endif; ?>
+
+        <!-- STANDINGS -->
+        <div class="br-table-wrapper">
+            <table class="br-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th>Points</th>
+                        <th>Kills</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php $r = 1;
+                    foreach ($standings as $s): ?>
+                        <tr>
+                            <td><?= $r++ ?></td>
+                            <td><?= htmlspecialchars($s['team_name']) ?></td>
+                            <td><?= $s['points'] ?? 0 ?></td>
+                            <td><?= $s['kills'] ?? 0 ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-    </form>
-</div>
-<?php else: ?>
-<!-- Disabled save button if no pending match -->
-<div class="br-match-card">
-    <div class="br-btn-wrapper">
-        <button type="button" class="br-btn" disabled>Save Match</button>
+
+        <!-- PENDING MATCH -->
+        <div class="br-match-grid">
+            <?php if ($currentMatch): ?>
+                <div class="br-match-card">
+                    <div class="br-match-round"><?= ucfirst(strtolower($currentMatch['round'])) ?> Match</div>
+                    <div style="text-align:center; margin-bottom:10px; color:#10b981;">
+                        Scheduled: <?= date('Y-m-d h:i A', strtotime($currentMatch['scheduled_time'])) ?>
+                    </div>
+                    <form method="POST" onsubmit="return validateMatch();">
+                        <input type="hidden" name="match_id" value="<?= $currentMatch['match_id'] ?>">
+                        <input type="hidden" name="tournament_id" value="<?= $tournament_id ?>">
+                        <div class="br-input-group">
+                            <?php foreach ($participants as $p): ?>
+                                <label><?= htmlspecialchars($p['team_name']) ?></label>
+                                <input type="number" name="rank[<?= $p['participation_id'] ?>]" min="1" placeholder="Rank">
+                                <input type="number" name="kills[<?= $p['participation_id'] ?>]" min="0" placeholder="Kills">
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="br-btn-wrapper">
+                            <button type="submit" class="br-btn">Save Match</button>
+                        </div>
+                    </form>
+                </div>
+            <?php else: ?>
+                <!-- Disabled save button if no pending match -->
+                <div class="br-match-card">
+                    <div class="br-btn-wrapper">
+                        <button type="button" class="br-btn" disabled>Save Match</button>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- COMPLETED MATCHES -->
+        <?php if ($finishedMatches): ?>
+            <div class="br-match-grid">
+                <?php
+                $rounds = [];
+                foreach ($finishedMatches as $m) {
+                    $rounds[$m['round']][] = $m;
+                }
+
+                foreach ($rounds as $round => $matches):
+                ?>
+                    <div class="br-match-card completed">
+                        <div class="br-match-round"><?= ucfirst(strtolower($round)) ?> Match</div>
+                        <div style="text-align:center; font-size:0.9rem; margin-bottom:10px;">
+                            <?= date('Y-m-d h:i A', strtotime($matches[0]['scheduled_time'])) ?>
+                        </div>
+                        <div class="br-table-wrapper" style="padding:10px;">
+                            <table class="br-table">
+                                <thead>
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Rank</th>
+                                        <th>Kills</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($matches as $m): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($m['team_name']) ?></td>
+                                            <td><?= $m['rank_position'] ?></td>
+                                            <td><?= $m['kill_count'] ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- TOP 3 TEAMS -->
+        <?php if ($top3): ?>
+            <div class="br-top3-wrapper">
+                <div class="br-top3-card silver">🥈 <?= $top3[1]['team_name'] ?? '' ?></div>
+                <div class="br-top3-card gold">🥇 <?= $top3[0]['team_name'] ?? '' ?></div>
+                <div class="br-top3-card bronze">🥉 <?= $top3[2]['team_name'] ?? '' ?></div>
+            </div>
+        <?php endif; ?>
+
     </div>
-</div>
-<?php endif; ?>
-</div>
 
-<!-- COMPLETED MATCHES -->
-<?php if ($finishedMatches): ?>
-<div class="br-match-grid">
-<?php
-$rounds = [];
-foreach ($finishedMatches as $m) {
-    $rounds[$m['round']][] = $m;
-}
-
-foreach ($rounds as $round => $matches):
-?>
-<div class="br-match-card completed">
-    <div class="br-match-round"><?= ucfirst(strtolower($round)) ?> Match</div>
-    <div style="text-align:center; font-size:0.9rem; margin-bottom:10px;">
-        <?= date('Y-m-d h:i A', strtotime($matches[0]['scheduled_time'])) ?>
-    </div>
-    <div class="br-table-wrapper" style="padding:10px;">
-        <table class="br-table">
-            <thead>
-                <tr><th>Team</th><th>Rank</th><th>Kills</th></tr>
-            </thead>
-            <tbody>
-            <?php foreach ($matches as $m): ?>
-                <tr>
-                    <td><?= htmlspecialchars($m['team_name']) ?></td>
-                    <td><?= $m['rank_position'] ?></td>
-                    <td><?= $m['kill_count'] ?></td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-<?php endforeach; ?>
-</div>
-<?php endif; ?>
-
-<!-- TOP 3 TEAMS -->
-<?php if ($top3): ?>
-<div class="br-top3-wrapper">
-    <div class="br-top3-card silver">🥈 <?= $top3[1]['team_name'] ?? '' ?></div>
-    <div class="br-top3-card gold">🥇 <?= $top3[0]['team_name'] ?? '' ?></div>
-    <div class="br-top3-card bronze">🥉 <?= $top3[2]['team_name'] ?? '' ?></div>
-</div>
-<?php endif; ?>
-
-</div>
-
-<script>
-function validateMatch() {
-    let ranks = [];
-    document.querySelectorAll('input[name^="rank"]').forEach(r => {
-        if (!r.value || ranks.includes(r.value)) {
-            alert("Invalid or duplicate rank!");
-            throw false;
+    <script>
+        function validateMatch() {
+            let ranks = [];
+            document.querySelectorAll('input[name^="rank"]').forEach(r => {
+                if (!r.value || ranks.includes(r.value)) {
+                    alert("Invalid or duplicate rank!");
+                    throw false;
+                }
+                ranks.push(r.value);
+            });
+            document.querySelectorAll('input[name^="kills"]').forEach(k => {
+                if (k.value == null || k.value < 0) {
+                    alert("Kills can't be empty or negative value");
+                    throw false;
+                }
+            });
+            return true;
         }
-        ranks.push(r.value);
-    });
-    document.querySelectorAll('input[name^="kills"]').forEach(k => {
-        if(k.value==null || k.value < 0){
-           alert("Kills can't be empty or negative value");
-           throw false;
-        }
-    });
-    return true;
-}
-</script>
+    </script>
 </body>
+
 </html>
