@@ -38,8 +38,25 @@ while ($row = $res->fetch_assoc()) {
     ];
 }
 
+
+
 // Get the ID from the URL (defaulting to 5 as seen in your screenshot)
 $id = isset($_GET['id']) ? $_GET['id'] : 5;
+$stmt = $conn->prepare("SELECT g.genre FROM games g JOIN tournaments t ON t.game_id = g.game_id    WHERE t.tournament_id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$tournament_data = $result->fetch_assoc();
+$genre = $tournament_data ? $tournament_data['genre'] : 'MOBA';
+
+if ($genre === 'BATTLE_ROYALE') {
+    $scorePage = "brScoreManagement.php";
+    $schedulePage = "brScheduleManagement.php";
+} else {
+    $scorePage = "resultManagement.php";
+    $schedulePage = "scheduleManagement.php";
+}
 ?>
 
 <style>
@@ -164,7 +181,10 @@ $id = isset($_GET['id']) ? $_GET['id'] : 5;
     }
 
     /* SPECIFIC ACCENTS - All Blue for your request */
-    .blue, .purple, .red, .green {
+    .blue,
+    .purple,
+    .red,
+    .green {
         color: var(--riot-blue) !important;
     }
 </style>
@@ -174,28 +194,28 @@ $id = isset($_GET['id']) ? $_GET['id'] : 5;
     <p class="subtitle">Select a category to manage your gaming tournament</p>
 
     <div class="managecard">
-        <a href="manage_teams.php?id=<?php echo $id; ?>" class="mgmt-card">
+        <a href="editTournament.php?id=<?php echo $id; ?>" class="mgmt-card">
             <div class="icon-box"><i class="fa-solid fa-download"></i></div>
-            <h3>Teams</h3>
-            <p>Organize teams and rosters</p>
+            <h3>Tournaments</h3>
+            <p>Edit Tournament</p>
         </a>
 
-        <a href="manage_players.php?id=<?php echo $id; ?>" class="mgmt-card">
+        <a href="participants.php?tournament_id=<?php echo $id; ?>" class="mgmt-card">
             <div class="icon-box"><i class="fa-solid fa-users"></i></div>
             <h3>Participants</h3>
             <p>Manage player profiles and stats</p>
         </a>
 
-        <a href="manage_matches.php?id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box"><i class="fa-solid fa-code-branch"></i></div>
+        <a href="<?php echo $scorePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
+            <div class="icon-box red"><i class="fa-solid fa-code-branch"></i></div>
             <h3>Matches</h3>
-            <p>Schedule and track game matches</p>
+            <p>Manage Score</p>
         </a>
 
-        <a href="manage_events.php?id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
+        <a href="<?php echo $schedulePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
+            <div class="icon-box green"><i class="fa-solid fa-calendar-days"></i></div>
             <h3>Schedule</h3>
-            <p>Plan and coordinate gaming events</p>
+            <p>Manage Schedule</p>
         </a>
     </div>
 </div>
