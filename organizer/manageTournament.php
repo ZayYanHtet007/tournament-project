@@ -15,9 +15,10 @@ if (
 
 $organizer_id = $_SESSION['user_id'];
 
+
 /* FETCH ORGANIZER TOURNAMENTS */
 $stmt = $conn->prepare("
-    SELECT tournament_id, title, status
+    SELECT tournament_id, title, status , game_id
     FROM tournaments
     WHERE organizer_id = ?
     ORDER BY created_at DESC
@@ -32,7 +33,8 @@ while ($row = $res->fetch_assoc()) {
         'id' => $row['tournament_id'],
         'name' => $row['title'],
         'details' => 'Status: ' . $row['status'],
-        'status' => ucfirst($row['status'])
+        'status' => ucfirst($row['status']),
+        'game_id' => $row['game_id']
     ];
 }
 
