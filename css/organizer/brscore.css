@@ -1,11 +1,3 @@
-/* Battle Royale Gaming Style */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Orbitron', 'Segoe UI', sans-serif;
-}
 
 .br-body {
     min-height: 100vh;

@@ -4,16 +4,22 @@
  * Style: Riot Games / Valorant Industrial
  */
 ?>
-</div>
 <style>
     /* ================= RIOT FOOTER STYLE ================= */
+    /* Make the footer stick to viewport bottom and align with sidebar */
+    :root { --org-sidebar-w: 80px; }
+    /* body { padding-bottom: 300px; reserve space so fixed footer doesn't overlap content } */
     .site-footer {
         background: #000;
         color: #fff;
-        padding: 80px 40px 40px calc(var(--sidebar-w) + 40px); /* Offsets for sidebar */
+        padding: 40px 40px 24px calc(var(--org-sidebar-w) + 40px);
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         position: relative;
-        z-index: 10;
+        bottom: 0;
+        left: var(--org-sidebar-w);
+        width: calc(100% - var(--org-sidebar-w));
+        z-index: 999;
+        box-shadow: 0 -4px 30px rgba(0,0,0,0.6);
     }
 
     .footer-container {
@@ -129,9 +135,9 @@
 
     .progress-bar {
         width: 100%;
-        background: var(--riot);
+        background: var(--accent-blue);
         height: 0%;
-        box-shadow: 0 0 10px var(--riot);
+        box-shadow: 0 0 10px var(--accent-blue);
     }
 
     @media (max-width: 768px) {
@@ -147,7 +153,7 @@
 <footer class="site-footer">
     <div class="footer-container">
         <div class="footer-col about">
-            <img src="images/TX.png" class="footer-logo" alt="TournaX">
+            <img src="../images/TX.png" class="footer-logo" alt="TournaX">
             <p>The ultimate arena for competitive gaming. Join daily tournaments, climb the global leaderboard, and win legendary prizes in the most secure environment.</p>
             
             <div class="social-links">
