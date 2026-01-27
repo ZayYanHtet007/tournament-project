@@ -242,7 +242,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="fas fa-home"></i>
             </a>
             
-            <a href="tournaments.php" class="<?= ($current_page == 'tournaments.php') ? 'active' : '' ?>" title="Tournaments">
+            <a href="tournaments.php" class="<?= ($current_page == 'tournaments.php' || $current_page == 'manageTournament.php' ) ? 'active' : '' ?>" title="Tournaments">
                 <i class="fas fa-trophy"></i>
             </a>
             
