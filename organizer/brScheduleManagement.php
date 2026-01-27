@@ -125,44 +125,47 @@ $matches = $stmt->fetchAll();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Battle Royale Schedule</title>
     <link rel="stylesheet" href="../css/organizer/brscore.css">
 </head>
 
 <body class="br-body">
-<div class="br-container">
+    <div class="br-container">
 
-    <div class="br-title">
-        <h1>📅 Battle Royale Schedule</h1>
-        <p><?= htmlspecialchars($tournament['title']) ?></p>
-    </div>
-
-    <?php if ($errorMessage): ?>
-        <div class="br-message error"><?= htmlspecialchars($errorMessage) ?></div>
-
-    <?php elseif ($successMessage): ?>
-        <div class="br-message success"><?= htmlspecialchars($successMessage) ?></div>
-
-    <?php elseif ($allCompleted): ?>
-        <div class="br-message success">
-            🏁 Tournament is completed. You can review results or enable edit mode.
+        <div class="br-title">
+            <h1>📅 Battle Royale Schedule</h1>
+            <p><?= htmlspecialchars($tournament['title']) ?></p>
         </div>
 
-    <?php else: ?>
-        <div class="br-message info">
-            Set schedules to unlock score management.
-        </div>
-    <?php endif; ?>
+        <?php if ($errorMessage): ?>
+            <div class="br-message error"><?= htmlspecialchars($errorMessage) ?></div>
 
-    <?php if (!$canSchedule): ?>
-        <div class="br-message error">
-            Tournament needs more teams to schedule matches.
-        </div>
+        <?php elseif ($successMessage): ?>
+            <div class="br-message success"><?= htmlspecialchars($successMessage) ?></div>
+
+        <?php elseif ($allCompleted): ?>
+            <div class="br-message success">
+                🏁 Tournament is completed. You can review results or enable edit mode.
+            </div>
+
+        <?php else: ?>
+            <div class="br-message info">
+                Set schedules to unlock score management.
+            </div>
+        <?php endif; ?>
+
+        <?php if (!$canSchedule): ?>
+            <div class="br-message error">
+                Tournament needs more teams to schedule matches.
+            </div>
     </div>
 </body>
+
 </html>
-<?php exit; endif; ?>
+<?php exit;
+        endif; ?>
 
 <form method="POST">
 
@@ -190,10 +193,9 @@ $matches = $stmt->fetchAll();
                         type="datetime-local"
                         name="schedule[<?= $m['match_id'] ?>]"
                         value="<?= $m['scheduled_time']
-                            ? date('Y-m-d\TH:i', strtotime($m['scheduled_time']))
-                            : '' ?>"
-                        <?= $m['status'] === 'completed' || $allCompleted ? 'readonly disabled' : '' ?>
-                    >
+                                    ? date('Y-m-d\TH:i', strtotime($m['scheduled_time']))
+                                    : '' ?>"
+                        <?= $m['status'] === 'completed' || $allCompleted ? 'readonly disabled' : '' ?>>
                 </div>
 
                 <?php if ($m['status'] === 'completed'): ?>
@@ -217,4 +219,5 @@ $matches = $stmt->fetchAll();
 
 </div>
 </body>
+
 </html>
