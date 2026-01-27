@@ -1,110 +1,191 @@
 <?php
-include("header.php");
-?>
-
-<?php
 session_start();
 require_once "../database/dbConfig.php";
 
 /* ======================
-   ACCESS CONTROL
+     ACCESS CONTROL
 ====================== */
 if (
-  !isset($_SESSION['user_id']) ||
-  !isset($_SESSION['is_organizer']) ||
-  $_SESSION['is_organizer'] != 1
+    !isset($_SESSION['user_id']) ||
+    !isset($_SESSION['is_organizer']) ||
+    $_SESSION['is_organizer'] != 1
 ) {
-  header("Location: ../login.php");
-  exit;
+    header("Location: ../login.php");
+    exit;
 }
 
 /* ======================
-   USER INFO
+     USER INFO
 ====================== */
 $username = $_SESSION['username'] ?? 'Organizer';
 $isLoggedIn = true;
 
 /* ======================
-   FETCH LATEST TOURNAMENT
-====================== */
-$tournament_id = null;
-
-$stmt = $conn->prepare("
-    SELECT tournament_id
-    FROM tournaments
-    WHERE organizer_id = ?
-    ORDER BY created_at DESC
-    LIMIT 1
-");
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($row = $result->fetch_assoc()) {
-  $tournament_id = $row['tournament_id'];
-}
+     FETCH LATEST TOURNAMENT
 ?>
 
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TournaX | Home</title>
 
-<!-- Background -->
+    <style>
+        :root {
+            --primary-blue: #00f2ff;
+        }
 
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
+        .content-wrap {
+            padding-top: 80px;
+        }
 
-<!-- Particles -->
-<script>
-  for (let i = 0; i < 20; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.left = Math.random() * 100 + '%';
-    particle.style.animationDelay = Math.random() * 8 + 's';
-    particle.style.animationDuration = (6 + Math.random() * 4) + 's';
-    document.body.appendChild(particle);
-  }
-</script>
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+        }
 
-<div class="neon-line line-1"></div>
-<div class="neon-line line-2"></div>
+        .hero h1 {
+            color: #fff;
+            font-size: 2.4rem
+        }
 
-<section class="hero">
-  <div class="hero-content">
-    <h1>Welcome, <?= htmlspecialchars($username) ?> 🎮</h1>
-    <p>Compete. Manage. Dominate the Tournament Arena.</p>
+        .hero p {
+            color: rgba(255, 255, 255, 0.8)
+        }
 
-    <div class="hero-buttons">
-      <a href="createTournament.php" class="btn primary">
-        Create Tournament
-      </a>
+        .hero-buttons {
+            margin: 18px 0
+        }
 
-      <?php if ($tournament_id): ?>
-        <a href="tournaments.php" class="btn secondary">
-          Manage Tournaments
-        </a>
+        .btn.primary {
+            background: var(--primary-blue);
+            color: #000;
+            padding: 10px 18px;
+            border-radius: 6px;
+            text-decoration: none
+        }
 
-        </a>
-      <?php else: ?>
-        <a href="createTournament.php" class="btn secondary">
-          No Tournament Yet
-        </a>
-      <?php endif; ?>
+        .btn.secondary {
+            background: transparent;
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin-left: 10px
+        }
+
+        .charts-wrapper {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 320px;
+            flex: 1
+        }
+
+        @media(max-width:768px) {
+            .chart-card {
+                min-width: 100%
+            }
+        }
+    </style>
+
+<body class="tx-body">
+
+    <div class="content-wrap">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Welcome, <span style="color:var(--primary-blue)"><?= htmlspecialchars($username) ?></span> 🎮</h1>
+                <p>Compete. Manage. Dominate the Tournament Arena.</p>
+
+                <div class="hero-buttons">
+                    <a href="createTournament.php" class="btn primary">Create Tournament</a>
+                    <?php if ($tournament_id): ?>
+                        <a href="tournaments.php" class="btn secondary">Manage Tournaments</a>
+                    <?php else: ?>
+                        <a href="createTournament.php" class="btn secondary">No Tournament Yet</a>
+                    <?php endif; ?>
+                </div>
+
+                <div class="charts-wrapper">
+                    <div class="chart-card"><canvas id="participantsChart"></canvas></div>
+                    <div class="chart-card"><canvas id="revenueChart"></canvas></div>
+                </div>
+            </div>
+        </section>
     </div>
-  </div>  
-</section>
 
-<section class="dashboard">
-  <div class="card">🏆 Tournament Detail</div>
-  <div class="card">📊 Bracket Management</div>
-  <div class="card">✅ Result Management</div>
-  <div class="card">⏱ Deadline Management</div>
-  <div class="card">💬 Chat</div>
-  <div class="card">🧾 History</div>
-</section>
+    <!-- Chart.js + init -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#fff',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#fff'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#fff'
+                    }
+                }
+            }
+        };
 
-<footer class="footer">
-  © 2025 TournaX. All rights reserved.
-</footer>
+        const ctx1 = document.getElementById('participantsChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Valorant', 'CS:GO', 'League', 'Dota'],
+                datasets: [{
+                    label: 'Participants',
+                    data: [120, 190, 150, 250],
+                    backgroundColor: 'rgba(0,242,255,0.45)'
+                }]
+            },
+            options: commonOptions
+        });
 
-</body>
+        const ctx2 = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [5000, 8500, 6000, 11000],
+                    borderColor: '#1e90ff',
+                    backgroundColor: 'rgba(30,144,255,0.15)',
+                    tension: 0.3
+                }]
+            },
+            options: commonOptions
+        });
+    </script>
 
-</html>
+    <?php include("footer.php"); ?>

@@ -14,7 +14,7 @@
 
 .legacy-header.scrolled {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(10px);
 }
 
 .legacy-header span {

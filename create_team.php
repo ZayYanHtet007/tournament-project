@@ -73,44 +73,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_team'])) {
 
 <head>
   <meta charset="utf-8" />
-  <title>Create Team</title>
+  <title>Create Team - TournaX</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
   <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #06080f;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 4rem auto;
+      padding: 2rem;
+      background: #11141d;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 70, 85, 0.2);
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #ff4655;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
     .input {
       width: 100%;
-      padding: .5rem;
-      border: 1px solid #e5e7eb;
-      border-radius: .375rem
+      padding: 0.75rem 1rem;
+      border: 1px solid #33374d;
+      border-radius: 8px;
+      background: #1a1c28;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      transition: 0.2s;
+    }
+
+    .input:focus {
+      border-color: #ff4655;
+      outline: none;
+      box-shadow: 0 0 8px rgba(255, 70, 85, 0.5);
     }
 
     .btn {
-      padding: .5rem .75rem;
-      border-radius: .375rem;
-      cursor: pointer
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s;
+      text-transform: uppercase;
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: #ff4655;
       color: #fff;
-      border: none
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #ff3b4b;
     }
 
     .btn-outline {
-      border: 1px solid #d1d5db;
-      background: #fff;
-      padding: .45rem .7rem;
-      border-radius: .375rem
+      border: 2px solid #ff4655;
+      background: transparent;
+      color: #ff4655;
+    }
+
+    .btn-outline:hover {
+      background: #ff4655;
+      color: #fff;
+    }
+
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-error {
+      background: rgba(255, 70, 85, 0.1);
+      border: 1px solid #ff4655;
+      color: #ff4655;
+    }
+
+    .alert-success {
+      background: rgba(0, 255, 150, 0.1);
+      border: 1px solid #00ff96;
+      color: #00ff96;
+    }
+
+    a {
+      text-decoration: none;
     }
   </style>
 </head>
 
-<body class="bg-gray-50">
-  <div class="max-w-2xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-4">Create Team</h1>
+<body>
+  <div class="container">
+    <h1>Create Team</h1>
 
     <?php if (!empty($errors)): ?>
-      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4">
+      <div class="alert alert-error">
         <ul class="list-disc pl-5">
           <?php foreach ($errors as $e): ?>
             <li><?= htmlspecialchars($e) ?></li>
@@ -120,18 +197,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_team'])) {
     <?php endif; ?>
 
     <?php if ($message): ?>
-      <div class="bg-green-50 border border-green-200 text-green-700 p-3 rounded mb-4">
+      <div class="alert alert-success">
         <?= htmlspecialchars($message) ?>
       </div>
     <?php endif; ?>
 
-    <form method="post" class="bg-white p-6 rounded shadow">
-      <label class="block mb-1">Team Name *</label>
-      <input name="team_name" class="input mb-4" maxlength="50" value="<?= htmlspecialchars($_POST['team_name'] ?? '') ?>" required>
+    <form method="post">
+      <label for="team_name">Team Name *</label>
+      <input id="team_name" name="team_name" class="input" maxlength="50" value="<?= htmlspecialchars($_POST['team_name'] ?? '') ?>" required>
 
-      <div class="flex items-center">
-        <a class="btn btn-outline mr-2" href="../dashboard.php">Back</a>
-        <button class="btn btn-primary ml-auto" name="create_team" type="submit">Create Team</button>
+      <div class="flex justify-between mt-6">
+        <a class="btn btn-outline" href="../dashboard.php">Back</a>
+        <button class="btn btn-primary" name="create_team" type="submit">Create Team</button>
       </div>
     </form>
   </div>

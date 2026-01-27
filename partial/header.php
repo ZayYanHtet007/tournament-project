@@ -1,199 +1,374 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . "/init.php";
+
+$isLoggedIn = isset($_SESSION['user_id']);
+$uid = $_SESSION['user_id'] ?? null;
+
+if ($isLoggedIn) {
+    $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE user_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $uid);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $user = mysqli_fetch_assoc($result);
+}
+
+// ✅ Detect current page for active state
+$current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/user/style.css">
-    <link rel="stylesheet" href="css/user/login.css">
-    <link rel="stylesheet" href="css/user/footer.css">
-    <link rel="stylesheet" href="css/user/header.css">
-    <link rel="stylesheet" href="css/user/FAQs.css">
-    <link rel="stylesheet" href="css/user/aboutUs.css">
-    <link rel="stylesheet" href="css/user/tournament.css">
-    <link rel="stylesheet" href="css/user/strike.css">
-    <link rel="stylesheet" href="css/user/loading.css">
-    <link rel="stylesheet" href="css/user/responsive.css">
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TournaX — Elite Esports</title>
 
-    <title>Game Tournament</title>
+<script src="https://cdn.lordicon.com/lordicon.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --riot: #ff4655;
+    --bg: #06080f;
+    --surface: #11141d;
+    --sidebar-w: 85px;
+    --transition: all 0.25s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: #fff;
+    overflow-x: hidden;
+}
+
+canvas#bg {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+}
+
+/* ================= SIDEBAR ================= */
+
+.tx-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    background: black;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px 0;
+    z-index: 2000;
+}
+
+.logo-container {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 800px;
+}
+
+.logo-container:hover .side-logo {
+    transform: rotateY(360deg) rotateX(15deg) scale(1.1);
+    filter: drop-shadow(0 0 18px rgba(255, 70, 85, 0.8));
+}
+
+.side-logo {
+    width: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    flex-grow: 1;
+}
+
+.nav-item {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    opacity: 0.6;
+    transition: var(--transition);
+}
+
+.nav-item:hover, .nav-item.active { 
+    opacity: 1; 
+}
+
+/* 🔥 ACTIVE INDICATOR */
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    width: 4px;
+    height: 24px;
+    background: var(--riot);
+    box-shadow: 0 0 15px var(--riot);
+}
+
+.nav-item span {
+    position: absolute;
+    left: 45px;
+    background: var(--surface);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+    transition: var(--transition);
+    border-left: 2px solid var(--riot);
+}
+
+.nav-item:hover span, .nav-item.active:hover span {
+    opacity: 1;
+    transform: translateX(0);
+    color: #fff;
+}
+
+/* ================= HEADER ================= */
+
+.tx-header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-w);
+    right: 0;
+    height: 75px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 40px;
+    background-color: transparent;
+    z-index: 1000;
+}
+
+.auth-wrapper { position: relative; }
+
+.auth-trigger {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.1);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.auth-trigger:hover {
+    border-color: var(--riot);
+    transform: scale(1.1);
+}
+
+.user-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.riot-dropdown {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    width: 260px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: none;
+    flex-direction: column;
+    animation: menuIn 0.2s ease-out;
+}
+
+.riot-dropdown.show { display: flex; }
+
+@keyframes menuIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.drop-info {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    text-align: center;
+}
+
+.drop-links a {
+    padding: 15px 20px;
+    display: block;
+    text-decoration: none;
+    color: #bbb;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.drop-links a:hover {
+    background: rgba(255,70,85,0.1);
+    color: #fff;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+    :root { --sidebar-w: 0px; }
+
+    .tx-sidebar {
+        flex-direction: row;
+        height: 70px;
+        width: 100%;
+        bottom: 0;
+        top: auto;
+        border-right: none;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        padding: 0;
+        justify-content: space-around;
+    }
+
+    .logo-container { display: none; }
+
+    .nav-stack {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .nav-item.active::before {
+        left: 50%;
+        bottom: -2px;
+        top: auto;
+        width: 20px;
+        height: 3px;
+        transform: translateX(-50%);
+    }
+
+    .nav-item span {
+        left: 50%;
+        bottom: 45px;
+        transform: translateX(-50%) translateY(5px);
+    }
+
+    .nav-item:hover span {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .tx-header { left: 0; }
+}
+</style>
 </head>
 
 <body>
 
-    <div class="progress-container">
-        <div class="progress-bar" id="bar"></div>
+<aside class="tx-sidebar">
+    <a href="index.php" class="logo-container" id="logoAnimContainer">
+        <img src="images/TX red.png" class="side-logo" alt="TX">
+    </a>
+
+    <nav class="nav-stack">
+        <a href="index.php" class="nav-item <?= ($current_page == 'index.php' || $current_page == '') ? 'active' : '' ?>">
+            <lord-icon src="https://cdn.lordicon.com/wmwqvixz.json" trigger="hover" 
+                colors="primary:<?= ($current_page == 'index.php' || $current_page == '') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
+            </lord-icon>
+            <span>HOME</span>
+        </a>
+
+        <a href="tournament.php" class="nav-item <?= ($current_page == 'tournament.php') ? 'active' : '' ?>">
+            <lord-icon src="https://cdn.lordicon.com/dxjqoygy.json" trigger="hover" 
+                colors="primary:<?= ($current_page == 'tournament.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
+            </lord-icon>
+            <span>TOURNAMENTS</span>
+        </a>
+
+        <a href="teams.php" class="nav-item <?= ($current_page == 'teams.php') ? 'active' : '' ?>">
+            <lord-icon src="https://cdn.lordicon.com/mrdiiocb.json" trigger="hover" 
+                colors="primary:<?= ($current_page == 'teams.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
+            </lord-icon>
+            <span>TEAMS</span>
+        </a>
+
+        <a href="leaderboard.php" class="nav-item <?= ($current_page == 'leaderboard.php') ? 'active' : '' ?>">
+            <lord-icon src="https://cdn.lordicon.com/hjeefwhm.json" trigger="hover" 
+                colors="primary:<?= ($current_page == 'leaderboard.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
+            </lord-icon>
+            <span>LEADERBOARD</span>
+        </a>
+
+        <a href="contact.php" class="nav-item <?= ($current_page == 'contact.php') ? 'active' : '' ?>">
+            <lord-icon src="https://cdn.lordicon.com/hpivxauj.json" trigger="hover" 
+                colors="primary:<?= ($current_page == 'contact.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
+            </lord-icon>
+            <span>CONTACT US</span>
+        </a>
+    </nav>
+
+    <div class="nav-item" style="margin-top: auto; margin-bottom: 20px;">
+        <lord-icon src="https://cdn.lordicon.com/lecfrjdy.json" trigger="hover" colors="primary:#ffffff" style="width:32px;height:32px"></lord-icon>
     </div>
+</aside>
 
-    <header class="legacy-header">
-        <img src="images/TX.png" alt="" class="legacy-mainlogo">
-        <nav class="legacy-headnav">
-            <a href="index.php">Home</a>
-            <a href="tournament.php">Tournaments</a>
-            <div class="help-container">
-                <a>Help & Info <i class="fas fa-caret-down"></i></a>
-                <div class="HelpInfo">
-                    <a href="aboutUs.php">About Us</a>
-                    <a href="FAQS.php">FAQs</a>
-                </div>
-            </div>
-            <a href="#">Contact</a>
-        </nav>
-
-
-        <?php
-        if (isset($_SESSION['user_id'])) :
-            $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE user_id = ? AND is_organizer = 0");
-            $uid = (int)$_SESSION['user_id'];
-            mysqli_stmt_bind_param($stmt, "i", $uid);
-
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-            $user = mysqli_fetch_assoc($result);
-        ?>
-            <nav class="legacy-signnav">
-                <a>
-                    <img src="images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" alt="" class="profilegif" onclick="toggleDropdown()" />
-                </a>
-                <a href="logout.php" class="btn-primary">LogOut</a>
-            </nav>
-        <?php else : ?>
-            <nav class="legacy-signnav">
-                <a href="login.php">Login</a>
-                <a href="#" class="btn-primary">Join Now</a>
-            </nav>
-        <?php endif; ?>
-    </header>
-    <!-- Mobile header panel (toggles when TX logo clicked on small screens) -->
-    <div id="mobileHeaderPanel" class="mobile-header-panel" aria-hidden="true">
-        <nav class="mobile-header-nav">
-            <a href="index.php">Home</a>
-            <a href="tournament.php">Tournaments</a>
-            <a href="aboutUs.php">About Us</a>
-            <a href="FAQS.php">FAQs</a>
-            <a href="#">Contact</a>
-            <!-- Login/Join remain in the top-right `legacy-signnav`; not duplicated here -->
-        </nav>
-    </div>
-    <div id="mobileHeaderOverlay" class="mobile-header-overlay" tabindex="-1"></div>
-    <?php if (isset($_SESSION["user_id"])): ?>
-        <div class="profile-container">
-
-            <div id="profileDropdown" class="dropdown-menu"
-                onmouseenter="disableScroll()"
-                onmouseleave="enableScroll()">
-                <div class="profile-header">
-                    <img src="images/<?= htmlspecialchars($user['image'] ?? 'default.png') ?>" alt="" class="large-avatar">
-
-                    <div class="user-info">
-                        <span class="name"><?= htmlspecialchars($user['username'] ?? '') ?></span>
-                        <span class="email"><?= htmlspecialchars($user['email'] ?? '') ?></span>
-
-                    </div>
-                </div>
-
-                <ul class="menu-list">
-                    <li><span class="icon">🔑</span> <a href="">Change Password</a></li>
-                    <li><span class="icon">⚙️</span> <a href="">Change Email</a></li>
-                    <li><span class="icon">G</span> <a href="">My Team</a></li>
-                    <li><span class="icon">✏️</span> <a href="userprofile.php">Customize profile</a></li>
-                    <li><span class="icon">🔄</span> <a href="">Inbox</a></li>
-                </ul>
-
-                <hr class="divider">
-
-                <ul class="menu-list">
-                </ul>
-            </div>
+<header class="tx-header">
+    <div class="auth-wrapper">
+        <div class="auth-trigger" onclick="toggleUserMenu()">
+            <?php if ($isLoggedIn): ?>
+                <img src="images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" class="user-img">
+            <?php else: ?>
+                <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" colors="primary:#ffffff" style="width:35px;height:35px"></lord-icon>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
 
-    <script>
-        console.log("Dropdown script loaded");
+        <div id="userDropdown" class="riot-dropdown">
+            <?php if ($isLoggedIn): ?>
+                <div class="drop-info">
+                    <h4 style="color: var(--riot);"><?= htmlspecialchars($user['username']) ?></h4>
+                    <p style="font-size: 10px; opacity: 0.5;"><?= htmlspecialchars($user['email']) ?></p>
+                </div>
+                <div class="drop-links">
+                    <a href="userprofile.php">CUSTOMIZE PROFILE</a>
+                    <a href="#">MY TEAM</a>
+                    <a href="changePassword.php">CHANGE PASSWORD</a>
+                    <a href="logout.php" style="color: var(--riot)">LOGOUT</a>
+                </div>
+            <?php else: ?>
+                <div class="drop-links">
+                    <a href="login.php">LOGIN</a>
+                    <a href="signUp.php">CREATE ACCOUNT</a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</header>
 
-        function toggleDropdown() {
-            document.getElementById("profileDropdown").classList.toggle("show");
-        }
+<script>
+function toggleUserMenu() {
+    document.getElementById('userDropdown').classList.toggle('show');
+}
+window.onclick = function(e) {
+    if (!e.target.closest('.auth-wrapper')) {
+        const dropdown = document.getElementById('userDropdown');
+        if(dropdown) dropdown.classList.remove('show');
+    }
+}
+</script>
 
-        // Close the dropdown if the user clicks outside of it
-        window.onclick = function(event) {
-            if (!event.target.closest('.profile-container')) {
-                var dropdowns = document.getElementsByClassName("dropdown-menu");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
-        }
-    </script>
-
-    <script>
-        function disableScroll() {
-            // This stops the main page from scrolling
-            document.body.style.overflow = 'hidden';
-        }
-
-        function enableScroll() {
-            // This allows the main page to scroll again
-            document.body.style.overflow = 'auto';
-        }
-    </script>
-
-    <script>
-        window.addEventListener("scroll", () => {
-            const header = document.querySelector(".legacy-header");
-
-            if (window.scrollY > 50) {
-                header.classList.add("scrolled");
-            } else {
-                header.classList.remove("scrolled");
-            }
-        });
-    </script>
-
-    <script>
-        // Mobile header toggle: clicking the TX logo shows/hides header links on small screens
-        (function() {
-            const logo = document.querySelector('.legacy-mainlogo');
-            const panel = document.getElementById('mobileHeaderPanel');
-            const overlay = document.getElementById('mobileHeaderOverlay');
-
-            function open() {
-                document.body.classList.add('mobile-header-open');
-                panel && panel.setAttribute('aria-hidden', 'false');
-            }
-
-            function close() {
-                document.body.classList.remove('mobile-header-open');
-                panel && panel.setAttribute('aria-hidden', 'true');
-            }
-
-            if (logo) {
-                logo.addEventListener('click', function(e) {
-                    // only toggle on small screens
-                    if (window.innerWidth <= 768) {
-                        if (document.body.classList.contains('mobile-header-open')) close();
-                        else open();
-                    }
-                });
-            }
-
-            overlay && overlay.addEventListener('click', close);
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') close();
-            });
-        })();
-    </script>
+</body>
+</html>

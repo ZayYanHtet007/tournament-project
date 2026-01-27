@@ -1,152 +1,253 @@
-
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once "database/dbConfig.php";
 
-/* ================= ERROR HANDLING ================= */
-$error = "";
-if (isset($_SESSION['error'])) {
-    $error = $_SESSION['error'];
-    unset($_SESSION['error']);
-}
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['error']);
 
-/* ================= LOGIN LOGIC ================= */
 if (isset($_POST['btnlogin'])) {
-
-    $email = trim($_POST['txtemail']);
+    $email = strtolower(trim($_POST['txtemail']));
     $password = $_POST['txtpwd'];
 
-    $sql = "SELECT * FROM users WHERE email = ? LIMIT 1";
+    $sql = "SELECT user_id, username, password, is_organizer, organizer_status FROM users WHERE email = ? LIMIT 1";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "s", $email);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
+    $user = mysqli_fetch_assoc($result);
 
-    if ($user = mysqli_fetch_assoc($result)) {
+    $hash = $user['password'] ?? '$2y$10$invalidhashinvalidhashinvalidhash';
 
-        if (!password_verify($password, $user['password'])) {
-            $_SESSION['error'] = "Invalid email or password";
-            header("Location: login.php");
-            exit;
-        }
-
-        /* ORGANIZER LOGIN */
-        if ((int)$user['is_organizer'] === 1) {
-
-            $status = strtolower(trim($user['organizer_status']));
-
-            if ($status !== 'approved') {
-                $_SESSION['error'] = "Organizer account not approved";
-                header("Location: login.php");
-                exit;
-            }
-
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['is_organizer'] = 1;
-            $_SESSION['organizer_status'] = $status;
-
-            header("Location: organizer/organizerDashboard.php");
-            exit;
-        }
-
-        /* PLAYER LOGIN */
-        session_regenerate_id(true);
-        $_SESSION['user_id'] = $user['user_id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['is_organizer'] = 0;
-
-        header("Location: index.php");
+    if (!password_verify($password, $hash)) {
+        $_SESSION['error'] = "Invalid email or password";
+        header("Location: login.php");
         exit;
     }
 
-    $_SESSION['error'] = "Invalid email or password";
-    header("Location: login.php");
+    if ((int)$user['is_organizer'] === 1) {
+        if (strtolower(trim($user['organizer_status'])) !== 'approved') {
+            $_SESSION['error'] = "Organizer account not approved";
+            header("Location: login.php");
+            exit;
+        }
+    }
+
+    session_regenerate_id(true);
+    $_SESSION['user_id'] = $user['user_id'];
+    $_SESSION['username'] = $user['username'];
+    $_SESSION['is_organizer'] = (int)$user['is_organizer'];
+
+    header("Location: " . ($user['is_organizer'] ? "organizer/organizerDashboard.php" : "index.php"));
     exit;
 }
-?>
 
-<?php
+// 1. INCLUDE YOUR ORIGINAL HEADER
 include('partial/header.php'); 
 ?>
 
-<!-- ================= BACKGROUND EFFECTS ================= -->
-<div class="geometric-shape-1"></div>
-<div class="geometric-shape-2"></div>
+<script src="https://cdn.lordicon.com/lordicon.js"></script>
 
-<div class="wave-container">
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-</div>
+<style>
+    /* ================= SIDEBAR & SHELL LAYOUT ================= */
+    :root {
+        --primary-red: #ff4655;
+        --deep-black: #0a0a0a;
+        --sidebar-w: 80px; /* Width of the Riot Sidebar */
+    }
 
-<div class="ring ring-1"></div>
-<div class="ring ring-2"></div>
+    /* THE SIDEBAR */
+    .riot-sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        width: var(--sidebar-w);
+        background: #000;
+        border-right: 1px solid rgba(255, 70, 85, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 20px;
+        z-index: 9999; /* Ensure it stays above everything */
+    }
 
-<div class="orb-signup orb-signup-1"></div>
-<div class="orb-signup orb-signup-2"></div>
+    .side-icon-btn {
+        margin: 25px 0;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.6;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-<div class="grid-overlay"></div>
+    .side-icon-btn:hover {
+        opacity: 1;
+        transform: translateX(5px); /* Subtle Riot-style hover nudge */
+    }
 
-<!-- ================= LOGIN CARD ================= -->
-<div class="card-container-signup">
-    <div class="card-signup">
-        <div class="card-header-signup">
-            <h1 class="card-title-signup">Sign In</h1>
-            <p class="card-description-signup">Login to join the competition</p>
-        </div>
+    .side-icon-btn span {
+        font-size: 9px;
+        color: #fff;
+        font-weight: 800;
+        margin-top: 6px;
+        letter-spacing: 1px;
+    }
 
-        <div class="card-content-signup">
+    /* ================= OFFSET FOR ORIGINAL ELEMENTS ================= */
+    /* This pushes your original header, footer, and main content to the right */
+    .legacy-header, 
+    .site-footer, 
+    .login-container-wrapper {
+        margin-left: var(--sidebar-w) !important;
+        width: calc(100% - var(--sidebar-w)) !important;
+    }
 
-            <!-- ERROR MESSAGE -->
-            <?php if (!empty($error)) : ?>
-                <div class="error-message" style="color:#ff4d4d; margin-bottom:15px;">
-                    <?= htmlspecialchars($error) ?>
-                </div>
-            <?php endif; ?>
+    /* ================= LOGIN DESIGN (RED & BLACK) ================= */
+    .login-container-wrapper {
+        min-height: 85vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(circle at center, #1a080a 0%, #000000 100%);
+    }
 
-            <form method="POST">
+    .login-panel {
+        background: #111;
+        width: 100%;
+        max-width: 400px;
+        padding: 50px 40px;
+        border: 1px solid #222;
+        border-top: 4px solid var(--primary-red);
+        box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+    }
 
-                <!-- EMAIL -->
-                <div class="form-field-signup">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        name="txtemail"
-                        placeholder="example@gmail.com"
-                        required>
-                </div>
+    .login-panel h2 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 38px;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 5px;
+        letter-spacing: 2px;
+    }
 
-                <!-- PASSWORD -->
-                <div class="form-field-signup">
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        name="txtpwd"
-                        placeholder="********"
-                        required>
-                </div>
+    .login-panel p.subtitle {
+        color: #555;
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 40px;
+        letter-spacing: 1px;
+    }
 
-                <br>
-                <label class="loginlabel">Create New Account</label>
-                <a href="signup.php" class="signup_btn">SignUp</a><br><br>
+    .form-group-custom {
+        margin-bottom: 25px;
+    }
 
-                <a href="forget_password.php" class="legacy-forget_btn">Forget password?</a><br><br>
-                <!-- BUTTONS -->
-                <div class="button-group-signup">
-                    <button type="submit" name="btnlogin" class="btn-primary-form btn-signup">
-                        Sign In
-                    </button>
+    .form-group-custom label {
+        display: block;
+        color: var(--primary-red);
+        font-size: 11px;
+        font-weight: 900;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
 
-                    <a href="index.php" class="btn-secondary-form btn-signup">
-                        Cancel
-                    </a>
-                </div>
+    .form-group-custom input {
+        width: 100%;
+        padding: 14px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        font-weight: 600;
+        transition: 0.3s;
+    }
 
-            </form>
-        </div>
+    .form-group-custom input:focus {
+        border-color: var(--primary-red);
+        background: #222;
+        outline: none;
+    }
+
+    .btn-red-action {
+        width: 100%;
+        padding: 18px;
+        background: var(--primary-red);
+        color: #fff;
+        border: none;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 22px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.3s;
+        letter-spacing: 1px;
+    }
+
+    .btn-red-action:hover {
+        background: #cc3844;
+        filter: brightness(1.2);
+        box-shadow: 0 0 20px rgba(255, 70, 85, 0.3);
+    }
+
+    .login-helper-links {
+        margin-top: 25px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+    }
+
+    .login-helper-links a { color: #888; text-decoration: none; transition: 0.2s; }
+    .login-helper-links a:hover { color: var(--primary-red); }
+
+    .error-notice {
+        background: rgba(255, 70, 85, 0.1);
+        color: var(--primary-red);
+        padding: 12px;
+        border: 1px solid var(--primary-red);
+        margin-bottom: 25px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+    }
+</style>
+
+<main class="login-container-wrapper">
+    <div class="login-panel">
+        <h2>LOGIN TO <span style="color: var(--primary-red);">TX</span></h2>
+        <p class="subtitle">Global Esports Network</p>
+
+        <?php if (!empty($error)) : ?>
+            <div class="error-notice">
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST">
+            <div class="form-group-custom">
+                <label>E-Mail Access</label>
+                <input type="email" name="txtemail" placeholder="AGENT@TOURNX.COM" required>
+            </div>
+
+            <div class="form-group-custom">
+                <label>Passphrase</label>
+                <input type="password" name="txtpwd" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" name="btnlogin" class="btn-red-action">
+                Initialize Session
+            </button>
+
+            <div class="login-helper-links">
+                <a href="signup.php">Register New Agent</a>
+                <a href="forget_password.php">Forgot Password?</a>
+            </div>
+        </form>
     </div>
-</div>
+</main>
 
-<?php include('partial/footer.php'); ?>
+<?php 
+// 3. INCLUDE YOUR ORIGINAL FOOTER
+include('partial/footer.php'); 
+?>
