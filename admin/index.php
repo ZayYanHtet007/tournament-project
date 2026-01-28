@@ -24,10 +24,8 @@
             Tournament Admin Panel
         </div>
     </div>
-<<<<<<< HEAD
 </div>
-=======
->>>>>>> ZayYanHtet
+
 
 </body>
 

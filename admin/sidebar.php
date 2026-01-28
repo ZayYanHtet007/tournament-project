@@ -33,13 +33,13 @@
 
     $adminName = $_SESSION['admin_name'] ?? 'Admin User';
     $adminEmail = $_SESSION['admin_email'] ?? 'admin@gmail.com';
-    $adminImg = $_SESSION['admin_img'] ?? 'default.jpg';
+    $adminImg = $_SESSION['admin_img'] ?? 'default_profile.png';
 
 
     $imageSource = '../images/upload_photos/' . $adminImg;
-    if (!file_exists(__DIR__ . '/' . $imageSource) && $adminImg !== 'default.jpg') {
+    if (!file_exists(__DIR__ . '/' . $imageSource) && $adminImg !== 'default_profile.png') {
 
-        $imageSource = '../images/default.jpg';
+        $imageSource = '../images/default_profile.png';
     } elseif ($adminImg === 'default.jpg') {
 
         $imageSource = '../images/default.jpg';
@@ -69,7 +69,7 @@
             <div class="profile-popup" id="profilePopup">
                 <div class="popup-header">
                     <div class="popup-avatar-large"><img src="<?php echo $imageSource; ?>" alt="<?php echo htmlspecialchars($adminName); ?>"
-                            onerror="this.src='../images/default.jpg'"></div>
+                            onerror="this.src='../images/default_profile.png'"></div>
                     <div class="popup-info">
                         <h4>Hi, <?= $adminName ?>!</h4>
                         <a href="customizeProfile.php" class="manage-btn" style="text-decoration: none;">Customize Profile</a>
