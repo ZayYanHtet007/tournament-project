@@ -51,26 +51,19 @@ $check->bind_param("i", $tournament_id);
 $check->execute();
 $count = (int)$check->get_result()->fetch_assoc()['c'];
 
-/*
- * Create matches only when there are no matches yet.
- * Make the generator adaptive for smaller tournaments (not forced >=12).
- */
 $teamCount = count($teams);
 if ($count == 0 && $teamCount >= 2) {
 
     shuffle($teams);
 
-    // Use up to 4 groups, or fewer when there are fewer teams
     $groupCount = min(4, $teamCount);
     if ($groupCount <= 0) $groupCount = 1;
     $groups = array_chunk($teams, ceil($teamCount / $groupCount));
-    // Group names A,B,C,D... (use as many as needed)
     $groupNamesAll = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     $groupNames = array_slice($groupNamesAll, 0, count($groups));
 
     $order = 1;
 
-    /* GROUP STAGE: round-robin inside each group */
     foreach ($groups as $gi => $groupTeams) {
         $gname = $groupNames[$gi] ?? ('G' . ($gi + 1));
         $n = count($groupTeams);
@@ -96,12 +89,6 @@ if ($count == 0 && $teamCount >= 2) {
         }
     }
 
-    /* KNOCKOUT PLACEHOLDERS
-     * Always create placeholders after group stage so bracket code can populate them.
-     * We'll create placeholders for quarterfinal, semifinal, final, third_place
-     * but if fewer teams require fewer quarterfinal slots it's still safe:
-     * populateQuarterFinals will place top teams where possible.
-     */
     $rounds = [
         'quarterfinal' => 4,
         'semifinal' => 2,
@@ -126,8 +113,8 @@ if ($count == 0 && $teamCount >= 2) {
 /* ---------- FETCH MATCHES ---------- */
 $result = $conn->query("
     SELECT m.*, 
-           t1.team_name AS team1, 
-           t2.team_name AS team2
+            t1.team_name AS team1, 
+            t2.team_name AS team2
     FROM matches m
     LEFT JOIN teams t1 ON m.team1_id = t1.team_id
     LEFT JOIN teams t2 ON m.team2_id = t2.team_id
@@ -153,20 +140,213 @@ function matchCard($m)
     return "
 <div class='tx-match'>
     <div class='tx-match-row'>
-        <span class='tx-team'>" . ($m['team1'] ?? 'TBD') . "</span>
-        <span>vs</span>
-        <span class='tx-team'>" . ($m['team2'] ?? 'TBD') . "</span>
-
+        <div class='tx-vs-container'>
+            <span class='tx-team'>" . ($m['team1'] ?? 'TBD') . "</span>
+            <span class='tx-vs-badge'>VS</span>
+            <span class='tx-team'>" . ($m['team2'] ?? 'TBD') . "</span>
+        </div>
         <div class='tx-date-wrap'>
-            <input type='datetime-local'
-                   class='match-date'
-                   name='schedule[{$m['match_id']}]'
-                   value='{$time}'>
+            <label>Set Intel Date</label>
+            <div class='date-input-container'>
+                <input type='datetime-local'
+                       class='match-date'
+                       name='schedule[{$m['match_id']}]'
+                       value='{$time}'>
+            </div>
         </div>
     </div>
 </div>";
 }
 ?>
+
+<head>
+    <style>
+        :root {
+            --riot-blue: #0bc6e3;
+            --riot-dark: #010a13;
+            --riot-surface: #051923;
+            --riot-border: rgba(11, 198, 227, 0.2);
+            --riot-gold: #c8aa6e;
+        }
+
+        .tx-body {
+            background-color: var(--riot-dark);
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-image: radial-gradient(circle at 50% 50%, #051923 0%, #010a13 100%);
+            min-height: 100vh;
+        }
+
+        .tx-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .tx-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .tx-header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            color: var(--riot-blue);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(11, 198, 227, 0.4);
+        }
+
+        .tx-section {
+            margin-bottom: 60px;
+        }
+
+        .tx-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-left: 4px solid var(--riot-blue);
+            padding-left: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .tx-card {
+            background: var(--riot-surface);
+            border: 1px solid var(--riot-border);
+            padding: 15px;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% 92%, 92% 100%, 0 100%);
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tx-card:hover {
+            border-color: var(--riot-blue);
+            box-shadow: 0 0 15px rgba(11, 198, 227, 0.1);
+        }
+
+        .tx-card h3 {
+            color: var(--riot-gold);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(200, 170, 110, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .tx-vs-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .tx-team {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
+            flex: 1;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tx-vs-badge {
+            background: var(--riot-blue);
+            color: #000;
+            font-size: 0.6rem;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 2px;
+            margin: 0 5px;
+        }
+
+        .tx-date-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .tx-date-wrap label {
+            font-size: 0.65rem;
+            color: var(--riot-blue);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        /* CALENDAR STYLING */
+        .date-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .match-date {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--riot-border);
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+            font-family: inherit;
+            cursor: text;
+        }
+
+        /* Customizing the native calendar icon */
+        .match-date::-webkit-calendar-picker-indicator {
+            filter: invert(75%) sepia(80%) saturate(2500%) hue-rotate(160deg) brightness(100%) contrast(100%);
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .match-date:focus {
+            border-color: var(--riot-blue);
+            background: #000;
+        }
+
+        .save-btn {
+            background: transparent;
+            color: var(--riot-blue);
+            border: 1px solid var(--riot-blue);
+            padding: 15px 40px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .save-btn:hover {
+            background: var(--riot-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--riot-blue);
+        }
+
+        @media (max-width: 1024px) {
+            .tx-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 600px) {
+            .tx-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
 
 <body class="tx-body">
     <div class="tx-container">
@@ -178,10 +358,9 @@ function matchCard($m)
         <form method="post" action="save-schedule.php">
             <div id="txContent">
 
-                <!-- GROUP STAGE -->
                 <?php if (!empty($matches['group'])): ?>
                     <div class="tx-section">
-                        <div class="tx-title">Group Stage</div>
+                        <div class="tx-title">Group Stage Deployment</div>
                         <div class="tx-grid">
                             <?php
                             $groups = [];
@@ -191,7 +370,7 @@ function matchCard($m)
                             foreach ($groups as $name => $games):
                             ?>
                                 <div class="tx-card">
-                                    <h3>Group <?= htmlspecialchars($name) ?></h3>
+                                    <h3>Sector Group <?= htmlspecialchars($name) ?></h3>
                                     <?php foreach ($games as $m) echo matchCard($m); ?>
                                 </div>
                             <?php endforeach; ?>
@@ -199,15 +378,14 @@ function matchCard($m)
                     </div>
                 <?php endif; ?>
 
-                <!-- QUARTERFINALS -->
                 <?php if (!empty($matches['quarterfinal'])): ?>
                     <div class="tx-section">
-                        <div class="tx-title">Quarterfinals</div>
+                        <div class="tx-title">Quarterfinal Rounds</div>
                         <div class="tx-grid">
                             <?php $i = 1;
                             foreach ($matches['quarterfinal'] as $m): ?>
                                 <div class="tx-card">
-                                    <h3>Match <?= $i++ ?></h3>
+                                    <h3>Match Protocol <?= $i++ ?></h3>
                                     <?= matchCard($m) ?>
                                 </div>
                             <?php endforeach; ?>
@@ -215,15 +393,14 @@ function matchCard($m)
                     </div>
                 <?php endif; ?>
 
-                <!-- SEMIFINALS -->
                 <?php if (!empty($matches['semifinal'])): ?>
                     <div class="tx-section">
-                        <div class="tx-title">Semifinals</div>
+                        <div class="tx-title">Semifinal Elimination</div>
                         <div class="tx-grid">
                             <?php $i = 1;
                             foreach ($matches['semifinal'] as $m): ?>
                                 <div class="tx-card">
-                                    <h3>Semifinal <?= $i++ ?></h3>
+                                    <h3>Strategic Semi <?= $i++ ?></h3>
                                     <?= matchCard($m) ?>
                                 </div>
                             <?php endforeach; ?>
@@ -231,21 +408,20 @@ function matchCard($m)
                     </div>
                 <?php endif; ?>
 
-                <!-- FINALS -->
                 <?php if (!empty($matches['final']) || !empty($matches['third_place'])): ?>
                     <div class="tx-section">
-                        <div class="tx-title">Finals</div>
+                        <div class="tx-title">Championship Deciders</div>
                         <div class="tx-grid">
                             <?php if (!empty($matches['final'])): ?>
-                                <div class="tx-card">
-                                    <h3>Champion</h3>
+                                <div class="tx-card" style="border-color: var(--riot-gold);">
+                                    <h3 style="color: #fff; background: var(--riot-gold); color: #000; padding: 2px 5px;">🏆 Grand Final</h3>
                                     <?= matchCard($matches['final'][0]) ?>
                                 </div>
                             <?php endif; ?>
 
                             <?php if (!empty($matches['third_place'])): ?>
                                 <div class="tx-card">
-                                    <h3>3rd Place</h3>
+                                    <h3>Consolation Final</h3>
                                     <?= matchCard($matches['third_place'][0]) ?>
                                 </div>
                             <?php endif; ?>
@@ -255,9 +431,9 @@ function matchCard($m)
 
             </div>
 
-            <div style="text-align:center;margin-top:30px;">
-                <button style="padding:10px 20px;font-size:16px;cursor:pointer;" type="submit">
-                    💾 SAVE TOURNAMENT
+            <div style="text-align:center;margin-top:50px; padding-bottom: 50px;">
+                <button class="save-btn" type="submit">
+                    💾 Save Tournament
                 </button>
             </div>
 
@@ -265,3 +441,4 @@ function matchCard($m)
     </div>
 
     <?php include("footer.php"); ?>
+</body>

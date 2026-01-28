@@ -182,9 +182,8 @@ if ($genre === 'BATTLE_ROYALE') {
 
     /* SPECIFIC ACCENTS - All Blue for your request */
     .blue,
-    .purple,
-    .red,
-    .green {
+    .purple
+     {
         color: var(--riot-blue) !important;
     }
 </style>
@@ -195,7 +194,7 @@ if ($genre === 'BATTLE_ROYALE') {
 
     <div class="managecard">
         <a href="editTournament.php?id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box"><i class="fa-solid fa-download"></i></div>
+            <div class="icon-box"><i class="fa-solid fa-trophy"></i></div>
             <h3>Tournaments</h3>
             <p>Edit Tournament</p>
         </a>
@@ -207,13 +206,13 @@ if ($genre === 'BATTLE_ROYALE') {
         </a>
 
         <a href="<?php echo $scorePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box red"><i class="fa-solid fa-code-branch"></i></div>
+            <div class="icon-box"><i class="fa-solid fa-code-branch"></i></div>
             <h3>Matches</h3>
             <p>Manage Score</p>
         </a>
 
         <a href="<?php echo $schedulePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box green"><i class="fa-solid fa-calendar-days"></i></div>
+            <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
             <h3>Schedule</h3>
             <p>Manage Schedule</p>
         </a>

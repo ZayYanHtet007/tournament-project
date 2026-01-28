@@ -72,6 +72,269 @@ $today = date('Y-m-d');
 $registration_open = ($today >= $tournament['registration_start_date'] && $today <= $tournament['registration_deadline']);
 ?>
 
+<style>
+  /* RIOT STYLE MODERN GAMING THEME */
+  :root {
+    --riot-red: #ff4655;
+    --riot-dark: #0f1923;
+    --riot-light: #ece8e1;
+    --riot-gray: #1f2326;
+    --bg-dark: #080d12;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--riot-light);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Background & Overlays */
+  .main-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: radial-gradient(circle at center, #1a2a33 0%, #080d12 100%);
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .strike-overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .strike {
+    position: absolute;
+    background: rgba(255, 70, 85, 0.05);
+    transform: rotate(-45deg);
+  }
+
+  .strike-1 {
+    width: 100%;
+    height: 2px;
+    top: 20%;
+  }
+
+  .strike-2 {
+    width: 100%;
+    height: 100px;
+    top: 50%;
+  }
+
+  /* Gradients */
+  .gradient-red-pink {
+    background: linear-gradient(135deg, #ff4655, #ff858d);
+  }
+
+  .gradient-purple-indigo {
+    background: linear-gradient(135deg, #7b2ff7, #3f51b5);
+  }
+
+  .gradient-orange-yellow {
+    background: linear-gradient(135deg, #ff9800, #ffeb3b);
+  }
+
+  .gradient-rose-orange {
+    background: linear-gradient(135deg, #f43f5e, #fb923c);
+  }
+
+  .gradient-cyan-indigo {
+    background: linear-gradient(135deg, #06b6d4, #6366f1);
+  }
+
+  .gradient-green-teal {
+    background: linear-gradient(135deg, #10b981, #14b8a6);
+  }
+
+  .gradient-blue-cyan {
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  }
+
+  .gradient-gray {
+    background: #333;
+  }
+
+  .gradient-text-alt {
+    background: linear-gradient(90deg, var(--riot-red), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+
+  /* Container & Layout */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-header {
+    border-left: 5px solid var(--riot-red);
+    padding-left: 20px;
+    margin-bottom: 40px;
+  }
+
+  .section-title {
+    font-size: 3rem;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .section-subtitle {
+    opacity: 0.6;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* Grid & Cards */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+  }
+
+  /* UNIQUE FULL SIZE FOR TOURNAMENT DETAILS */
+  .full-size-card {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .game-card {
+    background: var(--riot-gray);
+    position: relative;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    clip-path: polygon(0 0, 100% 0, 100% 95%, 95% 100%, 0 100%);
+    transition: 0.3s transform ease;
+  }
+
+  .game-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--riot-red);
+  }
+
+  .game-icon {
+    width: 100px;
+    height: 100px;
+    padding: 10px;
+    margin-bottom: 20px;
+    clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 20%);
+  }
+
+  .game-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .game-name {
+    font-size: 2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+  }
+
+  .game-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+    margin-bottom: 35px;
+  }
+
+  .game-stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .game-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.5;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .game-stat-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+  }
+
+  /* Buttons */
+  .btn-game {
+    display: inline-block;
+    min-width: 250px;
+    text-align: center;
+    padding: 18px 30px;
+    text-transform: uppercase;
+    font-weight: 900;
+    text-decoration: none;
+    letter-spacing: 2px;
+    color: #fff;
+    transition: 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-game:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 25px rgba(255, 70, 85, 0.4);
+  }
+
+  .game-glow {
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    width: 250px;
+    height: 250px;
+    filter: blur(80px);
+    opacity: 0.15;
+    z-index: -1;
+  }
+
+  .mt-5 {
+    margin-top: 100px;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .section-title {
+      font-size: 2rem;
+    }
+
+    .games-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .game-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-game {
+      width: 100%;
+    }
+  }
+</style>
+
 <div class="strike-overlay">
   <div class="strike strike-1"></div>
   <div class="strike strike-2"></div>
@@ -85,19 +348,6 @@ $registration_open = ($today >= $tournament['registration_start_date'] && $today
     <?php for ($i = 0; $i < 8; $i++): ?>
       <div class="floating-cube cube-<?php echo $i; ?>">
         <div class="cube-inner"></div>
-      </div>
-    <?php endfor; ?>
-
-    <?php for ($i = 0; $i < 5; $i++): ?>
-      <div class="glowing-orb orb-<?php echo $i; ?>"></div>
-    <?php endfor; ?>
-
-    <?php for ($i = 0; $i < 6; $i++): ?>
-      <div class="hexagon hex-<?php echo $i; ?>">
-        <svg viewBox="0 0 100 100">
-          <polygon points="50 1 95 25 95 75 50 99 5 75 5 25"
-            fill="none" stroke-width="2" opacity="0.3" />
-        </svg>
       </div>
     <?php endfor; ?>
   </div>
@@ -117,9 +367,7 @@ $registration_open = ($today >= $tournament['registration_start_date'] && $today
     </div>
 
     <div class="games-grid">
-      <div class="game-card game-card-0">
-        <div class="game-bg gradient-<?php echo $gradient; ?>"></div>
-
+      <div class="game-card full-size-card">
         <div class="game-icon gradient-<?php echo $gradient; ?>">
           <img src="images/games/<?php echo htmlspecialchars($image); ?>"
             alt="<?php echo htmlspecialchars($tournament['game_name']); ?>"
@@ -136,56 +384,45 @@ $registration_open = ($today >= $tournament['registration_start_date'] && $today
 
           <div class="game-stat">
             <span class="game-stat-label">Start Date</span>
-            <span class="game-stat-value gradient-<?php echo $gradient; ?>">
+            <span class="game-stat-value">
               <?php echo date('d M Y', strtotime($tournament['start_date'])); ?>
             </span>
           </div>
 
           <div class="game-stat">
-            <span class="game-stat-label">Registration</span>
-            <span class="game-stat-value gradient-<?php echo $gradient; ?>">
-              <?php echo date('d M Y', strtotime($tournament['registration_start_date'])); ?>
-              -
-              <?php echo date('d M Y', strtotime($tournament['registration_deadline'])); ?>
+            <span class="game-stat-label">Registration Period</span>
+            <span class="game-stat-value">
+              <?php echo date('d M Y', strtotime($tournament['registration_start_date'])); ?> - <?php echo date('d M Y', strtotime($tournament['registration_deadline'])); ?>
             </span>
           </div>
 
           <div class="game-stat">
             <span class="game-stat-label">Team Size</span>
-            <span class="game-stat-value"><?php echo (int)$tournament['team_size']; ?></span>
+            <span class="game-stat-value"><?php echo (int)$tournament['team_size']; ?> Players</span>
           </div>
 
           <div class="game-stat">
-            <span class="game-stat-label">Max Teams</span>
-            <span class="game-stat-value"><?php echo (int)$tournament['max_participants']; ?></span>
+            <span class="game-stat-label">Slot Limit</span>
+            <span class="game-stat-value"><?php echo (int)$tournament['max_participants']; ?> Teams</span>
           </div>
 
           <div class="game-stat">
             <span class="game-stat-label">Teams Joined</span>
-            <span class="game-stat-value gradient-<?php echo $gradient; ?>">
-              <?php echo count($teams); ?>
+            <span class="game-stat-value">
+              <?php echo count($teams); ?> / <?php echo (int)$tournament['max_participants']; ?>
             </span>
           </div>
 
           <div class="game-stat">
-            <span class="game-stat-label">Players Joined</span>
-            <span class="game-stat-value gradient-<?php echo $gradient; ?>">
-              <?php
-              $players = 0;
-              foreach ($teams as $team) $players += $team['player_count'];
-              echo $players;
-              ?>
-            </span>
-          </div>
-
-          <div class="game-stat">
-            <span class="game-stat-label">Fee</span>
+            <span class="game-stat-label">Entry Fee</span>
             <span class="game-stat-value">$<?php echo number_format((float)$tournament['fee'], 2); ?></span>
           </div>
 
           <div class="game-stat">
             <span class="game-stat-label">Prize Pool</span>
-            <span class="game-stat-value">$<?php echo number_format((float)$tournament['prize_pool'], 2); ?></span>
+            <span class="game-stat-value" style="font-size: 1.5rem; color: var(--riot-red);">
+              $<?php echo number_format((float)$tournament['prize_pool'], 2); ?>
+            </span>
           </div>
         </div>
 
@@ -196,45 +433,33 @@ $registration_open = ($today >= $tournament['registration_start_date'] && $today
           <span class="btn-game gradient-gray">Registration Closed</span>
         <?php endif; ?>
 
-        <div class="game-particles">
-          <div class="game-particle particle-1 gradient-<?php echo $gradient; ?>"></div>
-          <div class="game-particle particle-2 gradient-<?php echo $gradient; ?>"></div>
-          <div class="game-particle particle-3 gradient-<?php echo $gradient; ?>"></div>
-        </div>
-
         <div class="game-glow gradient-<?php echo $gradient; ?>"></div>
       </div>
     </div>
 
     <div class="section-header mt-5">
-      <h3>Registered Teams</h3>
+      <h3 class="section-title" style="font-size: 1.8rem;">Registered Teams</h3>
     </div>
 
     <div class="games-grid">
       <?php if (empty($teams)): ?>
-        <p>No teams have joined yet.</p>
+        <p style="opacity: 0.5; grid-column: 1/-1;">No teams have joined yet. Be the first!</p>
       <?php else: ?>
         <?php foreach ($teams as $index => $team): ?>
-          <div class="game-card game-card-<?php echo $index; ?>">
-            <div class="game-bg gradient-<?php echo $gradient; ?>"></div>
-            <div class="game-icon gradient-<?php echo $gradient; ?>">
+          <div class="game-card">
+            <div class="game-icon gradient-<?php echo $gradient; ?>" style="width: 60px; height: 60px;">
               <img src="images/default_team.png" alt="Team Logo" class="game-img">
             </div>
-            <h3 class="game-name"><?php echo htmlspecialchars($team['team_name']); ?></h3>
-            <div class="game-stats">
+            <h3 class="game-name" style="font-size: 1.3rem;"><?php echo htmlspecialchars($team['team_name']); ?></h3>
+            <div class="game-stats" style="grid-template-columns: 1fr; gap: 10px;">
               <div class="game-stat">
                 <span class="game-stat-label">Leader</span>
                 <span class="game-stat-value"><?php echo htmlspecialchars($team['leader_name']); ?></span>
               </div>
               <div class="game-stat">
-                <span class="game-stat-label">Players</span>
-                <span class="game-stat-value"><?php echo (int)$team['player_count']; ?></span>
+                <span class="game-stat-label">Roster</span>
+                <span class="game-stat-value"><?php echo (int)$team['player_count']; ?> Players</span>
               </div>
-            </div>
-            <div class="game-particles">
-              <div class="game-particle particle-1 gradient-<?php echo $gradient; ?>"></div>
-              <div class="game-particle particle-2 gradient-<?php echo $gradient; ?>"></div>
-              <div class="game-particle particle-3 gradient-<?php echo $gradient; ?>"></div>
             </div>
             <div class="game-glow gradient-<?php echo $gradient; ?>"></div>
           </div>
