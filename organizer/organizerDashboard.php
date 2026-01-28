@@ -79,7 +79,7 @@ include("header.php");
             color: #000;
             padding: 10px 18px;
             border-radius: 6px;
-            text-decoration: none
+            text-decoration: none;
         }
 
         .btn.secondary {
@@ -88,7 +88,8 @@ include("header.php");
             color: var(--primary-blue);
             padding: 8px 16px;
             border-radius: 6px;
-            margin-left: 10px
+            margin-left: 10px;
+            text-decoration: none;
         }
 
         .charts-wrapper {
