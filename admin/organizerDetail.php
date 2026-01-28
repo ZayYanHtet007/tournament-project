@@ -26,18 +26,20 @@ if (!$organizer) {
 }
 
 
-$tournaments = [
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED']
-];
+$tournaments = [];
+
+$tour_sql = "SELECT t.title AS name, t.status, g.name AS game 
+             FROM tournaments t 
+             JOIN games g ON t.game_id = g.game_id 
+             WHERE t.organizer_id = $user_id";
+
+$tour_result = mysqli_query($conn, $tour_sql);
+
+if ($tour_result) {
+    while ($row = mysqli_fetch_assoc($tour_result)) {
+        $tournaments[] = $row;
+    }
+}
 
 ?>
 
