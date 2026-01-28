@@ -63,9 +63,9 @@ usort($tournaments, function ($a, $b) {
             </form>
         </div>
 
-        <div class="tournament-card-wrapper">
+        <div class="glass-card">
             <div class="table-responsive">
-                <table class="table table-hover align-middle custom-tournament-table">
+                <table>
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -97,8 +97,8 @@ usort($tournaments, function ($a, $b) {
                             };
                         ?>
                             <tr onclick="window.location='tournamentsDetail.php?id=<?= $row['tournament_id'] ?>'" style="cursor: pointer;">
-                                <td><span class="id-badge">#<?= $row['tournament_id'] ?></span></td>
-                                <td class="fw-bold text-dark"><?= htmlspecialchars($row['title']) ?></td>
+                                <td><span>#<?= $row['tournament_id'] ?></span></td>
+                                <td ><?= htmlspecialchars($row['title']) ?></td>
                                 <td><?= htmlspecialchars($row['game_name']) ?></td>
                                 <td><?= number_format($row['max_participants']) ?> Players</td>
                                 <td class="fee-text">$<?= number_format($row['fee'], 2) ?></td>
