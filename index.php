@@ -1,5 +1,6 @@
 <?php
  include('partial/header.php');
+
 ?>
 <?php
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -82,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $conn->begin_transaction();
             try {
                 $stmt = $conn->prepare("
-        INSERT INTO teams (team_name, leader_id, short_name, motto, total_member, logo)
+        INSERT INTO teams (team_name, leader_id, short_name, motto, players, logo)
         VALUES (?, ?, ?, ?, ?, ?)
         ");
                 $stmt->bind_param("sissis", $teamName, $user_id, $shortName, $motto, $players, $image);
@@ -110,99 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
 }
 ?>
 
-
-<?php
-
-// Simulated login/team data
-// Replace these with your real session/database logic
-$isLoggedIn = isset($_SESSION['user_id']); // true if logged in
-$userTeam = $isLoggedIn ? ($_SESSION['team_name'] ?? null) : null;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
-    echo '$isLoggedIn=' . ($isLoggedIn ? 'true' : 'false');
-
-    if (!$isLoggedIn) {
-        $errors[] = "You must be logged in to create a team.";
-    } else {
-
-        $teamName = trim($_POST['teamName'] ?? '');
-        $shortName = trim($_POST['shortName'] ?? '');
-        $motto = trim($_POST['motto'] ?? '');
-        $players = (int)($_POST['players'] ?? 0);
-
-        if ($teamName === '' || $shortName === '' || $players <= 0 || empty($_FILES['image']['name'])) {
-            $errors[] = "All fields are required.";
-        }
-
-        if (strlen($teamName) < 6 || strlen($teamName) > 16) {
-            $errors[] = "Team name must be 6–16 characters.";
-        }
-
-        if (strlen($shortName) < 2 || strlen($shortName) > 4) {
-            $errors[] = "Short name must be 2–4 characters.";
-        }
-
-        if (empty($errors)) {
-            $image = time() . "_" . basename($_FILES['image']['name']); // max file size 2 MB
-            $tmp = $_FILES['image']['tmp_name'];
-
-            $uploadDir = __DIR__ . "/images/";
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-
-            $path = $uploadDir . $image;
-
-            if (!move_uploaded_file($tmp, $path)) {
-                $errors[] = "Image upload failed.";
-            }
-        }
-
-        if (empty($errors)) {
-            $stmt = $conn->prepare("SELECT team_id FROM teams WHERE team_name = ?");
-            $stmt->bind_param("s", $teamName);
-            $stmt->execute();
-            $stmt->store_result();
-            if ($stmt->num_rows > 0) {
-                $errors[] = "Team name already exists.";
-            }
-            $stmt->close();
-        }
-
-        print_r($errors);
-
-        if (empty($errors)) {
-
-            $conn->begin_transaction();
-            try {
-                $stmt = $conn->prepare("
-        INSERT INTO teams (team_name, leader_id, short_name, motto, total_member, logo)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ");
-                $stmt->bind_param("sissis", $teamName, $user_id, $shortName, $motto, $players, $image);
-                $stmt->execute();
-                $team_id = $stmt->insert_id;
-                $stmt->close();
-
-                $stmt = $conn->prepare("
-        INSERT INTO team_members (team_id, user_id, role)
-        VALUES (?, ?, 'leader')
-        ");
-                $stmt->bind_param("ii", $team_id, $user_id);
-                $stmt->execute();
-                $stmt->close();
-
-                $conn->commit();
-                header("Location: index.php?team_id=" . $team_id);
-                exit;
-            } catch (Exception $e) {
-                $conn->rollback();
-                $errors[] = "Database error.";
-            }
-        }
-    }
-}
-?>
 
 <!DOCTYPE html>
 <html lang="en">
