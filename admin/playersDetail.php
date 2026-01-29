@@ -63,7 +63,7 @@ $tournaments = [
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h3 fw-bold mb-1">Player Management</h1>
-                <p class="text-muted small">Manage details for <b><?= htmlspecialchars($player['username']) ?></b></p>
+                <p class="small">Manage details for <b><?= htmlspecialchars($player['username']) ?></b></p>
             </div>
 
             <a href="players.php" class="btn btn-secondary" style="width: auto; ">
@@ -72,22 +72,21 @@ $tournaments = [
 
         </div>
 
-        <div class="player-info-box shadow-sm mb-4">
-            <table class="table align-middle m-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Player ID</th>
-                        <th>Player Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="id-badge">#<?= $player['user_id'] ?></span></td>
-                        <td class="fw-bold"><?= htmlspecialchars($player['username']) ?></td>
-                    </tr>
-                </tbody>
-            </table>
+
+        <div class="glass-card">
+            <div class="player-details-grid">
+                <div class="detail-group">
+                    <label>PLAYER ID</label>
+                    <div class="detail-value">#<?= $player['user_id'] ?></div>
+                </div>
+
+                <div class="detail-group">
+                    <label>PLAYER NAME</label>
+                    <div class="detail-value"><?= htmlspecialchars($player['username']) ?></div>
+                </div>
+            </div>
         </div>
+
 
         <form method="POST" onsubmit="return confirm('Ban this player?');">
             <input type="hidden" name="user_id" value="<?= $player['user_id'] ?>">
@@ -108,8 +107,7 @@ $tournaments = [
             }
             ?>
         </form>
-
-        <div class="section-container mt-4">
+        <div class="section-container">
             <h3 class="section-title">Joined Teams</h3>
 
             <div class="scroll-grid-container">
@@ -122,7 +120,7 @@ $tournaments = [
                                         <h6 class="fw-bold mb-0"><?= htmlspecialchars($team['team_name']) ?></h6>
                                         <i class="bi bi-people text-muted"></i>
                                     </div>
-                                    <p class="text-muted x-small mb-1" style="font-size: 0.7rem;">GAME TITLE</p>
+                                    <p class=" x-small mb-1" style="font-size: 0.7rem;">GAME TITLE</p>
                                     <p class="fw-bold text-primary mb-0"><?= htmlspecialchars($team['game_name']) ?></p>
                                 </div>
                             </div>
@@ -148,8 +146,8 @@ $tournaments = [
                             <div class="item-card">
                                 <span class="custom-badge <?= $badge ?> d-inline-block mb-3"><?= strtoupper($status) ?></span>
                                 <h6 class="fw-bold"><?= htmlspecialchars($tour['name']) ?></h6>
-                                <div class="mt-2 pt-2 border-top d-flex justify-content-between small">
-                                    <span class="text-muted">Game</span>
+                                <div class="mt-2 pt-2  d-flex justify-content-between small">
+                                    <span>Game</span>
                                     <span class="fw-bold"><?= htmlspecialchars($tour['game']) ?></span>
                                 </div>
                             </div>
@@ -160,3 +158,5 @@ $tournaments = [
         </div>
     </div>
 </div>
+
+
