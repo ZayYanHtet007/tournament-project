@@ -76,13 +76,14 @@ function include_grid_content($data)
     <div class="team-grid">
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
-                <div class="team-card" onclick="openTeam('<?= addslashes($row['team_name']) ?>', '<?= addslashes($row['motto']) ?>', '<?= addslashes($row['player_list'] ?? '') ?>')">
+                <div class="team-card" onclick="openTeam('<?= addslashes($row['team_name']) ?>', '<?= addslashes($row['motto']?? '') ?>', '<?= addslashes($row['player_list'] ?? '') ?>')">
                     <div class="card-accent"></div>
                     <div class="photo-box">
                         <img src="uploads/teams/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
                     </div>
                     <div class="info-box">
-                        <p class="motto-txt"><?= htmlspecialchars($row['motto']) ?></p>
+                        <p class="motto-txt"><?= htmlspecialchars($row['motto'] ?? '') ?></p>
+
                         <h3 class="name-txt"><?= htmlspecialchars($row['team_name']) ?></h3>
                     </div>
                 </div>
