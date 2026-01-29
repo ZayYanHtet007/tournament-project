@@ -691,23 +691,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 <button id="closeTeam" style="margin-top:20px;padding:10px 20px;border:none;border-radius:6px;background:var(--riot);color:#000;font-weight:800;cursor:pointer;">Close</button>
             </div>
         </div>
+        <?php
+        $stats =[
+            'players' =>0,
+            'teams' =>0,
+            'matches'=>0,
+            'prize'=>0
+        ];
+        if(isset($conn) && $conn){
+            $res =$conn->query("select count(*) as total from users");
+            if($res) $status['players']= $res->fetch_assoc()['total'];
+
+            $res = $conn->query("select count(*) as total from teams");
+            if($res)  $status['teams']= $res->fetch_assoc()['total'];
+
+            $res = $conn->query("select count(*) as total from matches ");
+            if($res)  $status['matches']=$res->fetch_assoc()['total'];
+
+            $res =$conn->query('select sum(prize_pool) as total from tournaments');
+            if($res) $status['prize']=$res->fetch_assoc()['total'];
+        }
+       
+
+        
+        
+        ?>
 
         <!-- STATS -->
         <section class="stats-grid">
             <div class="stat-box reveal">
-                <h4 data-target="500">0</h4>
+                <h4 data-target="<?php echo $status['players']?>">0</h4>
                 <p>PLAYERS</p>
             </div>
             <div class="stat-box reveal">
-                <h4 data-target="100">0</h4>
+                <h4 data-target="<?php echo $status['teams']?>">0</h4>
                 <p>TEAMS</p>
             </div>
             <div class="stat-box reveal">
-                <h4 data-target="20">0</h4>
+                <h4 data-target="<?php echo $status['matches']?>">0</h4>
                 <p>MATCHES TODAY</p>
             </div>
             <div class="stat-box reveal">
-                <h4 data-target="250000">0</h4>
+                <h4 data-target="<?php echo $status['prize'] ?>">0</h4>
                 <p>PRIZE POOL ($)</p>
             </div>
         </section>
