@@ -592,7 +592,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                     <h1><span>TournaX</span><br>RISE TO DOMINANCE</h1>
                     <br>
                     <div class="tx-actions">
-                        <a class="tx-btn tx-btn-primary" href="#">JOIN TOURNAMENT</a>
+                        <a class="tx-btn tx-btn-primary" href="announcement.php">JOIN TOURNAMENT</a>
                         <?php if (!$isLoggedIn): ?>
                             <a class="tx-btn tx-btn-ghost" href="login.php">CREATE TEAM</a>
                         <?php elseif ($userTeam): ?>
