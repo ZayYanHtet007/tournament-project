@@ -1,5 +1,5 @@
 <?php
- include('partial/header.php');
+include('partial/header.php');
 ?>
 <?php
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -246,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 radial-gradient(circle at 90% 90%, rgba(0, 229, 255, 0.08), transparent 40%);
         }
 
-    
+
         .noise {
             position: fixed;
             inset: 0;
@@ -254,6 +254,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             opacity: .03;
             pointer-events: none;
             background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        main>section {
+            margin: 120px 0;
         }
 
         /* ================= GLOBAL ANIMATION (IN/OUT) ================= */
@@ -405,74 +409,128 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
 
         /* ================= GAME GRID ================= */
         .game-container {
-            padding: 100px 10%;
+            width: 100%;
+            max-width: 1400px;
+            /* ✅ ADDED — WIDER CAROUSEL */
+            margin: 0 auto;
+            /* ✅ CENTERED */
+            height: 450px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1400px;
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
         }
+
+        .game-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
 
         .game-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            perspective: 1000px;
-        }
-
-        .game-card {
-            background: var(--surface);
-            height: 400px;
-            border-radius: 12px;
             position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: 0.4s ease, transform 0.3s ease;
-            transform-style: preserve-3d;
+            width: 100%;
+            height: 100%;
         }
 
-        .game-card:hover {
-            border-color: var(--riot);
-            transform: translateY(-10px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-        }
-
-        .game-card::after {
-            content: '';
+        /* ===== CARD ===== */
+        .game-card {
             position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, #000, transparent);
-            z-index: 1;
+            top: 50%;
+            left: 50%;
+            width: 280px;
+            height: 360px;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #000;
+            cursor: pointer;
+
+            /* IMPORTANT */
+            transition:
+                transform 0.6s ease,
+                opacity 0.6s ease,
+                filter 0.6s ease;
+            transform-style: preserve-3d;
+            opacity: 0;
         }
 
         .game-card img {
-            position: absolute;
-            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.5;
-            transition: 0.5s;
         }
 
-        .game-card:hover img {
-            opacity: 0.8;
-            scale: 1.1;
+        /* overlay */
+        .game-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, .85), transparent);
         }
 
+        /* ===== INFO ===== */
         .game-info {
-            position: relative;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
             z-index: 2;
         }
 
-        .game-info h3 {
-            font-size: 1.5rem;
-            font-weight: 800;
+        .game-info p {
+            font-size: 12px;
+            color: #aaa;
+            letter-spacing: 1px;
         }
 
-        .game-info p {
-            color: var(--riot);
-            font-weight: 700;
-            font-size: 0.75rem;
+        .game-info h3 {
+            font-size: 22px;
+            margin-top: 4px;
         }
+
+        /* ===== STATES ===== */
+
+        /* CENTER = FULL COLOR */
+        .game-card.center {
+            transform: translate(-50%, -50%) scale(1.15);
+            opacity: 1;
+            z-index: 3;
+            filter: grayscale(0%);
+        }
+
+        /* SIDES = BLACK & WHITE */
+        .game-card.left {
+            transform: translate(-160%, -50%) scale(0.85) rotateY(20deg);
+            opacity: 0.7;
+            z-index: 2;
+            filter: grayscale(100%);
+        }
+
+        .game-card.right {
+            transform: translate(60%, -50%) scale(0.85) rotateY(-20deg);
+            opacity: 0.7;
+            z-index: 2;
+            filter: grayscale(100%);
+        }
+
+        /* FADE OUT */
+        .game-card.hidden-left {
+            transform: translate(-260%, -50%) scale(0.6);
+            opacity: 0;
+            z-index: 0;
+            filter: grayscale(100%);
+        }
+
+        .game-card.hidden-right {
+            transform: translate(160%, -50%) scale(0.6);
+            opacity: 0;
+            z-index: 0;
+            filter: grayscale(100%);
+        }
+
 
         /* ================= LIVE MATCHES ================= */
         .match-section {
@@ -557,7 +615,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             }
         }
 
-/* NEW RIOT MODAL STYLE */
+        /* NEW RIOT MODAL STYLE */
         #teamOverlay {
             position: fixed;
             inset: 0;
@@ -572,7 +630,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             z-index: 99999;
         }
 
-        #teamOverlay.active { opacity: 1; visibility: visible; }
+        #teamOverlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
 
         .teamCard {
             background: var(--surface);
@@ -580,13 +641,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             padding: 50px 40px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
         }
 
         .teamCard::before {
             content: "ESTABLISH SQUAD // 02";
             position: absolute;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
             background: var(--riot);
             color: #000;
             font-size: 10px;
@@ -602,28 +664,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             text-align: left;
         }
 
-        .form-row-top { display: flex; gap: 20px; margin-bottom: 20px; align-items: center; }
-        
+        .form-row-top {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
         .upload_photo {
-            width: 100px; height: 100px;
+            width: 100px;
+            height: 100px;
             border: 2px solid var(--riot);
             object-fit: cover;
             padding: 4px;
             background: #000;
         }
 
-        .teamCard input, .teamCard textarea {
+        .teamCard input,
+        .teamCard textarea {
             width: 100%;
             padding: 15px;
             background: #111;
             border: 1px solid transparent;
-            border-bottom: 2px solid rgba(255,255,255,0.1);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
             color: #fff;
             margin-bottom: 15px;
             transition: 0.3s;
         }
 
-        .teamCard input:focus { outline: none; border-bottom-color: var(--riot); background: #151515; }
+        .teamCard input:focus {
+            outline: none;
+            border-bottom-color: var(--riot);
+            background: #151515;
+        }
 
         .createBtn {
             width: 100%;
@@ -638,140 +711,149 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             margin-top: 10px;
         }
 
-        .createBtn:hover { background: var(--riot); color: #000; }
+        .createBtn:hover {
+            background: var(--riot);
+            color: #000;
+        }
 
         .closeBtn {
             position: absolute;
-            top: 15px; right: 15px;
+            top: 15px;
+            right: 15px;
             font-size: 30px;
             cursor: pointer;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255, 255, 255, 0.3);
             transition: 0.3s;
         }
-        .closeBtn:hover { color: var(--riot); }
+
+        .closeBtn:hover {
+            color: var(--riot);
+        }
 
 
-@media (min-width: 768px) {
-    .tournaments-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+        @media (min-width: 768px) {
+            .tournaments-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
 
-    .gradient-text {
-        font-size: 5rem;
-        margin-top: 30px;
-    }
-}
+            .gradient-text {
+                font-size: 5rem;
+                margin-top: 30px;
+            }
+        }
 
-@media (min-width: 1024px) {
-    .tournaments-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
+        @media (min-width: 1024px) {
+            .tournaments-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
 
-}
+        }
     </style>
 </head>
 
 <body>
-        <canvas id="bg"></canvas>
-        <div class="bg-fx"></div>
-        <div class="noise"></div>
-        <main>
+    <canvas id="bg"></canvas>
+    <div class="bg-fx"></div>
+    <div class="noise"></div>
+    <main>
 
-            <!-- HERO -->
-            <section class="tx-hero">
-                <div class="tx-hero-inner">
-                    <div class="tx-kicker">TOURNAMENTS PLATFORM</div>
-                    <h1><span>TournaX</span><br>RISE TO DOMINANCE</h1>
-                    <br>
-                    <div class="tx-actions">
-                        <a class="tx-btn tx-btn-primary" href="#">JOIN TOURNAMENT</a>
-                        <?php if (!$isLoggedIn): ?>
-                            <a class="tx-btn tx-btn-ghost" href="login.php">CREATE TEAM</a>
-                        <?php elseif ($userTeam): ?>
-                            <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="btn-large btn-outline">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
-                        <?php else: ?>
-                            <button id="openTeam" class="tx-btn tx-btn-ghost">Create Team</button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TEAM MODAL -->
-            <div id="teamCard">
-                <div>
-                    <h2 id="teamName"></h2>
-                    <p>Team members, stats, and other details here...</p>
-                    <button id="closeTeam" style="margin-top:20px;padding:10px 20px;border:none;border-radius:6px;background:var(--riot);color:#000;font-weight:800;cursor:pointer;">Close</button>
+        <!-- HERO -->
+        <div class="tx-hero">
+            <div class="tx-hero-inner">
+                <div class="tx-kicker">TOURNAMENTS PLATFORM</div>
+                <h1><span>TournaX</span><br>RISE TO DOMINANCE</h1>
+                <br>
+                <div class="tx-actions">
+                    <a class="tx-btn tx-btn-primary" href="#">JOIN TOURNAMENT</a>
+                    <?php if (!$isLoggedIn): ?>
+                        <a class="tx-btn tx-btn-ghost" href="login.php">CREATE TEAM</a>
+                    <?php elseif ($userTeam): ?>
+                        <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="btn-large btn-outline">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
+                    <?php else: ?>
+                        <button id="openTeam" class="tx-btn tx-btn-ghost">Create Team</button>
+                    <?php endif; ?>
                 </div>
             </div>
+                    </div>
 
-            <!-- STATS -->
-            <section class="stats-grid">
-                <div class="stat-box reveal">
-                    <h4 data-target="500">0</h4>
-                    <p>PLAYERS</p>
-                </div>
-                <div class="stat-box reveal">
-                    <h4 data-target="100">0</h4>
-                    <p>TEAMS</p>
-                </div>
-                <div class="stat-box reveal">
-                    <h4 data-target="20">0</h4>
-                    <p>MATCHES TODAY</p>
-                </div>
-                <div class="stat-box reveal">
-                    <h4 data-target="250000">0</h4>
-                    <p>PRIZE POOL ($)</p>
-                </div>
-            </section>
+        <!-- TEAM MODAL -->
+        <div id="teamCard">
+            <div>
+                <h2 id="teamName"></h2>
+                <p>Team members, stats, and other details here...</p>
+                <button id="closeTeam" style="margin-top:20px;padding:10px 20px;border:none;border-radius:6px;background:var(--riot);color:#000;font-weight:800;cursor:pointer;">Close</button>
+            </div>
+        </div>
 
-            <!-- GAME CARDS -->
-            <section class="game-container">
-                <div class="game-grid">
-                    <?php
-                    $games = [
-                        ['img' => 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800', 'title' => 'VALORANT', 'type' => 'TACTICAL SHOOTER'],
-                        ['img' => 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=800', 'title' => 'CS2', 'type' => 'ACTION'],
-                        ['img' => 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800', 'title' => 'DOTA 2', 'type' => 'MOBA'],
-                        ['img' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=800', 'title' => 'PUBG', 'type' => 'BATTLE ROYALE'],
-                        ['img' => 'https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?auto=format&fit=crop&q=80&w=800', 'title' => 'FREE FIRE', 'type' => 'SURVIVAL'],
-                        ['img' => 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800', 'title' => 'FORTNITE', 'type' => 'BUILDER'],
-                    ];
-                    foreach ($games as $game): ?>
-                        <div class="game-card reveal">
-                            <img data-src="<?= $game['img'] ?>" alt="<?= $game['title'] ?>">
-                            <div class="game-info">
-                                <p><?= $game['type'] ?></p>
-                                <h3><?= $game['title'] ?></h3>
-                            </div>
+        <!-- STATS -->
+        <section class="stats-grid">
+            <div class="stat-box reveal">
+                <h4 data-target="500">0</h4>
+                <p>PLAYERS</p>
+            </div>
+            <div class="stat-box reveal">
+                <h4 data-target="100">0</h4>
+                <p>TEAMS</p>
+            </div>
+            <div class="stat-box reveal">
+                <h4 data-target="20">0</h4>
+                <p>MATCHES TODAY</p>
+            </div>
+            <div class="stat-box reveal">
+                <h4 data-target="250000">0</h4>
+                <p>PRIZE POOL ($)</p>
+            </div>
+        </section>
+
+        <!-- GAME CARDS -->
+        <section class="game-container">
+            <div class="game-grid">
+                <?php
+                $games = [
+                    ['img' => 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800', 'title' => 'VALORANT', 'type' => 'TACTICAL SHOOTER'],
+                    ['img' => 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=800', 'title' => 'CS2', 'type' => 'ACTION'],
+                    ['img' => 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800', 'title' => 'DOTA 2', 'type' => 'MOBA'],
+                    ['img' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=800', 'title' => 'PUBG', 'type' => 'BATTLE ROYALE'],
+                    ['img' => 'https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?auto=format&fit=crop&q=80&w=800', 'title' => 'FREE FIRE', 'type' => 'SURVIVAL'],
+                    ['img' => 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800', 'title' => 'FORTNITE', 'type' => 'BUILDER'],
+                ];
+
+                foreach ($games as $game): ?>
+                    <div class="game-card reveal">
+                        <img data-src="<?= $game['img'] ?>" alt="<?= $game['title'] ?>">
+                        <div class="game-info">
+                            <p><?= $game['type'] ?></p>
+                            <h3><?= $game['title'] ?></h3>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
 
-            <!-- LIVE MATCHES -->
-            <section class="match-section">
-                <div class="match-list">
-                    <div class="match-item reveal">
-                        <div class="match-team" style="text-align:right">TEAM LIQUID</div>
-                        <div class="match-vs">VS</div>
-                        <div class="match-team">VITALITY</div>
-                    </div>
-                    <div class="match-item reveal">
-                        <div class="match-team" style="text-align:right">ZETA DIVISION</div>
-                        <div class="match-vs">VS</div>
-                        <div class="match-team">DRX</div>
-                    </div>
-                    <div class="match-item reveal">
-                        <div class="match-team" style="text-align:right">CLOUD9</div>
-                        <div class="match-vs">VS</div>
-                        <div class="match-team">NAVI</div>
-                    </div>
+
+        <!-- LIVE MATCHES -->
+        <section class="match-section">
+            <div class="match-list">
+                <div class="match-item reveal">
+                    <div class="match-team" style="text-align:right">TEAM LIQUID</div>
+                    <div class="match-vs">VS</div>
+                    <div class="match-team">VITALITY</div>
                 </div>
-            </section>
-        </main>
-        <!-- CREATE TEAM CARD (HIDDEN) -->
-<div id="teamOverlay">
+                <div class="match-item reveal">
+                    <div class="match-team" style="text-align:right">ZETA DIVISION</div>
+                    <div class="match-vs">VS</div>
+                    <div class="match-team">DRX</div>
+                </div>
+                <div class="match-item reveal">
+                    <div class="match-team" style="text-align:right">CLOUD9</div>
+                    <div class="match-vs">VS</div>
+                    <div class="match-team">NAVI</div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- CREATE TEAM CARD (HIDDEN) -->
+    <div id="teamOverlay">
         <div class="teamCard">
             <span class="closeBtn">&times;</span>
             <h2>CREATE SQUAD</h2>
@@ -991,7 +1073,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
     </script>
 
     <script>
-
         // ================= TEAM CARD LOGIC =================
         const teamBtn = document.getElementById('teamBtn');
         const teamCard = document.getElementById('teamCard');
@@ -1039,36 +1120,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             threshold: 0.15
         });
         document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    </script>
 
-        // ================= 3D CARD TILT =================
+    <script>
+        /* ================= CAROUSEL LOGIC ================= */
+
         const cards = document.querySelectorAll('.game-card');
+        let current = 2;
+
+        // ✅ ADDED: preload images for carousel (no blank cards)
         cards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = ((y - centerY) / centerY) * 10;
-                const rotateY = ((x - centerX) / centerX) * 10;
-                card.style.setProperty('--rx', `${-rotateX}deg`);
-                card.style.setProperty('--ry', `${rotateY}deg`);
+            const img = card.querySelector('img[data-src]');
+            if (img && !img.src) img.src = img.dataset.src;
+        });
+
+        function updateCarousel() {
+            cards.forEach((card, i) => {
+                card.className = 'game-card reveal';
+
+                if (i === current) {
+                    card.classList.add('center', 'active'); // ✅ fade in
+                } else if (i === current - 1) {
+                    card.classList.add('left', 'active'); // ✅ fade in
+                } else if (i === current + 1) {
+                    card.classList.add('right', 'active'); // ✅ fade in
+                } else if (i < current) {
+                    card.classList.add('hidden-left'); // ✅ fade out
+                } else {
+                    card.classList.add('hidden-right'); // ✅ fade out
+                }
             });
-            card.addEventListener('mouseleave', () => {
-                card.style.setProperty('--rx', '0deg');
-                card.style.setProperty('--ry', '0deg');
+        }
+
+        updateCarousel();
+
+        cards.forEach((card, i) => {
+            card.addEventListener('click', () => {
+                if (i === current + 1) current++;
+                if (i === current - 1) current--;
+
+                if (current < 0) current = 0;
+                if (current > cards.length - 1) current = cards.length - 1;
+
+                updateCarousel();
             });
         });
 
-        function previewImage(event) {
-        let img = document.getElementById("img");
-        img.src = URL.createObjectURL(event.target.files[0]);
-        img.onload = function() {
-            URL.revokeObjectURL(img.src);
-        }
-    }
+        /* ===== SCROLL FADE FOR GAME SECTION ONLY ===== */
+        const gameSection = document.querySelector('.game-container');
+
+        const gameObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    gameSection.classList.add('active');
+                } else {
+                    gameSection.classList.remove('active');
+                }
+            });
+        }, {
+            threshold: 0.3
+        });
+
+        if (gameSection) gameObserver.observe(gameSection);
     </script>
 
-<?php
- include('partial/footer.php');
-?>
+    <?php
+    include('partial/footer.php');
+    ?>

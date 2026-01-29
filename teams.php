@@ -5,22 +5,24 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 1. DATA FETCHING LOGIC (Encapsulated for both initial load and AJAX)
+// 1. DATA FETCHING LOGIC
 function getTeamsData($conn, $limit, $page, $search)
 {
     $offset = ($page - 1) * $limit;
     $search = $conn->real_escape_string($search);
-    $whereClause = $search ? "WHERE t.team_name LIKE '%$search%'" : "";
+    $whereClause = $search ? "WHERE t.team_name LIKE '%$search%' OR t.short_name LIKE '%$search%'" : "";
 
     // Count total
     $total_res = $conn->query("SELECT COUNT(*) as count FROM teams t $whereClause")->fetch_assoc();
     $total_results = $total_res['count'];
     $total_pages = ceil($total_results / $limit);
 
-    // Main Query
-    $sql = "SELECT t.team_id, t.team_name, t.motto, t.logo, 
+    // Main Query - Fetches Leader and Short Name
+    $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, 
+            l.username AS leader_name,
             GROUP_CONCAT(u.username SEPARATOR ', ') as player_list
             FROM teams t
+            LEFT JOIN users l ON t.leader_id = l.user_id 
             LEFT JOIN team_members tm ON t.team_id = tm.team_id
             LEFT JOIN users u ON tm.user_id = u.user_id
             $whereClause
@@ -35,14 +37,13 @@ function getTeamsData($conn, $limit, $page, $search)
     ];
 }
 
-// 2. AJAX HANDLER (If this is an AJAX request, return only the grid and pagination)
+// 2. AJAX HANDLER
 if (isset($_GET['ajax'])) {
     $limit = 9;
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $search = isset($_GET['search']) ? $_GET['search'] : '';
     $data = getTeamsData($conn, $limit, $page, $search);
 
-    // Output only the inner content for AJAX
     ob_start();
     include_grid_content($data);
     echo ob_get_clean();
@@ -55,7 +56,7 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $data = getTeamsData($conn, $limit, $page, $search);
 
-// Helper function to render the grid (used by both initial load and AJAX)
+// Helper function to render the grid
 function include_grid_content($data)
 {
     $result = $data['result'];
@@ -63,11 +64,8 @@ function include_grid_content($data)
     $page = $data['page'];
     $search = $data['search'];
 
-    // Pagination Window Logic (Show 4 pages starting from current)
     $start_page = $page;
     $end_page = $start_page + 3;
-
-    // Adjust if end exceeds total
     if ($end_page > $total_pages) {
         $end_page = $total_pages;
         $start_page = max(1, $end_page - 3);
@@ -76,7 +74,14 @@ function include_grid_content($data)
     <div class="team-grid">
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
-                <div class="team-card" onclick="openTeam('<?= addslashes($row['team_name']) ?>', '<?= addslashes($row['motto']) ?>', '<?= addslashes($row['player_list'] ?? '') ?>')">
+                <div class="team-card" onclick="openTeam(
+                    '<?= addslashes($row['team_name']) ?>', 
+                    '<?= addslashes($row['short_name'] ?? '') ?>', 
+                    '<?= addslashes($row['motto']) ?>', 
+                    '<?= addslashes($row['leader_name'] ?? 'N/A') ?>', 
+                    '<?= addslashes($row['player_list'] ?? '') ?>',
+                    '<?= $row['team_id'] ?>'
+                )">
                     <div class="card-accent"></div>
                     <div class="photo-box">
                         <img src="uploads/teams/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
@@ -251,6 +256,7 @@ include('partial/header.php');
         text-transform: uppercase;
         font-size: 0.9rem;
         letter-spacing: 2px;
+        margin-bottom: 5px;
     }
 
     .pagination {
@@ -277,6 +283,7 @@ include('partial/header.php');
         color: var(--riot-dark);
     }
 
+    /* MODAL STYLES */
     .modal-overlay {
         display: none;
         position: fixed;
@@ -298,6 +305,7 @@ include('partial/header.php');
         padding: 50px;
         border: 1px solid var(--riot-red);
         position: relative;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
     }
 
     .close-btn {
@@ -309,6 +317,26 @@ include('partial/header.php');
         cursor: pointer;
     }
 
+    .modal-header {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 20px;
+    }
+
+    .modal-short {
+        color: var(--riot-red);
+        font-family: 'Teko';
+        font-size: 2rem;
+        margin-left: 10px;
+    }
+
+    .modal-leader {
+        color: #888;
+        font-size: 1rem;
+        text-transform: uppercase;
+        margin-top: 5px;
+    }
+
     .player-pill {
         display: inline-block;
         background: #222;
@@ -316,6 +344,27 @@ include('partial/header.php');
         margin: 5px;
         border-left: 4px solid var(--riot-red);
         text-transform: uppercase;
+    }
+
+    /* Modal Join Button */
+    .modal-join-btn {
+        display: block;
+        width: 100%;
+        margin-top: 30px;
+        padding: 15px;
+        background: var(--riot-red);
+        border: none;
+        color: white;
+        font-family: 'Teko', sans-serif;
+        font-size: 1.5rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .modal-join-btn:hover {
+        background: white;
+        color: var(--riot-red);
     }
 </style>
 
@@ -337,9 +386,22 @@ include('partial/header.php');
 <div id="teamModal" class="modal-overlay">
     <div class="modal-content">
         <span class="close-btn" onclick="closeTeam()">&times;</span>
-        <h2 id="m-name" style="font-size: 3.5rem; margin: 0; text-transform: uppercase; font-family: 'Teko'"></h2>
-        <p id="m-motto" style="color: var(--riot-red); font-size: 1.1rem; margin-bottom: 25px; text-transform: uppercase;"></p>
+
+        <div class="modal-header">
+            <h2 style="font-size: 3.5rem; margin: 0; text-transform: uppercase; font-family: 'Teko'; line-height: 1;">
+                <span id="m-name"></span>
+                <span id="m-short" class="modal-short"></span>
+            </h2>
+            <div class="modal-leader">
+                <i class="fas fa-crown"></i> Leader: <span id="m-leader" style="color:white"></span>
+            </div>
+            <p id="m-motto" style="color: var(--riot-red); font-size: 1.1rem; margin-top: 10px; text-transform: uppercase; font-style: italic;"></p>
+        </div>
+
+        <h4 style="color:#666; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Players</h4>
         <div id="m-players"></div>
+
+        <button id="m-join-btn" class="modal-join-btn">Request to Join</button>
     </div>
 </div>
 
@@ -355,15 +417,13 @@ include('partial/header.php');
         }
     }
 
-    // This handles the typing (Debounced to prevent server overload)
     function handleSearch() {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
-            fetchTeams(1); // Always reset to page 1 when searching
+            fetchTeams(1);
         }, 300);
     }
 
-    // AJAX function to fetch data from the server
     function fetchTeams(page) {
         const search = document.getElementById('teamSearch').value;
         const dynamicContent = document.getElementById('dynamic-content');
@@ -384,10 +444,14 @@ include('partial/header.php');
             .catch(err => console.warn('Something went wrong.', err));
     }
 
-    // Modal Logic
-    function openTeam(name, motto, players) {
+    // OPEN MODAL WITH DETAILS
+    function openTeam(name, short, motto, leader, players, teamId) {
         document.getElementById('m-name').innerText = name;
-        document.getElementById('m-motto').innerText = motto;
+        document.getElementById('m-short').innerText = short ? `[${short}]` : '';
+        document.getElementById('m-motto').innerText = `"${motto}"`;
+        document.getElementById('m-leader').innerText = leader;
+
+        // Players Logic
         let html = '';
         if (players && players.trim() !== '') {
             players.split(',').forEach(p => {
@@ -397,11 +461,26 @@ include('partial/header.php');
             html = '<p style="opacity:0.5">No registered members found.</p>';
         }
         document.getElementById('m-players').innerHTML = html;
+
+        // Setup Join Button
+        const joinBtn = document.getElementById('m-join-btn');
+        joinBtn.onclick = function() {
+            requestJoin(teamId);
+        };
+
         document.getElementById('teamModal').style.display = 'flex';
     }
 
     function closeTeam() {
         document.getElementById('teamModal').style.display = 'none';
+    }
+
+    function requestJoin(teamId) {
+        if (confirm("Do you want to send a request to join this team?")) {
+            // Actual Logic Here (e.g., AJAX or Redirect)
+            // window.location.href = 'join_request.php?team_id=' + teamId;
+            alert("Request sent for Team ID: " + teamId);
+        }
     }
 
     window.onclick = function(e) {

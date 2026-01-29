@@ -146,7 +146,6 @@ function matchCard($m)
             <span class='tx-team'>" . ($m['team2'] ?? 'TBD') . "</span>
         </div>
         <div class='tx-date-wrap'>
-            <label>Set Intel Date</label>
             <div class='date-input-container'>
                 <input type='datetime-local'
                        class='match-date'
@@ -304,6 +303,7 @@ function matchCard($m)
             width: 100%;
             font-family: inherit;
             cursor: text;
+            margin-bottom: 30px;
         }
 
         /* Customizing the native calendar icon */
