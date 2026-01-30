@@ -655,10 +655,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             }
 
         }
+
+        /* ===== FULLSCREEN LOADER ===== */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        /* ===== HIDE ===== */
+        #loader.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* ===== LOGO ===== */
+        #txLogo {
+            width: 100px;
+            filter: brightness(0) invert(1);
+            /* force white */
+            animation: subtlePulse 2s ease-in-out infinite;
+        }
+
+        /* ===== CLEAN PULSE ===== */
+        @keyframes subtlePulse {
+            0% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+
+            100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+        }
+
+
     </style>
 </head>
 
 <body>
+
+
+    <div id="loader">
+        <img src="images/TX.png" id="txLogo">
+    </div>
+
+
     <canvas id="bg"></canvas>
     <div class="bg-fx"></div>
     <div class="noise"></div>
@@ -671,11 +724,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 <h1><span>TournaX</span><br>RISE TO DOMINANCE</h1>
                 <br>
                 <div class="tx-actions">
-                    <a class="tx-btn tx-btn-primary" href="#">JOIN TOURNAMENT</a>
+                    <a class="tx-btn tx-btn-primary" href="player/team.php">JOIN TOURNAMENT</a>
                     <?php if (!$isLoggedIn): ?>
                         <a class="tx-btn tx-btn-ghost" href="login.php">CREATE TEAM</a>
                     <?php elseif ($userTeam): ?>
-                        <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="btn-large btn-outline">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
+                        <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="tx-btn tx-btn-ghost">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
                     <?php else: ?>
                         <button id="openTeam" class="tx-btn tx-btn-ghost">Create Team</button>
                     <?php endif; ?>
@@ -1115,6 +1168,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
 
         if (gameSection) gameObserver.observe(gameSection);
     </script>
+
+    <script>
+        // ================= LOADER LOGIC =================
+        const startTime = Date.now();
+
+        window.addEventListener("load", () => {
+            const loader = document.getElementById("loader");
+
+            const elapsed = Date.now() - startTime;
+            const minDuration = 1500; // 1.5 seconds
+
+            const remaining = Math.max(0, minDuration - elapsed);
+
+            setTimeout(() => {
+                loader.classList.add("hide");
+            }, remaining);
+        });
+    </script>
+
 
     <?php
     include('partial/footer.php');
