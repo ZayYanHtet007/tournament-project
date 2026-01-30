@@ -1013,6 +1013,41 @@ p {
     transform: scale(1);
 }
 
+/* Container for the photo and the two name inputs */
+.form-row-top {
+    display: flex;
+    align-items: center; /* Aligns items vertically in the center */
+    gap: 15px;           /* Space between the photo and the inputs */
+    margin-bottom: 15px; /* Space before the Motto textarea */
+}
+
+/* Ensure the photo stays a consistent size */
+.upload_photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Stack the Team Name and Short Name inputs vertically */
+.name-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;           /* Space between the two inputs */
+    flex: 1;             /* Makes the inputs take up the remaining width */
+}
+
+/* Style for inputs inside the team card */
+.teamCard input, .teamCard textarea {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 5px;
+}
+
 /* CLOSE BUTTON */
 .closeBtn {
     position: absolute;

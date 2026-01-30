@@ -163,3 +163,5 @@ while ($row = mysqli_fetch_assoc($tournaments_res)) {
         </div>
     </div>
 </div>
+
+

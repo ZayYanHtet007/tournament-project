@@ -71,28 +71,200 @@ function matchCard($m)
   return "
 <div class='tx-match'>
     <div class='tx-match-row'>
-        <span class='tx-team'>{$team1}</span>
-        <input type='number' min='0' name='score[{$match_id}][team1]' value='{$score1}' required>
-        <span>vs</span>
-        <input type='number' min='0' name='score[{$match_id}][team2]' value='{$score2}' required>
-        <span class='tx-team'>{$team2}</span>
+        <div class='tx-score-entry'>
+            <div class='team-block'>
+                <span class='tx-team-name'>{$team1}</span>
+                <input type='number' min='0' class='tx-score-input' name='score[{$match_id}][team1]' value='{$score1}' required>
+            </div>
+            <div class='tx-vs-divider'>VS</div>
+            <div class='team-block'>
+                <input type='number' min='0' class='tx-score-input' name='score[{$match_id}][team2]' value='{$score2}' required>
+                <span class='tx-team-name'>{$team2}</span>
+            </div>
+        </div>
     </div>
 </div>";
 }
 ?>
 
+<head>
+    <style>
+        :root {
+            --riot-blue: #0bc6e3;
+            --riot-dark: #010a13;
+            --riot-surface: #051923;
+            --riot-border: rgba(11, 198, 227, 0.2);
+            --riot-gold: #c8aa6e;
+            --riot-red: #ff4655;
+        }
+
+        .tx-body {
+            background-color: var(--riot-dark);
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-image: radial-gradient(circle at 50% 50%, #051923 0%, #010a13 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .tx-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .tx-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .tx-header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            color: var(--riot-blue);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(11, 198, 227, 0.3);
+        }
+
+        .tx-section {
+            margin-bottom: 60px;
+        }
+
+        .tx-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-left: 4px solid var(--riot-red);
+            padding-left: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .tx-card {
+            background: var(--riot-surface);
+            border: 1px solid var(--riot-border);
+            padding: 20px;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 95% 100%, 0 100%);
+            transition: 0.3s;
+        }
+
+        .tx-card:hover {
+            border-color: var(--riot-blue);
+        }
+
+        .tx-card h3 {
+            color: var(--riot-gold);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(200, 170, 110, 0.2);
+            padding-bottom: 8px;
+        }
+
+        /* SCORE ENTRY STYLING */
+        .tx-score-entry {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 10px;
+            border-radius: 4px;
+        }
+
+        .team-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .team-block:last-child {
+            justify-content: flex-end;
+        }
+
+        .tx-team-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #eee;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tx-score-input {
+            width: 50px;
+            background: #000;
+            border: 1px solid var(--riot-blue);
+            color: var(--riot-blue);
+            text-align: center;
+            padding: 8px 5px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            border-radius: 2px;
+        }
+
+        .tx-score-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--riot-blue);
+        }
+
+        .tx-vs-divider {
+            color: #555;
+            font-weight: 900;
+            font-size: 0.7rem;
+            padding: 0 5px;
+        }
+
+        .save-btn {
+            background: var(--riot-red);
+            color: #fff;
+            border: none;
+            padding: 15px 50px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        }
+
+        .save-btn:hover {
+            background: #ff5e6a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 70, 85, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .tx-grid { grid-template-columns: 1fr; }
+            .tx-team-name { max-width: 80px; }
+        }
+    </style>
+</head>
+
 <body class="tx-body">
   <div class="tx-container">
     <div class="tx-header">
-      <h1>🏆 Tournament Results — <?= esc($tRow['title']) ?></h1>
+      <h1>🏆 Tournament Results</h1>
+      <p style="color: var(--riot-gold); letter-spacing: 2px;"><?= esc($tRow['title']) ?></p>
     </div>
+    
     <form method="post" action="save-results.php">
       <input type="hidden" name="tournament_id" value="<?= $tournament_id ?>">
 
-      <!-- GROUP STAGE -->
       <?php if (!empty($matches['group'])): ?>
         <div class="tx-section">
-          <div class="tx-title">Group Stage</div>
+          <div class="tx-title">Group Stage Standings</div>
           <div class="tx-grid">
             <?php
             $groups = [];
@@ -110,7 +282,6 @@ function matchCard($m)
         </div>
       <?php endif; ?>
 
-      <!-- QUARTERFINALS -->
       <?php if (!empty($matches['quarterfinal'])): ?>
         <div class="tx-section">
           <div class="tx-title">Quarterfinals</div>
@@ -126,7 +297,6 @@ function matchCard($m)
         </div>
       <?php endif; ?>
 
-      <!-- SEMIFINALS -->
       <?php if (!empty($matches['semifinal'])): ?>
         <div class="tx-section">
           <div class="tx-title">Semifinals</div>
@@ -142,20 +312,19 @@ function matchCard($m)
         </div>
       <?php endif; ?>
 
-      <!-- FINALS -->
       <?php if (!empty($matches['final']) || !empty($matches['third_place'])): ?>
         <div class="tx-section">
-          <div class="tx-title">Finals</div>
+          <div class="tx-title">Championship Finals</div>
           <div class="tx-grid">
             <?php if (!empty($matches['final'])): ?>
-              <div class="tx-card">
-                <h3>Champion</h3>
+              <div class="tx-card" style="border-color: var(--riot-gold);">
+                <h3 style="color: var(--riot-gold);">Champion Title Match</h3>
                 <?= matchCard($matches['final'][0]) ?>
               </div>
             <?php endif; ?>
             <?php if (!empty($matches['third_place'])): ?>
               <div class="tx-card">
-                <h3>3rd Place</h3>
+                <h3>3rd Place Decider</h3>
                 <?= matchCard($matches['third_place'][0]) ?>
               </div>
             <?php endif; ?>
@@ -163,9 +332,10 @@ function matchCard($m)
         </div>
       <?php endif; ?>
 
-      <div style="text-align:center;margin-top:30px;">
-        <button style="padding:10px 20px;font-size:16px;cursor:pointer;" type="submit">💾 Save Scores</button>
+      <div style="text-align:center; margin-top:50px; padding-bottom: 50px;">
+        <button class="save-btn" type="submit">💾 Commit Scores to Database</button>
       </div>
     </form>
   </div>
   <?php include("footer.php"); ?>
+</body>

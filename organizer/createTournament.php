@@ -5,8 +5,8 @@ require_once "../database/dbConfig.php";
 /* ---------- ACCESS CONTROL ---------- */
 if (
     !isset($_SESSION['user_id']) ||
-    !$_SESSION['is_organizer'] ||
-    $_SESSION['organizer_status'] !== 'approved'
+    !$_SESSION['is_organizer'] 
+    // $_SESSION['organizer_status'] !== 'approved'
 ) {
     header("Location: ../login.php");
     exit;
@@ -123,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
     <title>Create Tournament</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/organizer/createtour.css">
     <style>
         .input {
             width: 100%;

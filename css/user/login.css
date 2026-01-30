@@ -1,5 +1,3 @@
-/* SignUp */
-
 /* 3D Animated Geometric Shapes */
 .geometric-shape-1 {
     position: absolute;
@@ -40,97 +38,13 @@
 }
 
 @keyframes rotate3d-1 {
-    0% {
-        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-    }
-
-    100% {
-        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
-    }
+    0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+    100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
 }
 
 @keyframes rotate3d-2 {
-
-    0%,
-    100% {
-        transform: rotateX(360deg) rotateY(360deg) scale(1);
-    }
-
-    50% {
-        transform: rotateX(180deg) rotateY(180deg) scale(1.2);
-    }
-}
-
-/* Floating 3D Cards */
-.floating-card-signup {
-    position: absolute;
-    width: 8rem;
-    height: 8rem;
-    background: linear-gradient(to bottom right, rgba(168, 85, 247, 0.05), rgba(236, 72, 153, 0.05));
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
-    transform-style: preserve-3d;
-}
-
-.floating-card-signup:nth-child(1) {
-    left: 5%;
-    top: 10%;
-    animation: float3d 8s ease-in-out infinite;
-}
-
-.floating-card-signup:nth-child(2) {
-    left: 17%;
-    top: 70%;
-    animation: float3d 8.5s ease-in-out 0.2s infinite;
-}
-
-.floating-card-signup:nth-child(3) {
-    left: 29%;
-    top: 10%;
-    animation: float3d 9s ease-in-out 0.4s infinite;
-}
-
-.floating-card-signup:nth-child(4) {
-    left: 41%;
-    top: 70%;
-    animation: float3d 9.5s ease-in-out 0.6s infinite;
-}
-
-.floating-card-signup:nth-child(5) {
-    left: 53%;
-    top: 10%;
-    animation: float3d 10s ease-in-out 0.8s infinite;
-}
-
-.floating-card-signup:nth-child(6) {
-    left: 65%;
-    top: 70%;
-    animation: float3d 10.5s ease-in-out 1s infinite;
-}
-
-.floating-card-signup:nth-child(7) {
-    left: 77%;
-    top: 10%;
-    animation: float3d 11s ease-in-out 1.2s infinite;
-}
-
-.floating-card-signup:nth-child(8) {
-    left: 89%;
-    top: 70%;
-    animation: float3d 11.5s ease-in-out 1.4s infinite;
-}
-
-@keyframes float3d {
-
-    0%,
-    100% {
-        transform: translateY(0) rotateY(0deg) rotateX(-10deg) scale(1);
-    }
-
-    50% {
-        transform: translateY(-30px) rotateY(180deg) rotateX(10deg) scale(1.1);
-    }
+    0%, 100% { transform: rotateX(360deg) rotateY(360deg) scale(1); }
+    50% { transform: rotateX(180deg) rotateY(180deg) scale(1.2); }
 }
 
 /* 3D Rotating Rings */
@@ -158,58 +72,15 @@
     animation: ringRotate2 10s linear infinite;
 }
 
-.ring-3 {
-    width: 16rem;
-    height: 16rem;
-    border: 4px solid rgba(59, 130, 246, 0.2);
-    transform: translate(-50%, -50%);
-    animation: ringRotate3 8s linear infinite;
-}
-
 @keyframes ringRotate1 {
-
-    0%,
-    100% {
-        transform: translate(-50%, -50%) rotateX(0deg) scale(1);
-    }
-
-    50% {
-        transform: translate(-50%, -50%) rotateX(180deg) scale(1.2);
-    }
-
-    100% {
-        transform: translate(-50%, -50%) rotateX(360deg) scale(1);
-    }
+    0%, 100% { transform: translate(-50%, -50%) rotateX(0deg) scale(1); }
+    50% { transform: translate(-50%, -50%) rotateX(180deg) scale(1.2); }
 }
 
 @keyframes ringRotate2 {
-    0% {
-        transform: translate(-50%, -50%) rotateY(0deg) scale(1.2);
-    }
-
-    50% {
-        transform: translate(-50%, -50%) rotateY(180deg) scale(1);
-    }
-
-    100% {
-        transform: translate(-50%, -50%) rotateY(360deg) scale(1.2);
-    }
-}
-
-@keyframes ringRotate3 {
-
-    0%,
-    100% {
-        transform: translate(-50%, -50%) rotateZ(0deg) scale(1);
-    }
-
-    50% {
-        transform: translate(-50%, -50%) rotateZ(180deg) scale(1.3);
-    }
-
-    100% {
-        transform: translate(-50%, -50%) rotateZ(360deg) scale(1);
-    }
+    0% { transform: translate(-50%, -50%) rotateY(0deg) scale(1.2); }
+    50% { transform: translate(-50%, -50%) rotateY(180deg) scale(1); }
+    100% { transform: translate(-50%, -50%) rotateY(360deg) scale(1.2); }
 }
 
 /* Animated Gradient Orbs */
@@ -237,217 +108,14 @@
     animation: orb2 12s ease-in-out infinite;
 }
 
-.orb-signup-3 {
-    top: 33%;
-    right: 25%;
-    width: 18rem;
-    height: 18rem;
-    background: rgba(59, 130, 246, 0.2);
-    animation: orb3 14s ease-in-out infinite;
-}
-
 @keyframes orb1 {
-
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1) rotate(0deg);
-    }
-
-    50% {
-        transform: translate(100px, 50px) scale(1.5) rotate(180deg);
-    }
+    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50% { transform: translate(100px, 50px) scale(1.5) rotate(180deg); }
 }
 
 @keyframes orb2 {
-
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1.2) rotate(360deg);
-    }
-
-    50% {
-        transform: translate(-80px, -60px) scale(1) rotate(180deg);
-    }
-}
-
-@keyframes orb3 {
-
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-
-    50% {
-        transform: translate(-50px, 70px) scale(1.4);
-    }
-}
-
-/* Glowing Particles */
-.particle-signup {
-    position: absolute;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: #c084fc;
-    filter: blur(2px);
-    animation: particleFloat 5s ease-in-out infinite;
-}
-
-.particle-signup:nth-child(1) {
-    left: 10%;
-    top: 20%;
-    animation-delay: 0s;
-    animation-duration: 5s;
-}
-
-.particle-signup:nth-child(2) {
-    left: 25%;
-    top: 50%;
-    animation-delay: 0.5s;
-    animation-duration: 6s;
-}
-
-.particle-signup:nth-child(3) {
-    left: 40%;
-    top: 30%;
-    animation-delay: 1s;
-    animation-duration: 5.5s;
-}
-
-.particle-signup:nth-child(4) {
-    left: 55%;
-    top: 60%;
-    animation-delay: 1.5s;
-    animation-duration: 7s;
-}
-
-.particle-signup:nth-child(5) {
-    left: 70%;
-    top: 25%;
-    animation-delay: 2s;
-    animation-duration: 6.5s;
-}
-
-.particle-signup:nth-child(6) {
-    left: 85%;
-    top: 55%;
-    animation-delay: 2.5s;
-    animation-duration: 5.8s;
-}
-
-.particle-signup:nth-child(7) {
-    left: 15%;
-    top: 70%;
-    animation-delay: 3s;
-    animation-duration: 6.2s;
-}
-
-.particle-signup:nth-child(8) {
-    left: 30%;
-    top: 15%;
-    animation-delay: 3.5s;
-    animation-duration: 7.5s;
-}
-
-.particle-signup:nth-child(9) {
-    left: 45%;
-    top: 80%;
-    animation-delay: 4s;
-    animation-duration: 5.3s;
-}
-
-.particle-signup:nth-child(10) {
-    left: 60%;
-    top: 10%;
-    animation-delay: 4.5s;
-    animation-duration: 6.8s;
-}
-
-.particle-signup:nth-child(11) {
-    left: 75%;
-    top: 75%;
-    animation-delay: 0.2s;
-    animation-duration: 5.6s;
-}
-
-.particle-signup:nth-child(12) {
-    left: 90%;
-    top: 35%;
-    animation-delay: 0.7s;
-    animation-duration: 6.4s;
-}
-
-.particle-signup:nth-child(13) {
-    left: 5%;
-    top: 45%;
-    animation-delay: 1.2s;
-    animation-duration: 7.2s;
-}
-
-.particle-signup:nth-child(14) {
-    left: 20%;
-    top: 85%;
-    animation-delay: 1.7s;
-    animation-duration: 5.9s;
-}
-
-.particle-signup:nth-child(15) {
-    left: 35%;
-    top: 5%;
-    animation-delay: 2.2s;
-    animation-duration: 6.6s;
-}
-
-.particle-signup:nth-child(16) {
-    left: 50%;
-    top: 40%;
-    animation-delay: 2.7s;
-    animation-duration: 5.4s;
-}
-
-.particle-signup:nth-child(17) {
-    left: 65%;
-    top: 90%;
-    animation-delay: 3.2s;
-    animation-duration: 7.1s;
-}
-
-.particle-signup:nth-child(18) {
-    left: 80%;
-    top: 15%;
-    animation-delay: 3.7s;
-    animation-duration: 6.3s;
-}
-
-.particle-signup:nth-child(19) {
-    left: 95%;
-    top: 65%;
-    animation-delay: 4.2s;
-    animation-duration: 5.7s;
-}
-
-.particle-signup:nth-child(20) {
-    left: 12%;
-    top: 92%;
-    animation-delay: 4.7s;
-    animation-duration: 6.9s;
-}
-
-@keyframes particleFloat {
-    0% {
-        transform: translateY(0) translateX(0) scale(0);
-        opacity: 0;
-    }
-
-    50% {
-        transform: translateY(-100px) translateX(20px) scale(1.5);
-        opacity: 1;
-    }
-
-    100% {
-        transform: translateY(0) translateX(0) scale(0);
-        opacity: 0;
-    }
+    0%, 100% { transform: translate(0, 0) scale(1.2) rotate(360deg); }
+    50% { transform: translate(-80px, -60px) scale(1) rotate(180deg); }
 }
 
 /* Animated Wave Lines */
@@ -468,43 +136,13 @@
     background: linear-gradient(to right, #a855f7, #ec4899, #3b82f6);
 }
 
-.wave-line:nth-child(1) {
-    top: 10%;
-    animation: wave 5s ease-in-out infinite;
-}
-
-.wave-line:nth-child(2) {
-    top: 30%;
-    animation: wave 5s ease-in-out 0.3s infinite;
-}
-
-.wave-line:nth-child(3) {
-    top: 50%;
-    animation: wave 5s ease-in-out 0.6s infinite;
-}
-
-.wave-line:nth-child(4) {
-    top: 70%;
-    animation: wave 5s ease-in-out 0.9s infinite;
-}
-
-.wave-line:nth-child(5) {
-    top: 90%;
-    animation: wave 5s ease-in-out 1.2s infinite;
-}
+.wave-line:nth-child(1) { top: 10%; animation: wave 5s ease-in-out infinite; }
+.wave-line:nth-child(2) { top: 30%; animation: wave 5s ease-in-out 0.3s infinite; }
+.wave-line:nth-child(3) { top: 50%; animation: wave 5s ease-in-out 0.6s infinite; }
 
 @keyframes wave {
-
-    0%,
-    100% {
-        transform: translateY(0) scaleX(0);
-        opacity: 0;
-    }
-
-    50% {
-        transform: translateY(-20px) scaleX(1);
-        opacity: 0.5;
-    }
+    0%, 100% { transform: translateY(0) scaleX(0); opacity: 0; }
+    50% { transform: translateY(-20px) scaleX(1); opacity: 0.5; }
 }
 
 /* Grid Pattern Overlay */
@@ -518,15 +156,8 @@
 }
 
 @keyframes gridPulse {
-
-    0%,
-    100% {
-        opacity: 0.3;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
 }
 
 /* Card Container */
@@ -544,15 +175,8 @@
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px) rotateX(10deg);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) rotateX(0);
-    }
+    from { opacity: 0; transform: translateY(50px) rotateX(10deg); }
+    to { opacity: 1; transform: translateY(0) rotateX(0); }
 }
 
 .card-signup {
@@ -566,9 +190,7 @@
     transition: transform 0.3s ease;
 }
 
-.card-signup:hover {
-    transform: translateY(-5px);
-}
+.card-signup:hover { transform: translateY(-5px); }
 
 .card-header-signup {
     padding: 1.5rem 1.5rem 1rem;
@@ -576,15 +198,8 @@
 }
 
 @keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .card-title-signup {
@@ -606,12 +221,6 @@
     padding: 0 1.5rem 1.5rem;
 }
 
-.form-signup {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
 .form-field-signup {
     display: flex;
     flex-direction: column;
@@ -620,52 +229,20 @@
     transition: transform 0.3s ease;
 }
 
-.form-field-signup:nth-child(1) {
-    animation-delay: 0.3s;
-}
-
-.form-field-signup:nth-child(2) {
-    animation-delay: 0.4s;
-}
-
-.form-field-signup:nth-child(3) {
-    animation-delay: 0.5s;
-}
-
-.form-field-signup:nth-child(4) {
-    animation-delay: 0.6s;
-}
+.form-field-signup:nth-child(1) { animation-delay: 0.3s; }
+.form-field-signup:nth-child(2) { animation-delay: 0.4s; }
 
 @keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-50px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-50px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
-.form-field-signup:hover {
-    transform: scale(1.02);
-}
+.form-field-signup:hover { transform: scale(1.02); }
 
 label {
     color: #d1d5db;
     font-size: 0.875rem;
     font-weight: 500;
-}
-
-.input-wrapper {
-    transition: all 0.3s ease;
-    border-radius: 0.375rem;
-}
-
-.input-wrapper:focus-within {
-    transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
 }
 
 input {
@@ -680,13 +257,8 @@ input {
     transition: all 0.3s ease;
 }
 
-input::placeholder {
-    color: #9ca3af;
-}
-
-input:focus {
-    border-color: #c084fc;
-}
+input::placeholder { color: #9ca3af; }
+input:focus { border-color: #c084fc; }
 
 .error-message {
     color: #f87171;
@@ -695,40 +267,8 @@ input:focus {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.checkbox-field-signup {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    animation: slideInLeft 0.5s ease-out 0.7s backwards;
-    transition: transform 0.3s ease;
-    padding: 0.5rem 0;
-}
-
-.checkbox-field-signup:hover {
-    transform: scale(1.02) translateX(5px);
-}
-
-input[type="checkbox"] {
-    width: 1rem;
-    height: 1rem;
-    cursor: pointer;
-    accent-color: #a855f7;
-}
-
-.checkbox-field-signup label {
-    cursor: pointer;
-    margin: 0;
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .button-group-signup {
@@ -739,32 +279,8 @@ input[type="checkbox"] {
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.button-wrapper {
-    flex: 1;
-    transition: all 0.3s ease;
-}
-
-.button-wrapper:hover {
-    transform: scale(1.05) rotate(1deg);
-}
-
-.button-wrapper:nth-child(2):hover {
-    transform: scale(1.05) rotate(-1deg);
-}
-
-.button-wrapper:active {
-    transform: scale(0.95);
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .btn-signup {
@@ -776,6 +292,9 @@ input[type="checkbox"] {
     cursor: pointer;
     transition: all 0.3s ease;
     border: none;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
 }
 
 .btn-primary-form {
@@ -800,42 +319,13 @@ input[type="checkbox"] {
 
 /* Responsive */
 @media (max-width: 640px) {
-
-    .orb-1,
-    .orb-2,
-    .orb-3 {
-        width: 16rem;
-        height: 16rem;
-    }
-
-    .card-title {
-        font-size: 1.5rem;
-    }
-
-    .geometric-shape-1,
-    .geometric-shape-2 {
-        width: 8rem;
-        height: 8rem;
-    }
-
-    .ring-1 {
-        width: 16rem;
-        height: 16rem;
-    }
-
-    .ring-2 {
-        width: 12rem;
-        height: 12rem;
-    }
-
-    .ring-3 {
-        width: 8rem;
-        height: 8rem;
-    }
+    .geometric-shape-1, .geometric-shape-2 { width: 8rem; height: 8rem; }
+    .ring-1 { width: 16rem; height: 16rem; }
+    .ring-2 { width: 12rem; height: 12rem; }
 }
 
-/* LOgin */
-.loginlabel{
+/* Login specific styles */
+.loginlabel {
     display: inline-block;
     padding: 10px 5px;
     margin-top: 20px;
@@ -843,6 +333,7 @@ input[type="checkbox"] {
     font-size: 0.875rem;
     color: #a855f7;
 }
+
 .signup_btn {
     display: inline-block;
     padding: 8px 12px;
@@ -854,9 +345,7 @@ input[type="checkbox"] {
     font-size: 0.875rem;
 }
 
-.signup_btn:hover {
-    color: #a855f7;
-}
+.signup_btn:hover { color: #a855f7; }
 
 .legacy-forget_btn {
     display: block;
@@ -869,6 +358,4 @@ input[type="checkbox"] {
     font-size: 0.875rem;
 }
 
-.legacy-forget_btn:hover {
-    color: #a855f7;
-}
+.legacy-forget_btn:hover { color: #a855f7; }

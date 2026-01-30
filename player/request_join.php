@@ -3,44 +3,76 @@ session_start();
 require_once "../database/dbConfig.php";
 
 if (!isset($_SESSION['user_id'])) {
-  header("Location: ../login.php");
-  exit;
+  http_response_code(401);
+  exit("Unauthorized");
 }
 
 $user_id = (int)$_SESSION['user_id'];
-$team_id = isset($_POST['team_id']) ? (int)$_POST['team_id'] : 0;
+$team_id = (int)($_POST['team_id'] ?? 0);
 $message = trim($_POST['message'] ?? '');
 
 if (!$team_id) {
-  die("Missing team_id");
+  http_response_code(400);
+  exit("Missing team_id");
 }
 
-// check not already member
-$chk = $conn->prepare("SELECT team_member_id FROM team_members WHERE team_id = ? AND user_id = ? LIMIT 1");
+/* ---------- FETCH TEAM ---------- */
+$t = $conn->prepare("SELECT players FROM teams WHERE team_id = ? LIMIT 1");
+$t->bind_param("i", $team_id);
+$t->execute();
+$team = $t->get_result()->fetch_assoc();
+$t->close();
+
+if (!$team) {
+  http_response_code(404);
+  exit("Team not found");
+}
+
+/* ---------- CHECK CAPACITY ---------- */
+$cnt = $conn->prepare("
+  SELECT COUNT(*) AS total FROM team_members WHERE team_id = ?
+");
+$cnt->bind_param("i", $team_id);
+$cnt->execute();
+$total = $cnt->get_result()->fetch_assoc()['total'];
+$cnt->close();
+
+if ($total >= (int)$team['players']) {
+  http_response_code(409);
+  exit("Team is full");
+}
+
+/* ---------- CHECK MEMBER ---------- */
+$chk = $conn->prepare("
+  SELECT team_member_id FROM team_members
+  WHERE team_id = ? AND user_id = ?
+");
 $chk->bind_param("ii", $team_id, $user_id);
 $chk->execute();
 if ($chk->get_result()->num_rows > 0) {
-  $chk->close();
-  die("You are already a member.");
+  exit("Already a member");
 }
 $chk->close();
 
-// check existing pending request
-$q = $conn->prepare("SELECT request_id FROM team_join_requests WHERE team_id = ? AND user_id = ? AND status = 'pending' LIMIT 1");
-$q->bind_param("ii", $team_id, $user_id);
-$q->execute();
-if ($q->get_result()->num_rows > 0) {
-  $q->close();
-  die("You already have a pending request.");
+/* ---------- CHECK PENDING REQUEST ---------- */
+$chk2 = $conn->prepare("
+  SELECT request_id FROM team_join_requests
+  WHERE team_id = ? AND user_id = ? AND status = 'pending'
+");
+$chk2->bind_param("ii", $team_id, $user_id);
+$chk2->execute();
+if ($chk2->get_result()->num_rows > 0) {
+  exit("Request already sent");
 }
-$q->close();
+$chk2->close();
 
-// create request
-$ins = $conn->prepare("INSERT INTO team_join_requests (team_id, user_id, message) VALUES (?, ?, ?)");
+/* ---------- INSERT REQUEST ---------- */
+$ins = $conn->prepare("
+  INSERT INTO team_join_requests (team_id, user_id, message)
+  VALUES (?, ?, ?)
+");
 $ins->bind_param("iis", $team_id, $user_id, $message);
-if ($ins->execute()) {
-  header("Location: team.php?team_id={$team_id}&requested=1");
-  exit;
-} else {
-  die("Failed to create request: " . $ins->error);
-}
+$ins->execute();
+$ins->close();
+
+echo "request_sent";

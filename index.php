@@ -1,5 +1,5 @@
 <?php
-include('./partial/header.php');
+include('partial/header.php');
 ?>
 <?php
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $conn->begin_transaction();
             try {
                 $stmt = $conn->prepare("
-        INSERT INTO teams (team_name, leader_id, short_name, motto, total_member, logo)
+        INSERT INTO teams (team_name, leader_id, short_name, motto, players, logo)
         VALUES (?, ?, ?, ?, ?, ?)
         ");
                 $stmt->bind_param("sissis", $teamName, $user_id, $shortName, $motto, $players, $image);
@@ -111,683 +111,1083 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
 ?>
 
 
-<!-- LOADER -->
-<div id="loader">
-    <h1 class="logo">Tourna<span>X</span></h1>
+<!DOCTYPE html>
+<html lang="en">
 
-    <div class="progress-bar1">
-        <div class="progress"></div>
+<head>
+    <meta charset="UTF-8" />
+    <title>TournaX — Elite Esports</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        /* ================= RESET & CORE ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --riot: #ff4655;
+            --riot-dark: #bd3944;
+            --bg: #06080f;
+            --surface: #11141d;
+            --text-dim: rgba(255, 255, 255, 0.6);
+            --transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: #fff;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ================= BACKGROUND ================= */
+        .bg-fx {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
+                radial-gradient(circle at 10% 10%, rgba(255, 70, 85, 0.12), transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 229, 255, 0.08), transparent 40%);
+        }
+
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: .03;
+            pointer-events: none;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        main>section {
+            margin: 120px 0;
+        }
+
+        /* ================= GLOBAL ANIMATION (IN/OUT) ================= */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px) scale(0.95);
+            transition: var(--transition);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+        }
+
+        .logo span {
+            color: var(--riot);
+        }
+
+        /* HERO */
+        .tx-hero {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 0 10%;
+            position: relative;
+        }
+
+        .tx-hero-inner {
+            max-width: 1100px;
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .tx-kicker {
+            letter-spacing: .35em;
+            color: #9aa3b2;
+            font-weight: 700;
+        }
+
+        .tx-hero h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(2rem, 6vw, 5rem);
+            line-height: 1;
+            margin: 18px 0;
+        }
+
+        .tx-hero h1 span {
+            color: var(--riot);
+        }
+
+        .tx-hero p {
+            max-width: 560px;
+            opacity: .75;
+            margin-bottom: 36px;
+        }
+
+        .tx-actions {
+            display: flex;
+            gap: 22px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tx-btn {
+            position: relative;
+            padding: 16px 36px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-decoration: none;
+            overflow: hidden;
+            border-radius: 6px;
+            transition: .3s;
+            cursor: pointer;
+            background-color: transparent;
+        }
+
+        .tx-btn-primary {
+            background: var(--riot);
+            color: #000;
+            box-shadow: 0 0 18px var(--riot);
+        }
+
+        .tx-btn-ghost {
+            border: 2px solid var(--riot);
+            color: var(--riot);
+        }
+
+        .tx-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .tx-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .5), transparent);
+            transform: translateX(-120%);
+            transition: .6s;
+        }
+
+        .tx-btn:hover::after {
+            transform: translateX(120%);
+        }
+
+        /* Floating 3D letters */
+        .floating-letters {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            perspective: 1000px;
+            pointer-events: none;
+        }
+
+        .floating-letters span {
+            position: absolute;
+            font-weight: 900;
+            color: rgba(255, 70, 85, 0.15);
+            transform-style: preserve-3d;
+            transition: transform 0.1s linear;
+        }
+
+        /* ================= STATS ================= */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 80px 10%;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .stat-box h4 {
+            font-size: 3rem;
+            color: var(--riot);
+            font-weight: 900;
+        }
+
+        .stat-box p {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            letter-spacing: 2px;
+        }
+
+        /* ================= GAME GRID ================= */
+        .game-container {
+            width: 100%;
+            max-width: 1400px;
+            /* ✅ ADDED — WIDER CAROUSEL */
+            margin: 0 auto;
+            /* ✅ CENTERED */
+            height: 450px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1400px;
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .game-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+        .game-grid {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ===== CARD ===== */
+        .game-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 280px;
+            height: 360px;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #000;
+            cursor: pointer;
+
+            /* IMPORTANT */
+            transition:
+                transform 0.6s ease,
+                opacity 0.6s ease,
+                filter 0.6s ease;
+            transform-style: preserve-3d;
+            opacity: 0;
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* overlay */
+        .game-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, .85), transparent);
+        }
+
+        /* ===== INFO ===== */
+        .game-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 2;
+        }
+
+        .game-info p {
+            font-size: 12px;
+            color: #aaa;
+            letter-spacing: 1px;
+        }
+
+        .game-info h3 {
+            font-size: 22px;
+            margin-top: 4px;
+        }
+
+        /* ===== STATES ===== */
+
+        /* CENTER = FULL COLOR */
+        .game-card.center {
+            transform: translate(-50%, -50%) scale(1.15);
+            opacity: 1;
+            z-index: 3;
+            filter: grayscale(0%);
+        }
+
+        /* SIDES = BLACK & WHITE */
+        .game-card.left {
+            transform: translate(-160%, -50%) scale(0.85) rotateY(20deg);
+            opacity: 0.7;
+            z-index: 2;
+            filter: grayscale(100%);
+        }
+
+        .game-card.right {
+            transform: translate(60%, -50%) scale(0.85) rotateY(-20deg);
+            opacity: 0.7;
+            z-index: 2;
+            filter: grayscale(100%);
+        }
+
+        /* FADE OUT */
+        .game-card.hidden-left {
+            transform: translate(-260%, -50%) scale(0.6);
+            opacity: 0;
+            z-index: 0;
+            filter: grayscale(100%);
+        }
+
+        .game-card.hidden-right {
+            transform: translate(160%, -50%) scale(0.6);
+            opacity: 0;
+            z-index: 0;
+            filter: grayscale(100%);
+        }
+
+
+        /* ================= LIVE MATCHES ================= */
+        .match-section {
+            padding: 100px 10%;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .match-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .match-item {
+            background: var(--surface);
+            padding: 20px 40px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .match-item:hover {
+            background: #1a1e2b;
+        }
+
+        .match-team {
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .match-vs {
+            background: var(--riot);
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 0.8rem;
+            margin: 0 30px;
+        }
+
+        /* ================= TEAM MODAL ================= */
+        #teamCard {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        #teamCard div {
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        /* ================= RESPONSIVE ================= */
+        @media (max-width:992px) {
+            .game-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width:600px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .match-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
+        /* NEW RIOT MODAL STYLE */
+        #teamOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 8, 15, 0.95);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+            z-index: 99999;
+        }
+
+        #teamOverlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .teamCard {
+            background: var(--surface);
+            width: 500px;
+            padding: 50px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+        }
+
+        .teamCard::before {
+            content: "ESTABLISH SQUAD // 02";
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--riot);
+            color: #000;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+        }
+
+        .teamCard h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-align: left;
+        }
+
+        .form-row-top {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .upload_photo {
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--riot);
+            object-fit: cover;
+            padding: 4px;
+            background: #000;
+        }
+
+        .teamCard input,
+        .teamCard textarea {
+            width: 100%;
+            padding: 15px;
+            background: #111;
+            border: 1px solid transparent;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+
+        .teamCard input:focus {
+            outline: none;
+            border-bottom-color: var(--riot);
+            background: #151515;
+        }
+
+        .createBtn {
+            width: 100%;
+            padding: 18px;
+            background: transparent;
+            border: 1px solid var(--riot);
+            color: #fff;
+            font-family: 'Bebas Neue';
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .createBtn:hover {
+            background: var(--riot);
+            color: #000;
+        }
+
+        .closeBtn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 30px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        .closeBtn:hover {
+            color: var(--riot);
+        }
+
+
+        @media (min-width: 768px) {
+            .tournaments-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .gradient-text {
+                font-size: 5rem;
+                margin-top: 30px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .tournaments-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+        }
+
+        /* ===== FULLSCREEN LOADER ===== */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        /* ===== HIDE ===== */
+        #loader.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* ===== LOGO ===== */
+        #txLogo {
+            width: 100px;
+            filter: brightness(0) invert(1);
+            /* force white */
+            animation: subtlePulse 2s ease-in-out infinite;
+        }
+
+        /* ===== CLEAN PULSE ===== */
+        @keyframes subtlePulse {
+            0% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+
+            100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+        }
+
+
+    </style>
+</head>
+
+<body>
+
+
+    <div id="loader">
+        <img src="images/TX.png" id="txLogo">
     </div>
 
-    <p class="loading-text">Initializing Arena…</p>
-</div>
-
-<!-- WEBSITE CONTENT -->
-<div id="site" class="hidden">
 
     <canvas id="bg"></canvas>
-
+    <div class="bg-fx"></div>
+    <div class="noise"></div>
     <main>
 
-        <!-- Hero Section -->
-        <section class="hero" id="hero3d">
-
-            <div class="hero-container">
-                <div class="hero-content">
-
-                    <h1 class="hero-title">
-                        <span class="gradient-text">TournaX</span>
-                        <br>
-                        <span>COMPETE FOR GLORY</span>
-                    </h1>
-
-                    <p class="hero-subtitle">
-                        Join the world's premier esports tournament platform. Compete against the best,
-                        win epic prizes, and become a legend.
-                    </p>
-
-                    <div class="hero-cta">
-                        <button class="btn-large btn-gradient">
-                            <span>Join Tournament</span>
-                        </button>
-                        <?php if (! $isLoggedIn): ?>
-                            <a href="login.php" class="btn-large btn-outline">Create Team</a>
-                        <?php elseif ($userTeam): ?>
-                            <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="btn-large btn-outline">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
-                        <?php else: ?>
-                            <button id="openTeam" class="btn-large btn-outline">Create Team</button>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="hero-stats">
-                        <div class="stat-card stat-card-1">
-                            <div class="stat-icon icon-cyan">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                                    <path d="M4 22h16" />
-                                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                                </svg>
-                            </div>
-                            <div class="stat-value gradient-cyan">$2.5M+</div>
-                            <div class="stat-label">Total Prize Pool</div>
-                        </div>
-
-                        <div class="stat-card stat-card-2">
-                            <div class="stat-icon icon-purple">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                                </svg>
-                            </div>
-                            <div class="stat-value gradient-purple">150K+</div>
-                            <div class="stat-label">Active Players</div>
-                        </div>
-
-                        <div class="stat-card stat-card-3">
-                            <div class="stat-icon icon-pink">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <circle cx="12" cy="12" r="6" />
-                                    <circle cx="12" cy="12" r="2" />
-                                </svg>
-                            </div>
-                            <div class="stat-value gradient-pink">500+</div>
-                            <div class="stat-label">Live Tournaments</div>
-                        </div>
-                    </div>
+        <!-- HERO -->
+        <div class="tx-hero">
+            <div class="tx-hero-inner">
+                <div class="tx-kicker">TOURNAMENTS PLATFORM</div>
+                <h1><span>TournaX</span><br>RISE TO DOMINANCE</h1>
+                <br>
+                <div class="tx-actions">
+                    <a class="tx-btn tx-btn-primary" href="player/team.php">JOIN TOURNAMENT</a>
+                    <?php if (!$isLoggedIn): ?>
+                        <a class="tx-btn tx-btn-ghost" href="login.php">CREATE TEAM</a>
+                    <?php elseif ($userTeam): ?>
+                        <a href="./player/team.php?team_id=<?php echo $userTeam['team_id']; ?>" class="tx-btn tx-btn-ghost">Team: <?php echo htmlspecialchars($userTeam['team_name']); ?></a>
+                    <?php else: ?>
+                        <button id="openTeam" class="tx-btn tx-btn-ghost">Create Team</button>
+                    <?php endif; ?>
                 </div>
             </div>
-
-        </section>
-
-        <!-- Stats Section -->
-        <section class="stats-section">
-            <div class="container">
-                <div class="stats-wrapper">
-                    <div class="stats-bg-pattern"></div>
-                    <div class="floating-shape-circle"></div>
-                    <div class="floating-shape-square"></div>
-
-                    <div class="stats-grid">
-                        <?php
-                        // DEBUG GUARD: set to true to force default data (skip DB queries)
-                        // Toggle to false to re-enable DB-driven stats once database is verified.
-                        $forceDefaultStats = true;
-
-                        // Try to load stats from database; fall back to defaults if unavailable
-                        $stats = [];
-                        if (!$forceDefaultStats && isset($conn) && $conn) {
-                            $playersCount = 0;
-                            $tournamentsCount = 0;
-                            $gamesCount = 0;
-                            $prizeTotal = null;
-
-                            $res = @$conn->query("SELECT COUNT(*) AS cnt FROM users");
-                            if ($res) {
-                                $r = $res->fetch_assoc();
-                                $playersCount = intval($r['cnt'] ?? 0);
-                            }
-
-                            $res = @$conn->query("SELECT COUNT(*) AS cnt FROM tournaments");
-                            if ($res) {
-                                $r = $res->fetch_assoc();
-                                $tournamentsCount = intval($r['cnt'] ?? 0);
-                            }
-
-                            $res = @$conn->query("SELECT COUNT(DISTINCT game) AS cnt FROM tournaments");
-                            if ($res) {
-                                $r = $res->fetch_assoc();
-                                $gamesCount = intval($r['cnt'] ?? 0);
-                            }
-
-                            // Try numeric prize column first (common name: prize_amount)
-                            $res = @$conn->query("SELECT SUM(prize_amount) AS sum FROM tournaments");
-                            if ($res) {
-                                $r = $res->fetch_assoc();
-                                $prizeTotal = $r['sum'] ?? null;
-                            }
-
-                            // Build display values with sensible fallbacks
-                            $stats = [
-                                ['value' => $prizeTotal ? ('$' . number_format($prizeTotal)) : '$2.5M+', 'label' => 'Total Prize Pool', 'gradient' => 'cyan', 'icon' => 'users'],
-                                ['value' => $playersCount ? number_format($playersCount) : '150K+', 'label' => 'Registered Players', 'gradient' => 'purple', 'icon' => 'trophy'],
-                                ['value' => $tournamentsCount ? number_format($tournamentsCount) : '500+', 'label' => 'Live Tournaments', 'gradient' => 'yellow', 'icon' => 'gamepad'],
-                                ['value' => $gamesCount ? number_format($gamesCount) : '50+', 'label' => 'Supported Games', 'gradient' => 'pink', 'icon' => 'zap']
-                            ];
-                        } else {
-                            // DB not available - keep original defaults
-                            $stats = [
-                                ['value' => '2.5M+', 'label' => 'Registered Players', 'gradient' => 'cyan', 'icon' => 'users'],
-                                ['value' => '15K+', 'label' => 'Tournaments Hosted', 'gradient' => 'purple', 'icon' => 'trophy'],
-                                ['value' => '50+', 'label' => 'Supported Games', 'gradient' => 'yellow', 'icon' => 'gamepad'],
-                                ['value' => '$100M+', 'label' => 'Total Prizes Awarded', 'gradient' => 'pink', 'icon' => 'zap']
-                            ];
-                        }
-
-                        foreach ($stats as $index => $stat):
-                        ?>
-                            <div class="stats-item stats-item-<?php echo $index; ?>">
-                                <div class="stats-icon-wrapper">
-                                    <div class="stats-icon icon-<?php echo $stat['gradient']; ?>">
-                                        <?php if ($stat['icon'] == 'users'): ?>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                                <circle cx="9" cy="7" r="4" />
-                                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                            </svg>
-                                        <?php elseif ($stat['icon'] == 'trophy'): ?>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                                                <path d="M4 22h16" />
-                                                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                                                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                                            </svg>
-                                        <?php elseif ($stat['icon'] == 'gamepad'): ?>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <line x1="6" x2="10" y1="12" y2="12" />
-                                                <line x1="8" x2="8" y1="10" y2="14" />
-                                                <line x1="15" x2="15.01" y1="13" y2="13" />
-                                                <line x1="18" x2="18.01" y1="11" y2="11" />
-                                                <rect width="20" height="12" x="2" y="6" rx="2" />
-                                            </svg>
-                                        <?php else: ?>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                                            </svg>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="stats-icon-ring"></div>
-                                </div>
-                                <div class="stats-value gradient-<?php echo $stat['gradient']; ?>"><?php echo $stat['value']; ?></div>
-                                <div class="stats-label"><?php echo $stat['label']; ?></div>
-                            </div>
-                        <?php endforeach; ?>
                     </div>
-                </div>
+
+        <!-- TEAM MODAL -->
+        <div id="teamCard">
+            <div>
+                <h2 id="teamName"></h2>
+                <p>Team members, stats, and other details here...</p>
+                <button id="closeTeam" style="margin-top:20px;padding:10px 20px;border:none;border-radius:6px;background:var(--riot);color:#000;font-weight:800;cursor:pointer;">Close</button>
+            </div>
+        </div>
+        <?php
+        $stats =[
+            'players' =>0,
+            'teams' =>0,
+            'matches'=>0,
+            'prize'=>0
+        ];
+        if(isset($conn) && $conn){
+            $res =$conn->query("select count(*) as total from users");
+            if($res) $status['players']= $res->fetch_assoc()['total'];
+
+            $res = $conn->query("select count(*) as total from teams");
+            if($res)  $status['teams']= $res->fetch_assoc()['total'];
+
+            $res = $conn->query("select count(*) as total from matches ");
+            if($res)  $status['matches']=$res->fetch_assoc()['total'];
+
+            $res =$conn->query('select sum(prize_pool) as total from tournaments');
+            if($res) $status['prize']=$res->fetch_assoc()['total'];
+        }
+       
+
+        
+        
+        ?>
+
+        <!-- STATS -->
+        <section class="stats-grid">
+            <div class="stat-box reveal">
+                <h4 data-target="<?php echo $status['players']?>">0</h4>
+                <p>PLAYERS</p>
+            </div>
+            <div class="stat-box reveal">
+                <h4 data-target="<?php echo $status['teams']?>">0</h4>
+                <p>TEAMS</p>
+            </div>
+            <div class="stat-box reveal">
+                <h4 data-target="<?php echo $status['matches']?>">0</h4>
+                <p>MATCHES TODAY</p>
+            </div>
+            <div class="stat-box reveal">
+                <h4 data-target="<?php echo $status['prize'] ?>">0</h4>
+                <p>PRIZE POOL ($)</p>
             </div>
         </section>
 
-        <!-- Tournaments Section -->
-        <section class="tournaments-section" id="tournaments">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="gradient-text">FEATURED TOURNAMENTS</span>
-                    </h2>
-                    <p class="section-subtitle">Join the biggest esports competitions and prove your skills</p>
-                </div>
+        <!-- GAME CARDS -->
+        <section class="game-container">
+            <div class="game-grid">
+                <?php
+                $games = [
+                    ['img' => 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800', 'title' => 'VALORANT', 'type' => 'TACTICAL SHOOTER'],
+                    ['img' => 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=800', 'title' => 'CS2', 'type' => 'ACTION'],
+                    ['img' => 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800', 'title' => 'DOTA 2', 'type' => 'MOBA'],
+                    ['img' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=800', 'title' => 'PUBG', 'type' => 'BATTLE ROYALE'],
+                    ['img' => 'https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?auto=format&fit=crop&q=80&w=800', 'title' => 'FREE FIRE', 'type' => 'SURVIVAL'],
+                    ['img' => 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800', 'title' => 'FORTNITE', 'type' => 'BUILDER'],
+                ];
 
-                <div class="tournaments-grid">
-                    <?php
-                    // DEBUG GUARD: reuse the same toggle above; when true we skip DB queries
-                    // Try to load tournaments from DB; fall back to hardcoded list if unavailable
-                    $tournaments = [];
-                    if (!$forceDefaultStats && isset($conn) && $conn) {
-                        $sql = "SELECT title, game, prize, players, `date`, status, image FROM tournaments ORDER BY `date` DESC LIMIT 6";
-                        $res = @$conn->query($sql);
-                        if ($res && $res->num_rows > 0) {
-                            while ($row = $res->fetch_assoc()) {
-                                // Ensure expected keys exist
-                                $tournaments[] = [
-                                    'title' => $row['title'] ?? 'Untitled',
-                                    'game' => $row['game'] ?? 'Unknown',
-                                    'prize' => $row['prize'] ?? '$0',
-                                    'players' => $row['players'] ?? '0/0',
-                                    'date' => $row['date'] ?? '',
-                                    'status' => $row['status'] ?? 'Upcoming',
-                                    'image' => $row['image'] ?? '',
-                                    'gradient' => $row['gradient'] ?? 'cyan-blue'
-                                ];
-                            }
-                        }
-                    }
-
-                    if (empty($tournaments)) {
-                        $tournaments = [
-                            [
-                                'title' => 'Apex Legends Championship',
-                                'game' => 'Apex Legends',
-                                'prize' => '$50,000',
-                                'players' => '128/128',
-                                'date' => 'Dec 28, 2025',
-                                'status' => 'Live',
-                                'image' => 'https://images.unsplash.com/photo-1688377051459-aebb99b42bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBuZW9uJTIwY2l0eXxlbnwxfHx8fDE3NjYzNDI3MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-                                'gradient' => 'red-orange'
-                            ],
-                            [
-                                'title' => 'Valorant Masters',
-                                'game' => 'Valorant',
-                                'prize' => '$75,000',
-                                'players' => '64/64',
-                                'date' => 'Dec 30, 2025',
-                                'status' => 'Upcoming',
-                                'image' => 'https://images.unsplash.com/photo-1628089700970-0012c5718efc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnYW1pbmclMjBrZXlib2FyZCUyMGxpZ2h0c3xlbnwxfHx8fDE3NjYzNzI5NzF8MA&ixlib=rb-4.1.0&q=80&w=1080',
-                                'gradient' => 'pink-purple'
-                            ],
-                            [
-                                'title' => 'CS:GO Pro League',
-                                'game' => 'Counter-Strike',
-                                'prize' => '$100,000',
-                                'players' => '32/32',
-                                'date' => 'Jan 5, 2026',
-                                'status' => 'Registration Open',
-                                'image' => 'https://images.unsplash.com/photo-1553492206-f609eddc33dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlc3BvcnRzJTIwZ2FtaW5nJTIwYXJlbmF8ZW58MXx8fHwxNzY2Mjg1MzkxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                                'gradient' => 'cyan-blue'
-                            ]
-                        ];
-                    }
-
-                    foreach ($tournaments as $tournament):
-                    ?>
-                        <div class="tournament-card">
-                            <div class="tournament-image">
-                                <img src="<?php echo $tournament['image']; ?>" alt="<?php echo $tournament['title']; ?>">
-                                <div class="tournament-image-overlay"></div>
-                                <div class="tournament-status status-<?php echo strtolower($tournament['status']); ?> gradient-<?php echo $tournament['gradient']; ?>">
-                                    <?php echo $tournament['status']; ?>
-                                </div>
-                                <?php if ($tournament['status'] == 'Live'): ?>
-                                    <div class="tournament-live-indicator">
-                                        <span class="live-dot"></span>
-                                        <span>LIVE</span>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="tournament-content">
-                                <div class="tournament-game"><?php echo $tournament['game']; ?></div>
-                                <h3 class="tournament-title"><?php echo $tournament['title']; ?></h3>
-
-                                <div class="tournament-info">
-                                    <div class="info-item">
-                                        <svg class="icon-yellow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                                            <path d="M4 22h16" />
-                                            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                                        </svg>
-                                        <span>Prize Pool: <strong><?php echo $tournament['prize']; ?></strong></span>
-                                    </div>
-                                    <div class="info-item">
-                                        <svg class="icon-cyan" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                            <circle cx="9" cy="7" r="4" />
-                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                        </svg>
-                                        <span>Players: <strong><?php echo $tournament['players']; ?></strong></span>
-                                    </div>
-                                    <div class="info-item">
-                                        <svg class="icon-purple" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                                            <line x1="16" x2="16" y1="2" y2="6" />
-                                            <line x1="8" x2="8" y1="2" y2="6" />
-                                            <line x1="3" x2="21" y1="10" y2="10" />
-                                        </svg>
-                                        <span><?php echo $tournament['date']; ?></span>
-                                    </div>
-                                </div>
-
-                                <button class="btn-tournament gradient-<?php echo $tournament['gradient']; ?>">
-                                    View Tournament
-                                </button>
-                            </div>
-
-                            <div class="tournament-glow"></div>
+                foreach ($games as $game): ?>
+                    <div class="game-card reveal">
+                        <img data-src="<?= $game['img'] ?>" alt="<?= $game['title'] ?>">
+                        <div class="game-info">
+                            <p><?= $game['type'] ?></p>
+                            <h3><?= $game['title'] ?></h3>
                         </div>
-                    <?php endforeach; ?>
-                </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
 
-                <div class="section-footer">
-                    <button class="btn-view-all">
-                        <span>View All Tournaments</span>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                    </button>
+
+        <!-- LIVE MATCHES -->
+        <section class="match-section">
+            <div class="match-list">
+                <div class="match-item reveal">
+                    <div class="match-team" style="text-align:right">TEAM LIQUID</div>
+                    <div class="match-vs">VS</div>
+                    <div class="match-team">VITALITY</div>
+                </div>
+                <div class="match-item reveal">
+                    <div class="match-team" style="text-align:right">ZETA DIVISION</div>
+                    <div class="match-vs">VS</div>
+                    <div class="match-team">DRX</div>
+                </div>
+                <div class="match-item reveal">
+                    <div class="match-team" style="text-align:right">CLOUD9</div>
+                    <div class="match-vs">VS</div>
+                    <div class="match-team">NAVI</div>
                 </div>
             </div>
         </section>
-</div>
-
-<!-- CREATE TEAM CARD (HIDDEN) -->
-<div id="teamOverlay">
-    <div class="teamCard">
-        <span class="closeBtn">&times;</span>
-        <h2>Create Team</h2>
-
-        <form method="POST" enctype="multipart/form-data" action="">
-
-            <div class="form-row-top">
-                <div class="upload-section">
+    </main>
+    <!-- CREATE TEAM CARD (HIDDEN) -->
+    <div id="teamOverlay">
+        <div class="teamCard">
+            <span class="closeBtn">&times;</span>
+            <h2>CREATE SQUAD</h2>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-row-top">
                     <label for="uploadInput" style="cursor:pointer;">
                         <img src="images/gif9.gif" class="upload_photo" id="img">
                     </label>
                     <input type="file" name="image" id="uploadInput" hidden required onchange="previewImage(event)">
+                    <div style="flex:1">
+                        <input type="text" name="teamName" placeholder="TEAM NAME (6-16 CHARS)" required>
+                        <input type="text" name="shortName" placeholder="TAG (2-4 CHARS)" required>
+                    </div>
                 </div>
-
-                <div class="name-fields">
-                    <input type="text" name="teamName" placeholder="Team Name (6-16 chars)" required>
-                    <input type="text" name="shortName" placeholder="Short Name (2-4 chars)" required>
-                </div>
-            </div>
-            <textarea name="motto" placeholder="Motto (Within 100 chars)"></textarea>
-            <input type="number" name="players" placeholder="Players" min="1" required>
-
-            <button type="submit" name="createBtn" class="createBtn">
-                Create Team
-            </button>
-        </form>
+                <textarea name="motto" placeholder="TEAM MOTTO" rows="2"></textarea>
+                <input type="number" name="players" placeholder="MAX PLAYERS" min="1" required>
+                <button type="submit" name="createBtn" class="createBtn">CONFIRM FORMATION</button>
+            </form>
+        </div>
     </div>
-</div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
-
-</main>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-
-<script>
-    // --- THREE.JS SCENE SETUP ---
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({
-        canvas: document.querySelector('#bg'),
-        antialias: true,
-        alpha: true
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    // CORE 3D OBJECT
-    const geometry = new THREE.IcosahedronGeometry(10, 1);
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x00f3ff,
-        wireframe: true,
-        emissive: 0xbc13fe,
-        emissiveIntensity: 0.5
-    });
-    const core = new THREE.Mesh(geometry, material);
-    scene.add(core);
-
-    // --- BACKGROUND LETTERS (T & X) WITH GLOW ---
-    const group = new THREE.Group();
-    const loader = new THREE.FontLoader();
-
-    loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
-        // Create glowing materials
-        const cyanGlow = new THREE.MeshStandardMaterial({
-            color: 0x00f3ff,
-            emissive: 0x00f3ff,
-            emissiveIntensity: 2,
-            transparent: true,
-            opacity: 0.8
+    <script>
+        // --- THREE.JS SCENE SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#bg'),
+            antialias: true,
+            alpha: true
         });
-
-        const purpleGlow = new THREE.MeshStandardMaterial({
-            color: 0xbc13fe,
-            emissive: 0xbc13fe,
-            emissiveIntensity: 2,
-            transparent: true,
-            opacity: 0.8
-        });
-
-        const letters = ['T', 'O', 'U', 'R', 'N', 'A', 'X'];
-
-        for (let i = 0; i < 200; i++) {
-            const char = letters[Math.floor(Math.random() * letters.length)];
-            const textGeo = new THREE.TextGeometry(char, {
-                font: font,
-                size: 0.8,
-                height: 0.1
-            });
-
-            // Randomly pick between cyan or purple glow
-            const material = Math.random() > 0.5 ? cyanGlow : purpleGlow;
-            const mesh = new THREE.Mesh(textGeo, material);
-
-            mesh.position.set(
-                (Math.random() - 0.5) * 150,
-                (Math.random() - 0.5) * 150,
-                (Math.random() - 0.5) * 150
-            );
-            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-            group.add(mesh);
-        }
-    });
-    scene.add(group);
-
-    // Using a hosted font for the letters
-    loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
-        const textMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.2
-        });
-        const letters = ['T', 'X'];
-
-        for (let i = 0; i < 200; i++) {
-            const char = letters[Math.floor(Math.random() * letters.length)];
-            const textGeo = new THREE.TextGeometry(char, {
-                font: font,
-                size: 0.8,
-                height: 0.1
-            });
-            const mesh = new THREE.Mesh(textGeo, textMaterial);
-
-            mesh.position.set(
-                (Math.random() - 0.5) * 150,
-                (Math.random() - 0.5) * 150,
-                (Math.random() - 0.5) * 150
-            );
-            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-            group.add(mesh);
-        }
-    });
-    scene.add(group);
-
-    const light = new THREE.PointLight(0x00f3ff, 2, 100);
-    light.position.set(10, 10, 10);
-    scene.add(light, new THREE.AmbientLight(0xffffff, 0.2));
-    camera.position.z = 30;
-
-    // --- GSAP & INTERACTION ---
-    gsap.registerPlugin(ScrollTrigger);
-    const tl = gsap.timeline({
-        scrollTrigger: {
-            trigger: "body",
-            start: "top top",
-            end: "bottom bottom",
-            scrub: 1.5,
-            onUpdate: (self) => {
-                document.getElementById('bar').style.height = (self.progress * 100) + "%";
-            }
-        }
-    });
-    tl.to(core.rotation, {
-        y: Math.PI * 4,
-        x: Math.PI
-    }).to(camera.position, {
-        z: 15
-    }, 0);
-
-    let mouseX = 0,
-        mouseY = 0;
-    document.addEventListener('mousemove', (e) => {
-        mouseX = (e.clientX / window.innerWidth) - 0.5;
-        mouseY = (e.clientY / window.innerHeight) - 0.5;
-    });
-
-    function animate() {
-        requestAnimationFrame(animate);
-        core.rotation.z += 0.002;
-        group.rotation.y += 0.001; // Rotate the T/X cloud
-        camera.position.x += (mouseX * 20 - camera.position.x) * 0.05;
-        camera.position.y += (-mouseY * 20 - camera.position.y) * 0.05;
-        camera.lookAt(scene.position);
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+        // Keep canvas transparent so page backgrounds/overlays show through
+        renderer.setClearColor(0x000000, 0);
+        renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Fallback/explicit scroll handler: map page scroll to 3D scene values
-    // This ensures the 3D core and camera respond even if ScrollTrigger isn't active
-    function updateSceneByScroll() {
-        const scrollTop = window.scrollY || window.pageYOffset;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = docHeight > 0 ? scrollTop / docHeight : 0;
+        // CORE 3D OBJECT
+        const geometry = new THREE.IcosahedronGeometry(10, 1);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xff0000,
+            wireframe: true,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.5
+        });
+        const core = new THREE.Mesh(geometry, material);
+        scene.add(core);
 
-        // Rotate core on X/Y based on scroll progress
-        core.rotation.x = progress * Math.PI * 2; // full two turns
-        core.rotation.y = progress * Math.PI * 4; // faster yaw
+        // --- BACKGROUND LETTERS (T & X) WITH GLOW ---
+        const group = new THREE.Group();
+        const loader = new THREE.FontLoader();
 
-        // Move camera closer as user scrolls down
-        camera.position.z = 30 - (progress * 15); // from 30 -> 15
-    }
+        loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
+            // Create glowing materials
+            const cyanGlow = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 2,
+                transparent: true,
+                opacity: 0.8
+            });
 
-    // Use passive listener for performance
-    window.addEventListener('scroll', updateSceneByScroll, {
-        passive: true
-    });
-    // Initialize once on load
-    updateSceneByScroll();
+            const purpleGlow = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 2,
+                transparent: true,
+                opacity: 0.8
+            });
 
-    // MODAL LOGIC
-    const openBtn = document.getElementById("openTeam");
-    const overlay = document.getElementById("teamOverlay");
-    const closeBtn = document.querySelector(".closeBtn");
+            const letters = ['T', 'O', 'U', 'R', 'N', 'A', 'X'];
 
-    if (openBtn) {
-        openBtn.onclick = () => overlay.classList.add("active");
-    }
-    if (closeBtn) {
-        closeBtn.onclick = () => overlay.classList.remove("active");
-    }
-    window.onclick = (e) => {
-        if (e.target == overlay) overlay.classList.remove("active");
-    }
+            for (let i = 0; i < 200; i++) {
+                const char = letters[Math.floor(Math.random() * letters.length)];
+                const textGeo = new THREE.TextGeometry(char, {
+                    font: font,
+                    size: 0.8,
+                    height: 0.1
+                });
 
-    function previewImage(event) {
-        let img = document.getElementById("img");
-        img.src = URL.createObjectURL(event.target.files[0]);
-    }
-</script>
+                // Randomly pick between cyan or purple glow
+                const material = Math.random() > 0.5 ? cyanGlow : purpleGlow;
+                const mesh = new THREE.Mesh(textGeo, material);
 
+                mesh.position.set(
+                    (Math.random() - 0.5) * 150,
+                    (Math.random() - 0.5) * 150,
+                    (Math.random() - 0.5) * 150
+                );
+                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                group.add(mesh);
+            }
+        });
+        scene.add(group);
 
-<script>
-    function previewImage(event) {
-        let img = document.getElementById("img");
-        img.src = URL.createObjectURL(event.target.files[0]);
-        img.onload = function() {
-            URL.revokeObjectURL(img.src);
+        // Using a hosted font for the letters
+        loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
+            const textMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.2
+            });
+            const letters = ['T', 'X'];
+
+            for (let i = 0; i < 200; i++) {
+                const char = letters[Math.floor(Math.random() * letters.length)];
+                const textGeo = new THREE.TextGeometry(char, {
+                    font: font,
+                    size: 0.8,
+                    height: 0.1
+                });
+                const mesh = new THREE.Mesh(textGeo, textMaterial);
+
+                mesh.position.set(
+                    (Math.random() - 0.5) * 150,
+                    (Math.random() - 0.5) * 150,
+                    (Math.random() - 0.5) * 150
+                );
+                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                group.add(mesh);
+            }
+        });
+        scene.add(group);
+
+        const light = new THREE.PointLight(0x00f3ff, 2, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light, new THREE.AmbientLight(0xffffff, 0.2));
+        camera.position.z = 30;
+
+        // --- GSAP & INTERACTION ---
+        gsap.registerPlugin(ScrollTrigger);
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: "body",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5,
+                onUpdate: (self) => {
+                    document.getElementById('bar').style.height = (self.progress * 100) + "%";
+                }
+            }
+        });
+        tl.to(core.rotation, {
+            y: Math.PI * 4,
+            x: Math.PI
+        }).to(camera.position, {
+            z: 15
+        }, 0);
+
+        let mouseX = 0,
+            mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) - 0.5;
+            mouseY = (e.clientY / window.innerHeight) - 0.5;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            core.rotation.z += 0.002;
+            group.rotation.y += 0.001; // Rotate the T/X cloud
+            camera.position.x += (mouseX * 20 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 20 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
         }
-    }
-</script>
+        animate();
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
+        // Fallback/explicit scroll handler: map page scroll to 3D scene values
+        // This ensures the 3D core and camera respond even if ScrollTrigger isn't active
+        function updateSceneByScroll() {
+            const scrollTop = window.scrollY || window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? scrollTop / docHeight : 0;
+
+            // Rotate core on X/Y based on scroll progress
+            core.rotation.x = progress * Math.PI * 2; // full two turns
+            core.rotation.y = progress * Math.PI * 4; // faster yaw
+
+            // Move camera closer as user scrolls down
+            camera.position.z = 30 - (progress * 15); // from 30 -> 15
+        }
+
+        // Use passive listener for performance
+        window.addEventListener('scroll', updateSceneByScroll, {
+            passive: true
+        });
+        // Initialize once on load
+        updateSceneByScroll();
+
+        // MODAL LOGIC
         const openBtn = document.getElementById("openTeam");
         const overlay = document.getElementById("teamOverlay");
         const closeBtn = document.querySelector(".closeBtn");
 
         if (openBtn) {
-            openBtn.addEventListener("click", () => {
-                overlay.classList.add("active");
-            });
+            openBtn.onclick = () => overlay.classList.add("active");
         }
-
         if (closeBtn) {
-            closeBtn.addEventListener("click", () => {
-                overlay.classList.remove("active");
-            });
+            closeBtn.onclick = () => overlay.classList.remove("active");
+        }
+        window.onclick = (e) => {
+            if (e.target == overlay) overlay.classList.remove("active");
         }
 
-        if (overlay) {
-            overlay.addEventListener("click", (e) => {
-                if (e.target === overlay) {
-                    overlay.classList.remove("active");
+        function previewImage(event) {
+            let img = document.getElementById("img");
+            img.src = URL.createObjectURL(event.target.files[0]);
+        }
+    </script>
+
+    <script>
+        // ================= TEAM CARD LOGIC =================
+        const teamBtn = document.getElementById('teamBtn');
+        const teamCard = document.getElementById('teamCard');
+        const teamName = document.getElementById('teamName');
+        const closeTeam = document.getElementById('closeTeam');
+        if (teamBtn) {
+            teamBtn.addEventListener('click', () => {
+                teamName.innerText = teamBtn.innerText;
+                teamCard.style.display = 'flex';
+            });
+        }
+        closeTeam.addEventListener('click', () => {
+            teamCard.style.display = 'none';
+        });
+
+        // ================= REVEAL + LAZY LOAD =================
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    // Stat counter
+                    const counter = entry.target.querySelector('h4');
+                    if (counter && !counter.classList.contains('counted')) {
+                        counter.classList.add('counted');
+                        const target = +counter.getAttribute('data-target');
+                        let count = 0;
+                        const increment = target / 50;
+                        const update = () => {
+                            if (count < target) {
+                                count += increment;
+                                counter.innerText = Math.floor(count).toLocaleString();
+                                setTimeout(update, 30);
+                            } else counter.innerText = target.toLocaleString();
+                        };
+                        update();
+                    }
+                    // Lazy load images
+                    const img = entry.target.querySelector('img[data-src]');
+                    if (img && !img.src) img.src = img.getAttribute('data-src');
+                } else {
+                    entry.target.classList.remove('active');
+                }
+            });
+        }, {
+            threshold: 0.15
+        });
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    </script>
+
+    <script>
+        /* ================= CAROUSEL LOGIC ================= */
+
+        const cards = document.querySelectorAll('.game-card');
+        let current = 2;
+
+        // ✅ ADDED: preload images for carousel (no blank cards)
+        cards.forEach(card => {
+            const img = card.querySelector('img[data-src]');
+            if (img && !img.src) img.src = img.dataset.src;
+        });
+
+        function updateCarousel() {
+            cards.forEach((card, i) => {
+                card.className = 'game-card reveal';
+
+                if (i === current) {
+                    card.classList.add('center', 'active'); // ✅ fade in
+                } else if (i === current - 1) {
+                    card.classList.add('left', 'active'); // ✅ fade in
+                } else if (i === current + 1) {
+                    card.classList.add('right', 'active'); // ✅ fade in
+                } else if (i < current) {
+                    card.classList.add('hidden-left'); // ✅ fade out
+                } else {
+                    card.classList.add('hidden-right'); // ✅ fade out
                 }
             });
         }
-    });
 
-    function previewImage(event) {
-        const img = document.getElementById("img");
-        img.src = URL.createObjectURL(event.target.files[0]);
-        img.onload = () => URL.revokeObjectURL(img.src);
-    }
-</script>
+        updateCarousel();
 
+        cards.forEach((card, i) => {
+            card.addEventListener('click', () => {
+                if (i === current + 1) current++;
+                if (i === current - 1) current--;
 
-<script>
-    (function() {
-        try {
-            const loader1 = document.getElementById("loader");
-            const site = document.getElementById("site");
-            const firstVisit = !localStorage.getItem("tournax_loaded");
+                if (current < 0) current = 0;
+                if (current > cards.length - 1) current = cards.length - 1;
 
-            function revealSite() {
-                try {
-                    if (loader1) {
-                        loader1.style.opacity = "0";
-                        setTimeout(() => {
-                            if (loader1) loader1.style.display = "none";
-                        }, 600);
-                    }
-                    if (site) {
-                        site.classList.remove("hidden");
-                        site.classList.add("loaded");
-                    }
-                } catch (e) {
-                    console.error('revealSite error', e);
+                updateCarousel();
+            });
+        });
+
+        /* ===== SCROLL FADE FOR GAME SECTION ONLY ===== */
+        const gameSection = document.querySelector('.game-container');
+
+        const gameObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    gameSection.classList.add('active');
+                } else {
+                    gameSection.classList.remove('active');
                 }
-            }
+            });
+        }, {
+            threshold: 0.3
+        });
 
-            if (firstVisit) {
-                // Use both load event and timeout fallback in case load never fires
-                window.addEventListener("load", () => {
-                    try {
-                        localStorage.setItem("tournax_loaded", "true");
-                    } catch (e) {}
-                    revealSite();
-                });
+        if (gameSection) gameObserver.observe(gameSection);
+    </script>
 
-                // Fallback: force reveal after 4s to avoid permanent loader
-                setTimeout(() => {
-                    if (!site || !site.classList.contains('loaded')) revealSite();
-                }, 4000);
-            } else {
-                revealSite();
-            }
-        } catch (err) {
-            console.error('Loader init error', err);
-            // Best-effort fallback
-            try {
-                document.getElementById('loader') && (document.getElementById('loader').style.display = 'none');
-            } catch (e) {}
-            try {
-                document.getElementById('site') && document.getElementById('site').classList.remove('hidden');
-            } catch (e) {}
-        }
-    })();
-</script>
+    <script>
+        // ================= LOADER LOGIC =================
+        const startTime = Date.now();
 
-<?php
-include('partial/footer.php');
-?>
+        window.addEventListener("load", () => {
+            const loader = document.getElementById("loader");
+
+            const elapsed = Date.now() - startTime;
+            const minDuration = 1500; // 1.5 seconds
+
+            const remaining = Math.max(0, minDuration - elapsed);
+
+            setTimeout(() => {
+                loader.classList.add("hide");
+            }, remaining);
+        });
+    </script>
+
+
+    <?php
+    include('partial/footer.php');
+    ?>
