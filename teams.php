@@ -77,18 +77,17 @@ function include_grid_content($data)
                 <div class="team-card" onclick="openTeam(
                     '<?= addslashes($row['team_name']) ?>', 
                     '<?= addslashes($row['short_name'] ?? '') ?>', 
-                    '<?= addslashes($row['motto']?? '') ?>', 
+                    '<?= addslashes($row['motto']) ?>', 
                     '<?= addslashes($row['leader_name'] ?? 'N/A') ?>', 
                     '<?= addslashes($row['player_list'] ?? '') ?>',
                     '<?= $row['team_id'] ?>'
                 )">
                     <div class="card-accent"></div>
                     <div class="photo-box">
-                        <img src="uploads/teams/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
+                        <img src="images/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
                     </div>
                     <div class="info-box">
-                        <p class="motto-txt"><?= htmlspecialchars($row['motto'] ?? '') ?></p>
-
+                        <p class="motto-txt"><?= htmlspecialchars($row['motto']) ?></p>
                         <h3 class="name-txt"><?= htmlspecialchars($row['team_name']) ?></h3>
                     </div>
                 </div>

@@ -80,6 +80,7 @@ if (isset($_POST['save_all'])) {
                 linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
             background-size: 40px 40px;
+            z-index: 0;
         }
 
         /* Pulsing Red Glow Layer */
@@ -122,18 +123,6 @@ if (isset($_POST['save_all'])) {
             box-shadow: 0 40px 100px rgba(0,0,0,0.5);
         }
 
-        .profile-container::after {
-            content: "IDENTITY // 01";
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: var(--riot-red);
-            color: #000;
-            font-family: 'Bebas Neue';
-            padding: 2px 10px;
-            font-size: 12px;
-        }
-
         h2 {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 3rem;
@@ -141,6 +130,25 @@ if (isset($_POST['save_all'])) {
             margin-bottom: 40px;
             letter-spacing: 1px;
             color: #fff;
+        }
+
+        .close-btn{
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2rem;
+            color: #fff;
+            text-decoration: none;
+            background: var(--riot-red);
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #ff6877;
         }
 
         .avatar-upload-wrapper {
@@ -257,6 +265,8 @@ if (isset($_POST['save_all'])) {
 <div class="profile-container">
     <h2>EDIT PREFERENCES</h2>
 
+    <a href="index.php" class="close-btn">X</a>
+
     <?php if(isset($message)): ?>
         <p class="status msg"><?= $message ?></p>
     <?php endif; ?>
@@ -266,7 +276,7 @@ if (isset($_POST['save_all'])) {
 
     <form method="post" enctype="multipart/form-data">
         <div class="avatar-upload-wrapper" onclick="document.getElementById('file-input').click()">
-            <img id="preview" src="uploads/<?= $user['image'] ?: 'default.png' ?>" class="avatar-preview">
+            <img id="preview" src="images/<?= $user['image'] ?: 'default.png' ?>" class="avatar-preview">
             <div class="upload-hint">CHANGE IMAGE</div>
             <input type="file" name="avatar" id="file-input" onchange="previewImage(this)">
         </div>
