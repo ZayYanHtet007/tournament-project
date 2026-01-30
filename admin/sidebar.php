@@ -1,3 +1,36 @@
+<?php
+require_once __DIR__ . '/../database/dbConfig.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: AdminLogin.php");
+    exit;
+}
+
+// Fetch latest 20 notifications with tournament_id
+$stmt = $conn->prepare("SELECT * FROM admin_notifications WHERE admin_id=? ORDER BY created_at DESC LIMIT 20");
+$stmt->bind_param("i", $_SESSION['admin_id']);
+$stmt->execute();
+$notifications = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Count unread from DB
+$unreadCount = array_sum(array_map(fn($n) => $n['is_read'] == 0 ? 1 : 0, $notifications));
+
+$adminName = $_SESSION['admin_name'] ?? 'Admin User';
+$adminEmail = $_SESSION['admin_email'] ?? 'admin@gmail.com';
+$adminImg = $_SESSION['admin_img'] ?? null;
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+
+
+$imageSource = null;
+if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
+
+    $imageSource = '../images/upload_photos/' . $adminImg;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,44 +41,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="../css/admin.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <?php
-    require_once __DIR__ . '/../database/dbConfig.php';
-
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    if (!isset($_SESSION['admin_id'])) {
-        header("Location: login.php");
-        exit;
-    }
-
-    // Fetch latest 20 notifications with tournament_id
-    $stmt = $conn->prepare("SELECT * FROM admin_notifications WHERE admin_id=? ORDER BY created_at DESC LIMIT 20");
-    $stmt->bind_param("i", $_SESSION['admin_id']);
-    $stmt->execute();
-    $notifications = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-    // Count unread from DB
-    $unreadCount = array_sum(array_map(fn($n) => $n['is_read'] == 0 ? 1 : 0, $notifications));
-
-    $adminName = $_SESSION['admin_name'] ?? 'Admin User';
-    $adminEmail = $_SESSION['admin_email'] ?? 'admin@gmail.com';
-    $adminImg = $_SESSION['admin_img'] ?? 'default_profile.png';
-
-    $imageSource = '../images/upload_photos/' . $adminImg;
-    if (!file_exists(__DIR__ . '/' . $imageSource) && $adminImg !== 'default_profile.png') {
-        $imageSource = '../images/default_profile.png';
-    } elseif ($adminImg === 'default.jpg') {
-        $imageSource = '../images/default.jpg';
-    }
-    ?>
-
     <button class="mobile-toggle" onclick="toggleSidebar()">
         <i class="fa fa-bars"></i>
     </button>
@@ -68,19 +67,43 @@
             <div class="profile-popup" id="profilePopup">
                 <div class="popup-header">
                     <div class="popup-avatar-large">
-                        <img src="<?php echo $imageSource; ?>" alt="<?php echo htmlspecialchars($adminName); ?>"
-                            onerror="this.src='../images/default_profile.png'">
+                        <?php if ($imageSource): ?>
+                            <img src="<?php echo htmlspecialchars($imageSource); ?>"
+                                alt="<?php echo htmlspecialchars($adminName); ?>"
+                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        <?php else: ?>
+                        <?php endif; ?>
                     </div>
                     <div class="popup-info">
-                        <h4>Hi, <?= $adminName ?>!</h4>
-                        <h4><?= $adminEmail ?></h4>
-                        <a href="customizeProfile.php" class="manage-btn" style="text-decoration: none;">Customize Profile</a>
+                        <h4>Hi, <?= htmlspecialchars($adminName) ?>!</h4>
+                        <p style="font-size: 13px; color: #a1a1b5; margin: 0;"><?= htmlspecialchars($adminEmail) ?></p>
+                        <a href="customizeProfile.php" class="manage-btn" style="text-decoration: none; margin-top: 10px; display: inline-block;">Customize Profile</a>
                     </div>
                 </div>
                 <div class="popup-body">
-                    <div class="popup-item"><a href="changePassword.php" style="text-decoration: none; color: #d1d1e6;"><i class="fa fa-lock"></i><span>Change Password</span></a></div>
+                    <div class="popup-item">
+                        <a href="changePassword.php" style="text-decoration: none; color: #d1d1e6;">
+                            <i class="fa fa-lock"></i><span>Change Password</span>
+                        </a>
+                    </div>
                     <hr style="border-color: #45455e; margin: 5px 0;">
-                    <a href="signOut.php" class="popup-item logout-link">
+
+                    <?php if ($adminRole === 'main_admin'): ?>
+                        <div class="popup-item">
+                            <a href="adminCreate.php" style="text-decoration: none; color: #d1d1e6;">
+                                <i class="fa fa-user-shield"></i><span>Create Admin</span>
+                            </a>
+                        </div>
+                        <hr style="border-color: #45455e; margin: 5px 0;">
+                        <div class="popup-item">
+                            <a href="manageAdmin.php" style="text-decoration: none; color: #d1d1e6;">
+                                <i class="fa fa-users-cog"></i><span>Manage Admin</span>
+                            </a>
+                        </div>
+                        <hr style="border-color: #45455e; margin: 5px 0;">
+                    <?php endif; ?>
+
+                    <a href="signOut.php" class="popup-item logout-link" style="text-decoration: none;">
                         <i class="fa fa-sign-out-alt"></i><span>Sign out</span>
                     </a>
                 </div>
@@ -88,7 +111,7 @@
 
             <div class="admin_profile" onclick="togglePopup(event)">
                 <div class="profile_content">
-                    account
+                    </i> Account
                 </div>
             </div>
         </nav>
@@ -172,28 +195,29 @@
             <div class="main-content">
 
 
+            </div>
 
-                <script>
-                    const ws = new WebSocket("ws://localhost:5000");
+            <script>
+                const ws = new WebSocket("ws://localhost:5000");
 
-                    // --- Real-time notifications ---
-                    ws.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        const notiBody = document.querySelector('.noti-body');
+                // --- Real-time notifications ---
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    const notiBody = document.querySelector('.noti-body');
 
-                        // Extract tournament ID from message
-                        let tournamentId = 0;
-                        const tournamentMatch = data.message.match(/tournament ID #(\d+)/i);
-                        if (tournamentMatch && tournamentMatch[1]) {
-                            tournamentId = tournamentMatch[1];
-                        }
+                    // Extract tournament ID from message
+                    let tournamentId = 0;
+                    const tournamentMatch = data.message.match(/tournament ID #(\d+)/i);
+                    if (tournamentMatch && tournamentMatch[1]) {
+                        tournamentId = tournamentMatch[1];
+                    }
 
-                        // Create new notification div
-                        const div = document.createElement("div");
-                        div.className = "noti-item unread";
-                        div.dataset.id = data.id;
-                        div.dataset.tournamentId = tournamentId;
-                        div.innerHTML = `
+                    // Create new notification div
+                    const div = document.createElement("div");
+                    div.className = "noti-item unread";
+                    div.dataset.id = data.id;
+                    div.dataset.tournamentId = tournamentId;
+                    div.innerHTML = `
                 <div class="noti-icon">
                     <i class="fa-solid fa-info"></i>
                 </div>
@@ -210,213 +234,213 @@
                 </div>
             `;
 
-                        // Add to top of notifications
-                        notiBody.prepend(div);
+                    // Add to top of notifications
+                    notiBody.prepend(div);
 
-                        // Remove "No new notifications" message if present
-                        const noNotiMsg = notiBody.querySelector('.noti-item p[style*="color: #94a3b8"]');
-                        if (noNotiMsg && noNotiMsg.textContent.includes("No new notifications")) {
-                            noNotiMsg.closest('.noti-item').remove();
-                        }
-
-                        // Update unread count
-                        const badge = document.querySelector('.noti-badge');
-                        if (badge) {
-                            badge.textContent = parseInt(badge.textContent) + 1;
-                        } else {
-                            // Create badge if it doesn't exist
-                            const notiBtn = document.querySelector('.noti-btn');
-                            const newBadge = document.createElement('span');
-                            newBadge.className = 'noti-badge';
-                            newBadge.textContent = '1';
-                            notiBtn.appendChild(newBadge);
-                        }
-
-                        // Update unread text in header
-                        const unreadSpan = document.querySelector('.noti-header span');
-                        if (unreadSpan) {
-                            const current = parseInt(unreadSpan.textContent.match(/\d+/)[0]) || 0;
-                            unreadSpan.textContent = `(${current + 1} unread)`;
-                        } else {
-                            // Create unread span if it doesn't exist
-                            const notiHeader = document.querySelector('.noti-header');
-                            const newSpan = document.createElement('span');
-                            newSpan.style.fontSize = '11px';
-                            newSpan.style.color = '#64748b';
-                            newSpan.style.fontWeight = 'normal';
-                            newSpan.textContent = `(1 unread)`;
-                            notiHeader.appendChild(newSpan);
-                        }
-                    };
-
-                    // --- Sidebar & Profile Popup ---
-                    function toggleSidebar() {
-                        document.getElementById('sidebar').classList.toggle('active');
+                    // Remove "No new notifications" message if present
+                    const noNotiMsg = notiBody.querySelector('.noti-item p[style*="color: #94a3b8"]');
+                    if (noNotiMsg && noNotiMsg.textContent.includes("No new notifications")) {
+                        noNotiMsg.closest('.noti-item').remove();
                     }
 
-                    function togglePopup(event) {
-                        event.stopPropagation();
-                        document.getElementById('profilePopup').classList.toggle('show');
+                    // Update unread count
+                    const badge = document.querySelector('.noti-badge');
+                    if (badge) {
+                        badge.textContent = parseInt(badge.textContent) + 1;
+                    } else {
+                        // Create badge if it doesn't exist
+                        const notiBtn = document.querySelector('.noti-btn');
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'noti-badge';
+                        newBadge.textContent = '1';
+                        notiBtn.appendChild(newBadge);
                     }
 
-                    window.onclick = function(e) {
-                        if (!document.querySelector('.sidebar').contains(e.target)) {
-                            document.getElementById('profilePopup').classList.remove('show');
+                    // Update unread text in header
+                    const unreadSpan = document.querySelector('.noti-header span');
+                    if (unreadSpan) {
+                        const current = parseInt(unreadSpan.textContent.match(/\d+/)[0]) || 0;
+                        unreadSpan.textContent = `(${current + 1} unread)`;
+                    } else {
+                        // Create unread span if it doesn't exist
+                        const notiHeader = document.querySelector('.noti-header');
+                        const newSpan = document.createElement('span');
+                        newSpan.style.fontSize = '11px';
+                        newSpan.style.color = '#64748b';
+                        newSpan.style.fontWeight = 'normal';
+                        newSpan.textContent = `(1 unread)`;
+                        notiHeader.appendChild(newSpan);
+                    }
+                };
+
+                // --- Sidebar & Profile Popup ---
+                function toggleSidebar() {
+                    document.getElementById('sidebar').classList.toggle('active');
+                }
+
+                function togglePopup(event) {
+                    event.stopPropagation();
+                    document.getElementById('profilePopup').classList.toggle('show');
+                }
+
+                window.onclick = function(e) {
+                    if (!document.querySelector('.sidebar').contains(e.target)) {
+                        document.getElementById('profilePopup').classList.remove('show');
+                    }
+
+                    if (window.innerWidth <= 768 && !document.getElementById('sidebar').contains(e.target) && !e.target.closest('.mobile-toggle')) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                };
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const notiBtn = document.getElementById('notiBtn');
+                    const notiContent = document.getElementById('notiContent');
+
+                    // Toggle dropdown
+                    notiBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        notiContent.classList.toggle('show');
+                    });
+
+                    // Close when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!notiContent.contains(e.target) && !notiBtn.contains(e.target)) {
+                            notiContent.classList.remove('show');
+                        }
+                    });
+
+                    // --- Handle notification click (mark as read & redirect) ---
+                    const notiBody = document.querySelector('.noti-body');
+                    notiBody.addEventListener('click', async (e) => {
+                        const notiItem = e.target.closest('.noti-item');
+                        if (!notiItem) return;
+
+
+                        if (notiItem.querySelector('p[style*="color: #94a3b8"]')) {
+                            return;
                         }
 
-                        if (window.innerWidth <= 768 && !document.getElementById('sidebar').contains(e.target) && !e.target.closest('.mobile-toggle')) {
-                            document.getElementById('sidebar').classList.remove('active');
-                        }
-                    };
+                        const id = notiItem.dataset.id;
+                        const tournamentId = notiItem.dataset.tournamentId;
+                        const isUnread = notiItem.classList.contains('unread');
 
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const notiBtn = document.getElementById('notiBtn');
-                        const notiContent = document.getElementById('notiContent');
+                        // Mark as read if unread
+                        if (isUnread) {
+                            try {
+                                const response = await fetch(`mark-read.php?id=${id}`);
+                                if (response.ok) {
+                                    notiItem.classList.remove('unread');
 
-                        // Toggle dropdown
-                        notiBtn.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            notiContent.classList.toggle('show');
-                        });
-
-                        // Close when clicking outside
-                        document.addEventListener('click', function(e) {
-                            if (!notiContent.contains(e.target) && !notiBtn.contains(e.target)) {
-                                notiContent.classList.remove('show');
-                            }
-                        });
-
-                        // --- Handle notification click (mark as read & redirect) ---
-                        const notiBody = document.querySelector('.noti-body');
-                        notiBody.addEventListener('click', async (e) => {
-                            const notiItem = e.target.closest('.noti-item');
-                            if (!notiItem) return;
-
-
-                            if (notiItem.querySelector('p[style*="color: #94a3b8"]')) {
-                                return;
-                            }
-
-                            const id = notiItem.dataset.id;
-                            const tournamentId = notiItem.dataset.tournamentId;
-                            const isUnread = notiItem.classList.contains('unread');
-
-                            // Mark as read if unread
-                            if (isUnread) {
-                                try {
-                                    const response = await fetch(`mark-read.php?id=${id}`);
-                                    if (response.ok) {
-                                        notiItem.classList.remove('unread');
-
-                                        // Update unread count
-                                        const badge = document.querySelector('.noti-badge');
-                                        if (badge) {
-                                            const current = parseInt(badge.textContent);
-                                            if (current > 1) {
-                                                badge.textContent = current - 1;
-                                            } else {
-                                                badge.remove();
-                                            }
+                                    // Update unread count
+                                    const badge = document.querySelector('.noti-badge');
+                                    if (badge) {
+                                        const current = parseInt(badge.textContent);
+                                        if (current > 1) {
+                                            badge.textContent = current - 1;
+                                        } else {
+                                            badge.remove();
                                         }
+                                    }
 
-                                        // Update unread text
-                                        const unreadSpan = document.querySelector('.noti-header span');
-                                        if (unreadSpan) {
-                                            const match = unreadSpan.textContent.match(/\d+/);
-                                            if (match) {
-                                                const current = parseInt(match[0]);
-                                                if (current > 1) {
-                                                    unreadSpan.textContent = `(${current - 1} unread)`;
-                                                } else {
-                                                    unreadSpan.textContent = '';
-                                                    unreadSpan.remove();
-                                                }
+                                    // Update unread text
+                                    const unreadSpan = document.querySelector('.noti-header span');
+                                    if (unreadSpan) {
+                                        const match = unreadSpan.textContent.match(/\d+/);
+                                        if (match) {
+                                            const current = parseInt(match[0]);
+                                            if (current > 1) {
+                                                unreadSpan.textContent = `(${current - 1} unread)`;
+                                            } else {
+                                                unreadSpan.textContent = '';
+                                                unreadSpan.remove();
                                             }
                                         }
                                     }
-                                } catch (error) {
-                                    console.error('Error marking notification as read:', error);
                                 }
-                            }
-
-                            // Redirect to tournament detail if tournament ID exists
-                            if (tournamentId && tournamentId > 0) {
-                                window.location.href = `tournamentsDetail.php?id=${tournamentId}`;
-                            } else {
-                                // If no tournament ID found, try to extract from notification text
-                                const notificationText = notiItem.querySelector('.noti-text p').textContent;
-                                const tournamentMatch = notificationText.match(/tournament ID #(\d+)/i);
-
-                                if (tournamentMatch && tournamentMatch[1]) {
-                                    window.location.href = `tournamentDetail.php?id=${tournamentMatch[1]}`;
-                                } else {
-                                    // If still no tournament ID, show alert or stay on page
-                                    console.log('No tournament ID found in notification');
-
-                                }
-                            }
-                        });
-                    });
-
-                    // Dark mode and light mode toggle
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const themeToggle = document.getElementById('theme-toggle');
-                        const themeIcon = themeToggle.querySelector('i');
-
-                        // Get saved theme or default to 'light'
-                        const savedTheme = localStorage.getItem('theme');
-                        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                        // Determine initial theme
-                        let currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-
-                        // Apply theme on load
-                        applyTheme(currentTheme);
-
-                        themeToggle.addEventListener('click', () => {
-                            // Toggle between light and dark
-                            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                            applyTheme(newTheme);
-                            localStorage.setItem('theme', newTheme);
-                        });
-
-                        function applyTheme(theme) {
-                            document.documentElement.setAttribute('data-theme', theme);
-
-                            // Update icon
-                            if (theme === 'dark') {
-                                themeIcon.classList.remove('fa-moon');
-                                themeIcon.classList.add('fa-sun');
-
-                            } else {
-                                themeIcon.classList.remove('fa-sun');
-                                themeIcon.classList.add('fa-moon');
-                                themeIcon.style.color = '#64748b'; // Gray for moon
+                            } catch (error) {
+                                console.error('Error marking notification as read:', error);
                             }
                         }
 
-                        // Listen for system theme changes
-                        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                            if (!localStorage.getItem('theme')) { // Only if user hasn't set a preference
-                                applyTheme(e.matches ? 'dark' : 'light');
+                        // Redirect to tournament detail if tournament ID exists
+                        if (tournamentId && tournamentId > 0) {
+                            window.location.href = `tournamentsDetail.php?id=${tournamentId}`;
+                        } else {
+                            // If no tournament ID found, try to extract from notification text
+                            const notificationText = notiItem.querySelector('.noti-text p').textContent;
+                            const tournamentMatch = notificationText.match(/tournament ID #(\d+)/i);
+
+                            if (tournamentMatch && tournamentMatch[1]) {
+                                window.location.href = `tournamentDetail.php?id=${tournamentMatch[1]}`;
+                            } else {
+                                // If still no tournament ID, show alert or stay on page
+                                console.log('No tournament ID found in notification');
+
                             }
-                        });
+                        }
+                    });
+                });
+
+                // Dark mode and light mode toggle
+                document.addEventListener('DOMContentLoaded', () => {
+                    const themeToggle = document.getElementById('theme-toggle');
+                    const themeIcon = themeToggle.querySelector('i');
+
+                    // Get saved theme or default to 'light'
+                    const savedTheme = localStorage.getItem('theme');
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                    // Determine initial theme
+                    let currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+                    // Apply theme on load
+                    applyTheme(currentTheme);
+
+                    themeToggle.addEventListener('click', () => {
+                        // Toggle between light and dark
+                        const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                        applyTheme(newTheme);
+                        localStorage.setItem('theme', newTheme);
                     });
 
+                    function applyTheme(theme) {
+                        document.documentElement.setAttribute('data-theme', theme);
 
-                    //sidebar active link highlighting
-                    document.addEventListener('DOMContentLoaded', function() {
+                        // Update icon
+                        if (theme === 'dark') {
+                            themeIcon.classList.remove('fa-moon');
+                            themeIcon.classList.add('fa-sun');
 
-                        const currentPage = window.location.pathname.split("/").pop();
+                        } else {
+                            themeIcon.classList.remove('fa-sun');
+                            themeIcon.classList.add('fa-moon');
+                            themeIcon.style.color = '#64748b'; // Gray for moon
+                        }
+                    }
 
-
-                        const menuLinks = document.querySelectorAll('.sidebar-menu a');
-
-                        menuLinks.forEach(link => {
-                            // If the link's href matches the current page, add the 'active' class
-                            if (link.getAttribute('href') === currentPage) {
-                                link.classList.add('active');
-                            }
-                        });
+                    // Listen for system theme changes
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                        if (!localStorage.getItem('theme')) { // Only if user hasn't set a preference
+                            applyTheme(e.matches ? 'dark' : 'light');
+                        }
                     });
-                </script>
+                });
+
+
+                //sidebar active link highlighting
+                document.addEventListener('DOMContentLoaded', function() {
+
+                    const currentPage = window.location.pathname.split("/").pop();
+
+
+                    const menuLinks = document.querySelectorAll('.sidebar-menu a');
+
+                    menuLinks.forEach(link => {
+                        // If the link's href matches the current page, add the 'active' class
+                        if (link.getAttribute('href') === currentPage) {
+                            link.classList.add('active');
+                        }
+                    });
+                });
+            </script>

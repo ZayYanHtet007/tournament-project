@@ -51,8 +51,8 @@ if ($tour_result) {
                 <h1 class="h3 fw-bold mb-1">Organizer Management</h1>
                 <p class="small">Manage details for <b><?= htmlspecialchars($organizer['username']) ?></b></p>
             </div>
-            <a href="organizers.php" class="btn btn-secondary" style="width: auto;">
-                Back
+            <a href="organizers.php" class="btn-custom btn-back">
+                ← Back 
             </a>
         </div>
 

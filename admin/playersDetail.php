@@ -2,59 +2,64 @@
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
 
-
 $user_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ban_user'])) {
     $ban_id = intval($_POST['user_id']);
-
     $ban_stmt = $conn->prepare("UPDATE users SET is_banned = 1 WHERE user_id = ?");
     $ban_stmt->bind_param("i", $ban_id);
     $ban_stmt->execute();
     echo "<script>alert('Player has been banned successfully!'); window.location.href='playersDetail.php?id=$ban_id';</script>";
 }
 
-
+// Player Data
 $user_sql = "SELECT * FROM users WHERE user_id = $user_id";
 $user_result = mysqli_query($conn, $user_sql);
 $player = mysqli_fetch_assoc($user_result);
-
 
 if (!$player) {
     die("Player not found.");
 }
 
-
-$teams = [
-    ['team_name' => 'Falcon Esports', 'game_name' => 'Mobile Legends'],
-    ['team_name' => 'Yangon Galacticos', 'game_name' => 'Dota 2'],
-    ['team_name' => 'Burmese Ghouls', 'game_name' => 'PUBG Mobile'],
-    ['team_name' => 'AI Esports', 'game_name' => 'Valorant'],
-    ['team_name' => 'Team Flash', 'game_name' => 'Arena of Valor'],
-    ['team_name' => 'Mythic Crew', 'game_name' => 'Free Fire'],
-    ['team_name' => 'Liquid BG', 'game_name' => 'Mobile Legends'],
-    ['team_name' => 'Yangon Galacticos', 'game_name' => 'PUBG Mobile'],
-    ['team_name' => 'Team Flash', 'game_name' => 'Arena of Valor'],
-    ['team_name' => 'Mythic Crew', 'game_name' => 'Free Fire'],
-    ['team_name' => 'Liquid BG', 'game_name' => 'Mobile Legends'],
-    ['team_name' => 'Old School', 'game_name' => 'Dota 2']
-];
+$teams = [];
+$tournaments = [];
 
 
-$tournaments = [
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED']
-];
+$teams_sql = "
+    SELECT DISTINCT
+        t.team_id,
+        t.team_name,
+        t.logo,
+        t.players,
+        u.username AS leader_name,
+        g.name AS game_name
+    FROM team_members tm
+    INNER JOIN teams t ON tm.team_id = t.team_id
+    LEFT JOIN users u ON t.leader_id = u.user_id
+    LEFT JOIN tournament_teams tt ON t.team_id = tt.team_id
+    LEFT JOIN tournaments tr ON tt.tournament_id = tr.tournament_id
+    LEFT JOIN games g ON tr.game_id = g.game_id
+    WHERE tm.user_id = $user_id
+";
 
+$teams_res = mysqli_query($conn, $teams_sql);
+while ($row = mysqli_fetch_assoc($teams_res)) {
+    $teams[] = $row;
+}
+
+// 2. Tournaments Query
+$tournaments_sql = "SELECT tr.title AS name, g.name AS game,tr.status FROM team_members tm
+                    INNER JOIN teams t ON tm.team_id = t.team_id
+                    INNER JOIN tournament_teams tt ON t.team_id = tt.team_id
+                    INNER JOIN tournaments tr ON tt.tournament_id = tr.tournament_id
+                    LEFT JOIN games g ON tr.game_id = g.game_id
+                    WHERE tm.user_id = $user_id
+                    GROUP BY tr.tournament_id";
+$tournaments_res = mysqli_query($conn, $tournaments_sql);
+while ($row = mysqli_fetch_assoc($tournaments_res)) {
+    $tournaments[] = $row;
+}
 ?>
 
 
@@ -66,8 +71,8 @@ $tournaments = [
                 <p class="small">Manage details for <b><?= htmlspecialchars($player['username']) ?></b></p>
             </div>
 
-            <a href="players.php" class="btn btn-secondary" style="width: auto; ">
-                Back
+            <a href="players.php" class="btn-custom btn-back">
+                ← Back 
             </a>
 
         </div>
