@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
 
       <label>Registration Deadline *</label>
       <input type="date" name="registration_deadline" class="input mb-4"
-        value="<?= $tournament['registration_deadline'] ?>" <?= $readOnly ?>>
+        value="<?= $tournament['registration_deadline'] ?>" <?= $readOnly ?>> 
 
       <label>Start Date *</label>
       <input type="date" name="start_date" class="input mb-4"
