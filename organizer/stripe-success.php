@@ -93,7 +93,6 @@ try {
   }
 
   mysqli_commit($conn);
-
   // Redirect to success page
   header("Location: payment-success.php?tournament_id=$tournament_id");
   exit;

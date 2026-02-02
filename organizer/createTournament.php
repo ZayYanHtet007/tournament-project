@@ -91,7 +91,7 @@ Semi Winners → Grand Final (BO5)
 function generateDefaultRules($genre,$description) {
   switch ($genre) {
     case 'MOBA':
-      return $description +"\n" +"      
+      return $description . "      
 • All matches are BO3 (Grand Final BO5)
 • Fair play is mandatory
 • Any cheating leads to disqualification
@@ -102,7 +102,7 @@ function generateDefaultRules($genre,$description) {
 ";
 
     case 'BATTLE_ROYALE':
-      return $description +"\n" +"
+      return $description ."
 • Fair play is mandatory
 • Any cheating leads to disqualification      
 • No teaming
@@ -112,7 +112,7 @@ function generateDefaultRules($genre,$description) {
 ";
 
     default:
-      return $description +"\n" +"
+      return $description ."
 • Fair play is mandatory
 • Any cheating leads to disqualification
 • Organizer decision is final
