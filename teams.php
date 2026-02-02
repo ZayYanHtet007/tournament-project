@@ -451,7 +451,6 @@ include('partial/header.php');
         document.getElementById('m-motto').innerText = `"${motto}"`;
         document.getElementById('m-leader').innerText = leader;
 
-        // Players Logic
         let html = '';
         if (players && players.trim() !== '') {
             players.split(',').forEach(p => {
@@ -462,7 +461,6 @@ include('partial/header.php');
         }
         document.getElementById('m-players').innerHTML = html;
 
-        // Setup Join Button
         const joinBtn = document.getElementById('m-join-btn');
         joinBtn.onclick = function() {
             requestJoin(teamId);
@@ -477,12 +475,40 @@ include('partial/header.php');
 
     function requestJoin(teamId) {
         if (confirm("Do you want to send a request to join this team?")) {
-            // Actual Logic Here (e.g., AJAX or Redirect)
-            // window.location.href = 'join_request.php?team_id=' + teamId;
-            alert("Request sent for Team ID: " + teamId);
+            const joinBtn = document.getElementById('m-join-btn');
+            const originalText = joinBtn.innerText;
+
+            joinBtn.innerText = "SENDING...";
+            joinBtn.disabled = true;
+
+            const formData = new URLSearchParams();
+            formData.append('team_id', teamId);
+
+            fetch('player/request_join.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData.toString()
+                })
+                .then(async response => {
+                    const text = await response.text();
+                    if (!response.ok) throw new Error(text || "Server Error");
+                    return text;
+                })
+                .then(message => {
+                    alert(message);
+                    closeTeam();
+                })
+                .catch(error => {
+                    alert("Failed: " + error.message);
+                })
+                .finally(() => {
+                    joinBtn.innerText = originalText;
+                    joinBtn.disabled = false;
+                });
         }
     }
-
     window.onclick = function(e) {
         if (e.target.className === 'modal-overlay') closeTeam();
     }
