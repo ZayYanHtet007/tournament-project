@@ -46,6 +46,10 @@ $stmt = $pdo->prepare($sqlAnnounce);
 $stmt->execute([$tournament_id]);
 $announce = $stmt->fetch(PDO::FETCH_ASSOC);
 
+if (!$announce) {
+  die('Announcement not found for this tournament');
+}
+
 /* ================= JOINED TEAMS ================= */
 $sqlJoined = "
 SELECT COUNT(*) 
@@ -54,84 +58,11 @@ WHERE tournament_id = ?
 ";
 $stmt = $pdo->prepare($sqlJoined);
 $stmt->execute([$tournament_id]);
-$joinedTeams = $stmt->fetchColumn();
+$joinedTeams = (int)$stmt->fetchColumn();
 
-/* ================= RULES ================= */
-$rulesText = $announce['rules'] ?? "
-All matches must follow fair-play rules.
-Any form of cheating leads to disqualification.
-Teams must be ready 15 minutes before match time.
-Organizer decisions are final.
-";
-
-/* ================= DYNAMIC SYSTEM ================= */
-function generateTournamentSystem($genre, $maxTeams) {
-  if ($genre === 'BATTLE_ROYALE') {
-    return "
-Points Based League Stage
-All Teams Will Play 3 Matches
-
-Rank Points:
-1 → 20
-2 → 16
-3 → 14
-4 → 12
-5 → 10
-6 → 8
-7 → 6
-8 → 4
-9+ → 1
-
-Each Kill = 1 Point
-Highest Total Points Wins
-";
-  }
-
-if ($maxTeams === 12) {
-    return "
-Group Stage (3 Teams Per Group)
-BO3 Matches
-2:0 → 3 pts
-2:1 → 2 pts (loser 1 pt)
-Top 8 → Quarter Final
-Top 4 → Semi Final
-Semi Losers → 2nd Runner Up
-Semi Losers → 2nd Runner-Up Final 
-Semi Winners → Grand Final (BO5)
-";
-  }
-
-  if ($maxTeams === 16) {
-    return "
-Group Stage (4 Teams Per Group)
-BO3 Matches
-2:0 → 3 pts
-2:1 → 2 pts (loser 1 pt)
-Top 8 → Quarter Final
-Top 4 → Semi Final
-Semi Losers → 2nd Runner-Up Final 
-Semi Winners → Grand Final (BO5)
-";
-  }
-
-  if ($maxTeams === 24) {
-    return "
-Group Stage (6 Teams Per Group)
-BO3 Matches
-2:0 → 3 pts
-2:1 → 2 pts (loser 1 pt)
-Top 8 → Quarter Final
-Top 4 → Semi Final
-Semi Losers → 2nd Runner-Up Final 
-Semi Winners → Grand Final (BO5)
-";
-  }
-
-  return "Single Elimination Format";
-}
-
-$systemText = $announce['system_info']
-  ?? generateTournamentSystem($tournament['genre'], $tournament['max_participants']);
+/* ================= DATA FROM DB ONLY ================= */
+$rulesText  = $announce['rules'];
+$systemText = $announce['system_info'];
 
 $isCompleted = ($tournament['status'] === 'completed');
 ?>
@@ -312,7 +243,7 @@ button:disabled {
     <div class="game"><?= htmlspecialchars($tournament['game_name']) ?></div>
   </div>
 
-  <div class="image" style="background-image:url('<?= htmlspecialchars($tournament['game_image'] ?:'images/games/defaultTournament.jpg') ?>')"></div>
+  <div class="image" style="background-image:url('<?= htmlspecialchars($tournament['game_image'] ?: 'images/games/defaultTournament.jpg') ?>')"></div>
 
   <!-- DATE CARDS -->
   <div class="dates">
