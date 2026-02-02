@@ -80,35 +80,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
 
         $status = calculateStatus($reg_start, $start);
 
-        $stmt = $conn->prepare("
-            INSERT INTO tournaments
-            (organizer_id, game_id, title, description,
-             max_participants, team_size, fee,
-             registration_start_date, registration_deadline, start_date,
-             status, admin_status,prize_pool)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending',?)
-        ");
+$stmt = $conn->prepare("
+    INSERT INTO tournaments
+    (organizer_id, game_id, title, description,
+     max_participants, team_size, fee,
+     registration_start_date, registration_deadline, start_date,
+     status, admin_status, prize_pool)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+");
 
-        $stmt->bind_param(
-            "iissiiissssi",
-            $organizer_id,
-            $game_id,
-            $title,
-            $description,
-            $max_participants,
-            $team_size,
-            $fee,
-            $reg_start,
-            $reg_end,
-            $start,
-            $status,
-            $prize_pool
-        );
+$stmt->bind_param("iissiiissssi", $organizer_id, $game_id, $title, $description, $max_participants, $team_size, $fee, $reg_start, $reg_end, $start, $status, $prize_pool);
 
-        if ($stmt->execute()) {
-            header("Location: stripe-payment.php?tournament_id=" . $stmt->insert_id);
-            exit;
-        } else {
+if ($stmt->execute()) {
+    header("Location: stripe-payment.php?tournament_id=" . $stmt->insert_id);
+    exit;
+}else {
             $message = "❌ DB Error: " . $stmt->error;
         }
     }
