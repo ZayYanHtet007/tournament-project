@@ -1,6 +1,10 @@
+
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();   // ✅ REQUIRED
+}
 
 require 'database/dbConfig.php';
 
@@ -65,259 +69,343 @@ $rulesText  = $announce['rules'];
 $systemText = $announce['system_info'];
 
 $isCompleted = ($tournament['status'] === 'completed');
+
+if (isset($_POST['btnRegister'])) {
+  // 1. Check Login
+  if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('Please log in to register.'); window.location.href='login.php';</script>";
+    exit;
+  }
+
+  $user_id = $_SESSION['user_id'];
+
+  // 2. CHECK IF USER IS A LEADER (Query the teams table)
+  // We check if the logged-in user ID exists in the 'leader_id' column
+  $stmt = $pdo->prepare("SELECT team_id, team_name FROM teams WHERE leader_id = ? LIMIT 1");
+  $stmt->execute([$user_id]);
+  $team = $stmt->fetch();
+
+  if (!$team) {
+    echo "<script>alert('Access Denied: Only team leaders can register for tournaments.');</script>";
+  } else {
+    $team_id = $team['team_id'];
+    $team_name = $team['team_name'];
+
+    // 3. Check if this team is already in the tournament
+    $checksql = "SELECT COUNT(*) FROM tournament_teams WHERE tournament_id = ? AND team_id = ?";
+    $stmt = $pdo->prepare($checksql);
+    $stmt->execute([$tournament_id, $team_id]);
+    $count = $stmt->fetchColumn();
+
+    if ($count > 0) {
+      echo "<script>alert('Your team ($team_name) is already registered.');</script>";
+    } else {
+      // 4. Insert into tournament_teams
+      $insertsql = "INSERT INTO tournament_teams (tournament_id, team_id, registered_at) VALUES (?, ?, NOW())";
+      $stmt = $pdo->prepare($insertsql);
+
+      if ($stmt->execute([$tournament_id, $team_id])) {
+        echo "<script>alert('Registration successful for $team_name!'); window.location.reload();</script>";
+      } else {
+        echo "<script>alert('Registration failed. Please try again.');</script>";
+      }
+    }
+  }
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title><?= htmlspecialchars($tournament['tournament_title']) ?></title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title><?= htmlspecialchars($tournament['tournament_title']) ?></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  background:#121212;
-  color:#fff;
-  font-family:'Segoe UI', sans-serif;
-  padding:20px;
-}
-.container {
-  max-width:1000px;
-  margin:auto;
-  background:#1e1e1e;
-  border-radius:14px;
-  overflow:hidden;
-}
-.header {
-  padding:20px;
-}
-.title {
-  font-size:26px;
-  color:#ffcc00;
-  font-weight:bold;
-}
-.game {
-  color:#ccc;
-}
-.image {
-  height:260px;
-  background-size:cover;
-  background-position:center;
-}
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
 
-/* ===== DATE CARDS ===== */
-.dates {
-  display:flex;
-  gap:12px;
-  padding:20px;
-}
-.date-card {
-  flex:1;
-  background:#2a2a2a;
-  border-radius:10px;
-  padding:12px;
-  text-align:center;
-}
-.date-card.reg-start { background:#00c6ff; color:#000; }
-.date-card.reg-end { background:#ff416c; }
-.date-card.tour-start { background:#ffcc00; color:#000; }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #1e1e1e;
+      border-radius: 14px;
+      overflow: hidden;
+    }
 
-.date-label {
-  font-size:12px;
-  font-weight:bold;
-}
-.date-value {
-  margin-top:4px;
-  font-size:13px;
-}
+    .header {
+      padding: 20px;
+    }
 
-/* ===== PRIZE ===== */
-.prize {
-  padding:0 20px 20px;
-  font-size:18px;
-  color:#00ffcc;
-  font-weight:bold;
-}
+    .title {
+      font-size: 26px;
+      color: #ffcc00;
+      font-weight: bold;
+    }
 
-/* ===== CONTENT ===== */
-.content {
-  padding:20px;
-}
-.grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
-}
-.section-title {
-  font-size:17px;
-  margin-bottom:8px;
-  color:#00c6ff;
-}
+    .game {
+      color: #ccc;
+    }
 
-/* ===== SCROLL BOX ===== */
-.scroll-box {
-  max-height:260px;
-  overflow-y:auto;
-  background:#151515;
-  border-radius:10px;
-  padding:15px;
-  line-height:1.6;
-  white-space:pre-line;
-}
-.scroll-box::-webkit-scrollbar {
-  width:6px;
-}
-.scroll-box::-webkit-scrollbar-thumb {
-  background:#00c6ff;
-  border-radius:10px;
-}
-.scroll-box::-webkit-scrollbar-track {
-  background:#111;
-}
+    .image {
+      height: 260px;
+      background-size: cover;
+      background-position: center;
+    }
 
-/* ===== ACTIONS ===== */
-.fee {
-  margin-top:20px;
-  font-size:15px;
-  color:#ffcc00;
-}
-.joined {
-  margin-top:5px;
-  color:#ccc;
-}
-.actions {
-  margin-top:20px;
-}
-.checkbox {
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-.checkbox input {
-  width:18px;
-  height:18px;
-}
-.warning {
-  display:none;
-  margin-top:10px;
-  background:#ff416c;
-  padding:8px;
-  border-radius:6px;
-}
-button {
-  margin-top:15px;
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  background:linear-gradient(45deg,#00c6ff,#0072ff);
-  color:#fff;
-}
-button:disabled {
-  background:#555;
-  cursor:not-allowed;
-}
-.readonly {
-  margin-top:15px;
-  background:#333;
-  padding:12px;
-  text-align:center;
-  border-radius:8px;
-}
+    /* ===== DATE CARDS ===== */
+    .dates {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+    }
 
-@media(max-width:768px){
-  .grid { grid-template-columns:1fr; }
-  .dates { flex-direction:column; }
-}
-</style>
+    .date-card {
+      flex: 1;
+      background: #2a2a2a;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .date-card.reg-start {
+      background: #00c6ff;
+      color: #000;
+    }
+
+    .date-card.reg-end {
+      background: #ff416c;
+    }
+
+    .date-card.tour-start {
+      background: #ffcc00;
+      color: #000;
+    }
+
+    .date-label {
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .date-value {
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    /* ===== PRIZE ===== */
+    .prize {
+      padding: 0 20px 20px;
+      font-size: 18px;
+      color: #00ffcc;
+      font-weight: bold;
+    }
+
+    /* ===== CONTENT ===== */
+    .content {
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .section-title {
+      font-size: 17px;
+      margin-bottom: 8px;
+      color: #00c6ff;
+    }
+
+    /* ===== SCROLL BOX ===== */
+    .scroll-box {
+      max-height: 260px;
+      overflow-y: auto;
+      background: #151515;
+      border-radius: 10px;
+      padding: 15px;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    .scroll-box::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scroll-box::-webkit-scrollbar-thumb {
+      background: #00c6ff;
+      border-radius: 10px;
+    }
+
+    .scroll-box::-webkit-scrollbar-track {
+      background: #111;
+    }
+
+    /* ===== ACTIONS ===== */
+    .fee {
+      margin-top: 20px;
+      font-size: 15px;
+      color: #ffcc00;
+    }
+
+    .joined {
+      margin-top: 5px;
+      color: #ccc;
+    }
+
+    .actions {
+      margin-top: 20px;
+    }
+
+    .checkbox {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .checkbox input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .warning {
+      display: none;
+      margin-top: 10px;
+      background: #ff416c;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      color: #fff;
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    .readonly {
+      margin-top: 15px;
+      background: #333;
+      padding: 12px;
+      text-align: center;
+      border-radius: 8px;
+    }
+
+    @media(max-width:768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dates {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <div class="header">
-    <div class="title"><?= htmlspecialchars($tournament['tournament_title']) ?></div>
-    <div class="game"><?= htmlspecialchars($tournament['game_name']) ?></div>
-  </div>
-
-  <div class="image" style="background-image:url('<?= htmlspecialchars($tournament['game_image'] ?: 'images/games/defaultTournament.jpg') ?>')"></div>
-
-  <!-- DATE CARDS -->
-  <div class="dates">
-    <div class="date-card reg-start">
-      <div class="date-label">Reg Start</div>
-      <div class="date-value"><?= date('M d, Y', strtotime($tournament['created_at'])) ?></div>
+    <div class="header">
+      <div class="title"><?= htmlspecialchars($tournament['tournament_title']) ?></div>
+      <div class="game"><?= htmlspecialchars($tournament['game_name']) ?></div>
     </div>
-    <div class="date-card reg-end">
-      <div class="date-label">Reg End</div>
-      <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_deadline'])) ?></div>
-    </div>
-    <div class="date-card tour-start">
-      <div class="date-label">Tournament Start</div>
-      <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_start_date'])) ?></div>
-    </div>
-  </div>
 
-  <div class="prize">💰 Prize Pool: $<?= number_format($tournament['prize_pool'],2) ?></div>
+    <div class="image" style="background-image:url('<?= htmlspecialchars($tournament['game_image'] ?: 'images/games/defaultTournament.jpg') ?>')"></div>
 
-  <div class="content">
-
-    <div class="grid">
-      <div>
-        <div class="section-title">📜 Rules & Regulations</div>
-        <div class="scroll-box"><?= nl2br(htmlspecialchars($rulesText)) ?></div>
+    <!-- DATE CARDS -->
+    <div class="dates">
+      <div class="date-card reg-start">
+        <div class="date-label">Reg Start</div>
+        <div class="date-value"><?= date('M d, Y', strtotime($tournament['created_at'])) ?></div>
       </div>
-
-      <div>
-        <div class="section-title">⚙ Tournament System</div>
-        <div class="scroll-box"><?= nl2br(htmlspecialchars($systemText)) ?></div>
+      <div class="date-card reg-end">
+        <div class="date-label">Reg End</div>
+        <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_deadline'])) ?></div>
+      </div>
+      <div class="date-card tour-start">
+        <div class="date-label">Tournament Start</div>
+        <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_start_date'])) ?></div>
       </div>
     </div>
 
-    <div class="fee">
-      Registration Fee: $<?= number_format($tournament['fee'],2) ?>
-    </div>
-    <div class="joined">
-      Joined Teams: <?= $joinedTeams ?> / <?= $tournament['max_participants'] ?>
-    </div>
+    <div class="prize">💰 Prize Pool: $<?= number_format($tournament['prize_pool'], 2) ?></div>
 
-    <?php if ($isCompleted): ?>
-      <div class="readonly">Tournament completed. Registration closed.</div>
-    <?php else: ?>
-      <div class="actions">
-        <div class="checkbox">
-          <input type="checkbox" id="agree">
-          <label for="agree">I agree to the rules & regulations</label>
+    <div class="content">
+
+      <div class="grid">
+        <div>
+          <div class="section-title">📜 Rules & Regulations</div>
+          <div class="scroll-box"><?= nl2br(htmlspecialchars($rulesText)) ?></div>
         </div>
-        <div id="warn" class="warning">Must agree rules and regulations to register</div>
-        <button id="registerBtn" disabled>Register Now</button>
+
+        <div>
+          <div class="section-title">⚙ Tournament System</div>
+          <div class="scroll-box"><?= nl2br(htmlspecialchars($systemText)) ?></div>
+        </div>
       </div>
-    <?php endif; ?>
 
+      <div class="fee">
+        Registration Fee: $<?= number_format($tournament['fee'], 2) ?>
+      </div>
+      <div class="joined">
+        Joined Teams: <?= $joinedTeams ?> / <?= $tournament['max_participants'] ?>
+      </div>
+
+      <?php if ($isCompleted): ?>
+        <div class="readonly">Tournament completed. Registration closed.</div>
+      <?php else: ?>
+        <div class="actions">
+          <form method="POST">
+            <div class="checkbox">
+              <input type="checkbox" id="agree">
+              <label for="agree">I agree to the rules & regulations</label>
+            </div>
+            <div id="warn" class="warning">Must agree rules and regulations to register</div>
+            <button type="submit" id="registerBtn" disabled name="btnRegister">Register Now</button>
+          </form>
+        </div>
+      <?php endif; ?>
+
+    </div>
   </div>
-</div>
 
-<script>
-const agree = document.getElementById('agree');
-const btn = document.getElementById('registerBtn');
-const warn = document.getElementById('warn');
 
-if (agree) {
-  agree.addEventListener('change', () => {
-    btn.disabled = !agree.checked;
-    warn.style.display = 'none';
-  });
-  btn.addEventListener('click', e => {
-    if (!agree.checked) {
-      e.preventDefault();
-      warn.style.display = 'block';
+  <script>
+    const agree = document.getElementById('agree');
+    const btn = document.getElementById('registerBtn');
+    const warn = document.getElementById('warn');
+
+    if (agree) {
+      agree.addEventListener('change', () => {
+        btn.disabled = !agree.checked;
+        warn.style.display = 'none';
+      });
+      btn.addEventListener('click', e => {
+        if (!agree.checked) {
+          e.preventDefault();
+          warn.style.display = 'block';
+        }
+      });
     }
-  });
-}
-</script>
+  </script>
 
 </body>
+
 </html>

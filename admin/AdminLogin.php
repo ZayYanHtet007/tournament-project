@@ -4,7 +4,7 @@ require_once __DIR__ . '/../database/dbConfig.php';
 
 $message = "";
 
-// 1. Initialize Brute-Force Protection
+
 if (!isset($_SESSION['login_attempts'])) {
     $_SESSION['login_attempts'] = 0;
     $_SESSION['last_attempt_time'] = time();
@@ -18,12 +18,12 @@ if ($_SESSION['login_attempts'] >= 8) {
         $wait_minutes = ceil(($lockout_time - $time_passed) / 60);
         $message = "Too many failed attempts. Please try again in $wait_minutes minutes.";
     } else {
-        // Time is up, reset attempts
+
         $_SESSION['login_attempts'] = 0;
     }
 }
 
-// 3. Process Login
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
     $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
     $password = $_POST['password'];
@@ -31,31 +31,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
     if (!$email) {
         $message = "Please enter a valid email address.";
     } else {
-        // Use Prepared Statements for Security
-        $stmt = $conn->prepare("SELECT admin_id, username, password FROM admins WHERE email = ? LIMIT 1");
+
+        $stmt = $conn->prepare("SELECT admin_id, username, password, img, role FROM admins WHERE email = ? LIMIT 1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($user = $result->fetch_assoc()) {
-            // Verify password using Bcrypt
+
             if (password_verify($password, $user['password'])) {
                 session_regenerate_id(true);
                 $_SESSION['admin_id'] = $user['admin_id'];
+                $_SESSION['admin_role'] = $user['role'];
                 $_SESSION['admin_name'] = $user['username'];
                 $_SESSION['admin_email'] = $email;
+                $_SESSION['admin_img'] = $user['img'];
                 $_SESSION['login_attempts'] = 0;
 
                 header("Location: adminDashboard.php");
                 exit;
             } else {
-                // WRONG PASSWORD
+
                 $_SESSION['login_attempts']++;
                 $_SESSION['last_attempt_time'] = time();
                 $message = "Invalid email or password.";
             }
         } else {
-            // EMAIL NOT FOUND
+
             $_SESSION['login_attempts']++;
             $_SESSION['last_attempt_time'] = time();
             $message = "Invalid email or password.";
@@ -231,6 +233,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
             <button type="submit" <?php echo $is_locked ? 'disabled' : ''; ?>>
                 <?php echo $is_locked ? 'Account Locked' : 'Sign In'; ?>
             </button>
+
+            <a href="forgetPassword.php">Forget Password</a>
         </form>
 
     </div>
