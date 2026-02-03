@@ -29,7 +29,7 @@ $stmt = $conn->prepare("
         t.created_at
     FROM tournaments t
     JOIN games g ON t.game_id = g.game_id
-    WHERE t.organizer_id = ?
+    WHERE t.organizer_id = ? and t.admin_status = 'approved'
     ORDER BY t.created_at DESC
 ");
 $stmt->bind_param("i", $organizer_id);
