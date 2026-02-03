@@ -106,7 +106,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($tournaments as $row): 
+                        <?php foreach ($tournaments as $row):
                             $statusClass = "status-" . $row['status'];
                             $approvalClass = "approval-" . ($row['admin_status'] == 'approved' ? 'success' : ($row['admin_status'] == 'rejected' ? 'danger' : 'pending'));
                         ?>
@@ -126,16 +126,38 @@ while ($row = mysqli_fetch_assoc($result)) {
             </div>
         </div>
 
+        <div id="feeModal" class="custom-modal-overlay">
+            <div class="custom-modal-box">
+                <span class="close-modal">&times;</span>
+                <div class="modal-header">
+                    <p>Set the cost required to create a tournament.</p>
+                </div>
+
+                <div class="current-fee-display">
+                    <span class="label">Original Fee</span>
+                    <span class="amount">$<?php echo number_format($current_fee, 2); ?></span>
+                </div>
+
+                <form method="POST" action="tournaments.php">
+                    <div class="input-group">
+                        <label>New Fee Amount ($)</label>
+                        <input type="number" name="new_fee" step="0.01" min="0" placeholder="Enter new fee" required>
+                    </div>
+                    <button type="submit" name="update_fee_btn" class="btn-save-fee">Update</button>
+                </form>
+            </div>
+        </div>aa
+
         <div class="pagination">
             <?php if ($page > 1): ?>
                 <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($searchTerm) ?>" class="pg-link"><i class="fas fa-chevron-left"></i> PREV</a>
             <?php endif; ?>
 
-            <?php 
+            <?php
             // Show up to 5 page numbers for cleaner UI
             $start_loop = max(1, $page - 2);
             $end_loop = min($total_pages, $page + 2);
-            
+
             for ($i = $start_loop; $i <= $end_loop; $i++): ?>
                 <a href="?page=<?= $i ?>&search=<?= urlencode($searchTerm) ?>" class="pg-link <?= ($i == $page) ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
@@ -146,3 +168,17 @@ while ($row = mysqli_fetch_assoc($result)) {
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById("feeModal");
+        const btn = document.getElementById("openFeeModal");
+        const closeBtn = document.querySelector(".close-modal");
+
+        btn.onclick = () => modal.style.display = "flex";
+        closeBtn.onclick = () => modal.style.display = "none";
+        window.onclick = (event) => {
+            if (event.target == modal) modal.style.display = "none";
+        }
+    });
+</script>
