@@ -2,7 +2,6 @@
 include('partial/header.php');
 require_once "database/dbConfig.php";
 
-
 $sql = "
     SELECT 
         g.game_id,
@@ -34,8 +33,6 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-
-/* UI gradients (since DB doesn’t store them yet) */
 $gradients = [
     'League of Legends' => 'red-pink',
     'Dota 2'            => 'purple-indigo',
@@ -48,22 +45,21 @@ $gradients = [
 ?>
 
 <style>
-    /* ================= CORE THEME OVERRIDES (Red & Black) ================= */
+    /* ================= CORE THEME OVERRIDES ================= */
     :root {
         --primary-red: #ff4655;
         --deep-black: #0a0a0a;
-        --card-bg: #111111;
     }
 
     body {
         background-color: var(--deep-black) !important;
     }
 
-    /* ================= FADE IN/OUT ANIMATION CLASS ================= */
+    /* ================= FADE ANIMATION ================= */
     .game-card {
         opacity: 0;
         transform: translateY(30px);
-        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        transition: opacity 0.8s ease-out, transform 0.8s ease-out, border-color 0.3s;
     }
 
     .game-card.visible {
@@ -113,16 +109,23 @@ $gradients = [
     }
 
     @media (max-width: 992px) {
-        .games-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 600px) {
-        .games-grid { grid-template-columns: 1fr; }
+        .games-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
-    /* ================= RIOT / VALORANT CARD UPGRADE ================= */
+    @media (max-width: 600px) {
+        .games-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ================= MODERN GLASS CARD ================= */
     .game-card {
-        background: linear-gradient(160deg, #141827, #0b0e14);
-        border: 1px solid #222;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 40px 30px;
         position: relative;
         overflow: hidden;
@@ -131,31 +134,66 @@ $gradients = [
         flex-direction: column;
         align-items: center;
         text-align: center;
+        border-radius: 8px;
     }
 
-    /* HOVER TRANSITION (Modified to work with the visibility transform) */
+    /* IMAGE BG LAYER */
+    .card-image-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.3) grayscale(0.2);
+        transition: transform 0.6s ease, filter 0.6s ease, opacity 0.5s ease;
+    }
+
+    /* VIDEO BG LAYER - NEW */
+    .card-video-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 1;
+        opacity: 0;
+        filter: brightness(0.4);
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+    }
+
     .game-card.visible:hover {
-        transform: translateY(-12px) rotateX(6deg) scale(1.03);
+        transform: translateY(-12px) scale(1.03);
         border-color: var(--primary-red);
-        box-shadow:
-            0 0 25px rgba(255,70,85,0.6),
-            0 0 80px rgba(255,70,85,0.25);
+        box-shadow: 0 0 30px rgba(255, 70, 85, 0.3);
     }
 
-    /* SCANLINE TEXTURE INSIDE CARD */
+    .game-card:hover .card-image-bg {
+        transform: scale(1.1);
+        opacity: 0;
+        /* Hide image on hover to show video */
+    }
+
+    .game-card:hover .card-video-bg {
+        opacity: 1;
+        /* Show video on hover */
+    }
+
+    .card-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+    }
+
+    /* SCANLINE TEXTURE */
     .game-card::after {
         content: "";
         position: absolute;
         inset: 0;
-        background: repeating-linear-gradient(
-            to bottom,
-            rgba(255,255,255,0.025),
-            rgba(255,255,255,0.025) 1px,
-            transparent 1px,
-            transparent 4px
-        );
+        background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 4px);
         opacity: 0.15;
         pointer-events: none;
+        z-index: 3;
     }
 
     /* NEON SWEEP */
@@ -163,13 +201,9 @@ $gradients = [
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-            120deg,
-            transparent,
-            rgba(255,70,85,0.35),
-            transparent
-        );
+        background: linear-gradient(120deg, transparent, rgba(255, 70, 85, 0.2), transparent);
         transform: translateX(-120%);
+        z-index: 4;
     }
 
     .game-card:hover::before {
@@ -177,40 +211,39 @@ $gradients = [
     }
 
     @keyframes riotSweep {
-        to { transform: translateX(120%); }
+        to {
+            transform: translateX(120%);
+        }
     }
 
     .game-icon {
         width: 100%;
-        height: 150px;
+        height: 120px;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative;
-        z-index: 2;
     }
 
     .game-img {
-        max-width: 80%;
-        max-height: 120px;
-        filter: grayscale(1) brightness(0.75);
+        max-width: 70%;
+        max-height: 100px;
+        filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
         transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .game-card:hover .game-img {
-        filter: grayscale(0) brightness(1.1)
-            drop-shadow(0 0 18px var(--primary-red));
-        transform: translateZ(60px) scale(1.12);
+        transform: translateZ(40px) scale(1.1);
+        filter: drop-shadow(0 0 15px var(--primary-red));
     }
 
     .game-name {
         color: #fff;
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 28px;
+        font-size: 32px;
         margin-bottom: 20px;
         letter-spacing: 1px;
-        z-index: 2;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
     }
 
     .game-stats {
@@ -218,15 +251,14 @@ $gradients = [
         display: flex;
         justify-content: space-around;
         margin-bottom: 25px;
-        border-top: 1px solid #222;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
         padding-top: 20px;
-        z-index: 2;
     }
 
     .game-stat-label {
         display: block;
         font-size: 9px;
-        color: #666;
+        color: #bbb;
         text-transform: uppercase;
         margin-bottom: 5px;
     }
@@ -234,13 +266,14 @@ $gradients = [
     .game-stat-value {
         color: #fff;
         font-weight: 800;
-        font-size: 16px;
+        font-size: 18px;
     }
 
     .btn-game {
+        display: block;
         width: 100%;
         padding: 15px;
-        background: transparent;
+        background: rgba(0, 0, 0, 0.5);
         border: 1px solid var(--primary-red);
         color: #fff;
         font-weight: bold;
@@ -248,28 +281,12 @@ $gradients = [
         cursor: pointer;
         transition: 0.3s;
         letter-spacing: 1px;
-        z-index: 2;
         text-decoration: none;
     }
 
     .btn-game:hover {
         background: var(--primary-red);
-        box-shadow: 0 0 25px rgba(255, 70, 85, 0.5);
-    }
-
-    .game-glow {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at center,
-            rgba(255, 70, 85, 0.18) 0%,
-            transparent 70%);
-        opacity: 0;
-        transition: 0.5s;
-        pointer-events: none;
-    }
-
-    .game-card:hover .game-glow {
-        opacity: 1;
+        box-shadow: 0 0 20px rgba(255, 70, 85, 0.5);
     }
 
     /* 2. STRIKE OVERLAY */
@@ -310,7 +327,7 @@ $gradients = [
 
     .strike-2 {
         transform: rotate(-45deg);
-        animation: slash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+        animation: slash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.17s forwards;
     }
 
     /* 4. THE ANIMATION (Slash and Dissolve) */
@@ -341,60 +358,47 @@ $gradients = [
 <section class="games-section" id="games">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">
-                <span class="gradient-text-alt">FEATURED GAMES</span>
-            </h2>
-            <p class="section-subtitle">
-                Compete in your favorite games and dominate the leaderboards
-            </p>
+            <h2 class="section-title"><span class="gradient-text-alt">FEATURED GAMES</span></h2>
+            <p class="section-subtitle">Compete in your favorite games and dominate the leaderboards</p>
         </div>
 
         <div class="games-grid">
             <?php foreach ($games as $index => $game):
-                $gradient = $gradients[$game['name']] ?? 'blue-cyan';
                 $image = !empty($game['image']) ? $game['image'] : 'default.png';
+                $imagePath = "images/games/" . htmlspecialchars($image);
+                // Video filename logic: Valorant.mp4, Dota2.mp4, etc.
+                $videoFile = str_replace(' ', '', $game['name']) . ".mp4";
+                $videoPath = "Videos/" . htmlspecialchars($videoFile);
             ?>
-                <div class="game-card game-card-<?php echo $index; ?>">
-                    <div class="game-bg gradient-<?php echo $gradient; ?>"></div>
+                <div class="game-card">
+                    <div class="card-image-bg" style="background-image: url('<?php echo $imagePath; ?>');"></div>
 
-                    <div class="game-icon gradient-<?php echo $gradient; ?>">
-                        <img src="images/games/<?php echo htmlspecialchars($image); ?>"
-                            alt="<?php echo htmlspecialchars($game['name']); ?>"
-                            class="game-img">
-                    </div>
+                    <video class="card-video-bg" muted loop playsinline preload="none">
+                        <source src="<?php echo $videoPath; ?>" type="video/mp4">
+                    </video>
 
-                    <h3 class="game-name">
-                        <?php echo htmlspecialchars($game['name']); ?>
-                    </h3>
-
-                    <div class="game-stats">
-                        <div class="game-stat">
-                            <span class="game-stat-label">Active Tournaments</span>
-                            <span class="game-stat-value">
-                                <?php echo (int)$game['tournament_count']; ?>
-                            </span>
+                    <div class="card-content">
+                        <div class="game-icon">
+                            <img src="<?php echo $imagePath; ?>" alt="icon" class="game-img">
                         </div>
 
-                        <div class="game-stat">
-                            <span class="game-stat-label">Players</span>
-                            <span class="game-stat-value gradient-<?php echo $gradient; ?>">
-                                <?php echo number_format((int)$game['player_count']); ?>
-                            </span>
+                        <h3 class="game-name"><?php echo htmlspecialchars($game['name']); ?></h3>
+
+                        <div class="game-stats">
+                            <div class="game-stat">
+                                <span class="game-stat-label">Tournaments</span>
+                                <span class="game-stat-value"><?php echo (int)$game['tournament_count']; ?></span>
+                            </div>
+                            <div class="game-stat">
+                                <span class="game-stat-label">Players</span>
+                                <span class="game-stat-value"><?php echo number_format((int)$game['player_count']); ?></span>
+                            </div>
                         </div>
+
+                        <a href="tournaments.php?game_id=<?php echo (int)$game['game_id']; ?>" class="btn-game">
+                            Browse Tournaments
+                        </a>
                     </div>
-
-                    <a href="tournaments.php?game_id=<?php echo (int)$game['game_id']; ?>"
-                        class="btn-game gradient-<?php echo $gradient; ?>">
-                        Browse Tournaments
-                    </a>
-
-                    <div class="game-particles">
-                        <div class="game-particle particle-1 gradient-<?php echo $gradient; ?>"></div>
-                        <div class="game-particle particle-2 gradient-<?php echo $gradient; ?>"></div>
-                        <div class="game-particle particle-3 gradient-<?php echo $gradient; ?>"></div>
-                    </div>
-
-                    <div class="game-glow gradient-<?php echo $gradient; ?>"></div>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -404,27 +408,36 @@ $gradients = [
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const cards = document.querySelectorAll('.game-card');
-        
-        const observerOptions = {
-            threshold: 0.1 // Triggers when 10% of the card is visible
-        };
 
+        // Intersection Observer for card entrance
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                 } else {
-                    entry.target.classList.remove('visible'); // Fades out when scrolling away
+                    entry.target.classList.remove('visible');
                 }
             });
-        }, observerOptions);
+        }, {
+            threshold: 0.1
+        });
 
         cards.forEach(card => {
             observer.observe(card);
+
+            // Play video on hover, pause and reset on leave
+            const video = card.querySelector('.card-video-bg');
+            card.addEventListener('mouseenter', () => {
+                if (video) video.play().catch(e => {});
+            });
+            card.addEventListener('mouseleave', () => {
+                if (video) {
+                    video.pause();
+                    video.currentTime = 0;
+                }
+            });
         });
     });
 </script>
 
-<?php
-include('partial/footer.php');
-?>
+<?php include('partial/footer.php'); ?>

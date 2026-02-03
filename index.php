@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         }
 
         main>section {
-            margin: 120px 0;
+            margin: 350px 0;
         }
 
         /* ================= GLOBAL ANIMATION (IN/OUT) ================= */

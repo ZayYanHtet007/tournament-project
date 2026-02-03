@@ -68,7 +68,7 @@ canvas#bg {
     top: 0;
     bottom: 0;
     width: var(--sidebar-w);
-    background: transparent;
+    background: black;
     border-right: 1px solid rgba(255,255,255,0.08);
     display: flex;
     flex-direction: column;
@@ -374,5 +374,3 @@ window.onclick = function(e) {
 }
 </script>
 
-</body>
-</html>
