@@ -25,12 +25,13 @@ if (isset($_POST['submit'])) {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'theintnandarsoe16@gmail.com';
-        $mail->Password = 'cqmx tiwi oqoe rpyr';
+        $mail->Username = 'kelvin30102003@gmail.com';
+        $mail->Password = 'jfzu ayeg gcov fbij';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
         
-        $mail->setFrom('myattheingikyaw200234@gmail.com', 'TX Network');
+        
+        $mail->setFrom('myattheingikyaw200234@gmail.com', 'Theint');
         $mail->addAddress($email);
 
         $mail->isHTML(true);
