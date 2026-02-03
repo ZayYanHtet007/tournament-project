@@ -11,6 +11,116 @@ if (
     header("Location: ../login.php");
     exit;
 }
+//Default Functions
+
+function generateDefaultSystem($genre, $maxTeams) {
+
+  if ($genre === 'BATTLE_ROYALE') {
+    return "
+•Points Based League
+•All Teams Will Play 3 Matches
+
+Rank Points:
+1 → 20
+2 → 16
+3 → 14
+4 → 12
+5 → 10
+6 → 8
+7 → 6
+8 → 4
+9+ → 1
+
+•Each Kill = 1 Point
+•Highest Total Points Wins
+ 
+";
+  }
+
+  // MOBA / TEAM BASED
+  if ($maxTeams == 12) {
+    return "
+Group Stage (3 teams per group)
+BO3 Matches
+
+• 2:0 → 3 points (loser 0 point)
+• 2:1 → 2 points (loser 1 point)
+
+Top 8 → Quarter Final
+Top 4 → Semi Final
+
+Semi Losers → 2nd Runner-Up Match
+Semi Winners → Grand Final (BO5)
+";
+  }
+
+  if ($maxTeams == 16) {
+    return "
+Group Stage (4 teams per group)
+BO3 Matches
+
+• 2:0 → 3 points (loser 0 point)
+• 2:1 → 2 points (loser 1 point)
+
+Top 8 → Quarter Final
+Top 4 → Semi Final
+
+Semi Losers → 2nd Runner-Up Match
+Semi Winners → Grand Final (BO5)
+";
+  }
+  
+  if ($maxTeams == 24) {
+    return "
+Group Stage (6 teams per group)
+BO3 Matches
+
+• 2:0 → 3 points (loser 0 point)
+• 2:1 → 2 points (loser 1 point)
+
+Top 8 → Quarter Final
+Top 4 → Semi Final
+
+Semi Losers → 2nd Runner-Up Match
+Semi Winners → Grand Final (BO5)
+";
+  }
+
+  return "Single Elimination Format";
+}
+function generateDefaultRules($genre,$description) {
+  switch ($genre) {
+    case 'MOBA':
+      return $description . "      
+• All matches are BO3 (Grand Final BO5)
+• Fair play is mandatory
+• Any cheating leads to disqualification
+• MOBA Mobile can't play with emulator
+• Teams must be ready 15 minutes before match
+• Disconnects under 5 minutes → rematch
+• Organizer decision is final
+";
+
+    case 'BATTLE_ROYALE':
+      return $description ."
+• Fair play is mandatory
+• Any cheating leads to disqualification      
+• No teaming
+• Exploits and glitches are forbidden
+• Custom room only
+• Organizer decision is final
+";
+
+    default:
+      return $description ."
+• Fair play is mandatory
+• Any cheating leads to disqualification
+• Organizer decision is final
+";
+  }
+}
+
+
 
 /* ---------- HELPERS ---------- */
 function clean($v)
@@ -80,21 +190,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
 
         $status = calculateStatus($reg_start, $start);
 
-$stmt = $conn->prepare("
-    INSERT INTO tournaments
-    (organizer_id, game_id, title, description,
-     max_participants, team_size, fee,
-     registration_start_date, registration_deadline, start_date,
-     status, admin_status, prize_pool)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
-");
+        $stmt = $conn->prepare("
+            INSERT INTO tournaments
+            (organizer_id, game_id, title, description,
+             max_participants, team_size, fee,
+             registration_start_date, registration_deadline, start_date,
+             status, admin_status,prize_pool)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending',?)
+        ");
 
-$stmt->bind_param("iissiiissssi", $organizer_id, $game_id, $title, $description, $max_participants, $team_size, $fee, $reg_start, $reg_end, $start, $status, $prize_pool);
+        $stmt->bind_param(
+            "iissiiissssi",
+            $organizer_id,
+            $game_id,
+            $title,
+            $description,
+            $max_participants,
+            $team_size,
+            $fee,
+            $reg_start,
+            $reg_end,
+            $start,
+            $status,
+            $prize_pool
+        );
+        
+        if ($stmt->execute()) {
 
-if ($stmt->execute()) {
-    header("Location: stripe-payment.php?tournament_id=" . $stmt->insert_id);
-    exit;
-}else {
+        $tournamentId = $stmt->insert_id;
+
+        $stmt1 = $pdo->prepare("SELECT genre FROM games WHERE game_id = ?");
+        $stmt1->execute([$game_id]);
+        $game = $stmt1->fetch(PDO::FETCH_ASSOC);
+
+        $genre = $game['genre'];
+
+        $defaultRules  = generateDefaultRules($genre,$description);
+        $defaultSystem = generateDefaultSystem($genre, $max_participants);
+        
+       
+
+        $stmt1 = $pdo->prepare("
+        INSERT INTO tournament_announcements 
+        (tournament_id,title, rules, system_info, created_at)
+        VALUES (?,?,?, ?, NOW())
+        ");
+
+        $stmt1->execute([
+        $tournamentId,
+        $title,
+        $defaultRules,
+        $defaultSystem
+        ]); 
+            header("Location: stripe-payment.php?tournament_id=" . $stmt->insert_id);
+            exit;
+        } else {
             $message = "❌ DB Error: " . $stmt->error;
         }
     }
