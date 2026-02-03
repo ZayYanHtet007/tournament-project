@@ -256,6 +256,7 @@ canvas#bg {
         flex-direction: row;
         width: 100%;
         justify-content: space-around;
+        margin-left: 30px;
     }
 
     .nav-item.active::before {
