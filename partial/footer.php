@@ -99,8 +99,8 @@
 
     /* Footer Bottom Section */
     .footer-bottom {
-        margin-top: 80px;
-        padding-top: 30px;
+        margin-top: 50px;
+        padding-top: 20px;
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         display: flex;
         justify-content: space-between;
@@ -167,7 +167,6 @@
             <h4>Tournament</h4>
             <ul>
                 <li><a href="tournaments.php">Active Events</a></li>
-                <li><a href="brackets.php">Brackets</a></li>
                 <li><a href="rules.php">Official Rules</a></li>
                 <li><a href="leaderboard.php">Rankings</a></li>
             </ul>
@@ -178,7 +177,6 @@
             <ul>
                 <li><a href="faq.php">Help Center</a></li>
                 <li><a href="contact.php">Contact Us</a></li>
-                <li><a href="privacy.php">Privacy Policy</a></li>
                 <li><a href="terms.php">Terms of Service</a></li>
             </ul>
         </div>
