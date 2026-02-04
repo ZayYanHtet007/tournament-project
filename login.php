@@ -124,7 +124,7 @@ include('partial/header.php');
 
     /* ================= LOGIN DESIGN (HEAVY RED & RESPONSIVE) ================= */
     .login-container-wrapper {
-        min-height: 85vh;
+        min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -321,7 +321,7 @@ include('partial/header.php');
             </div>
 
             <button type="submit" name="btnlogin" class="btn-red-action">
-                Initialize Session
+                Login
             </button>
 
             <div class="login-helper-links">

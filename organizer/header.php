@@ -2,9 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Database connection (assuming it's included via your config)
-require_once "../database/dbConfig.php";
+require_once  "../partial/init.php";
 
 $isLoggedIn = isset($_SESSION['user_id']);
 $uid = $_SESSION['user_id'] ?? null;
@@ -17,7 +15,6 @@ if ($isLoggedIn) {
     $user = mysqli_fetch_assoc($result);
 }
 
-// Get current page filename for active state
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -26,182 +23,190 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TournaX | Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TournaX — Elite Esports</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* ======== ROOT VARIABLES ======== */
         :root {
-            --accent-blue: #3d8bff;
-            --bg-dark: #06090f;
-            --sidebar-bg: rgba(10, 15, 25, 0.95);
-            --text-light: #ffffff;
-            --text-dim: rgba(255, 255, 255, 0.5);
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --surface: rgba(15, 20, 35, 0.95);
-            --riot-red: #ff4655;
+            --accent: #00d4ff;
+            --bg: #06080f;
+            --surface: #11141d;
+            --sidebar-w: 85px;
+            --transition: all 0.25s ease;
         }
 
-        /* ======== RESET & BASE ======== */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 50%, #0d1a30 0%, #06090f 100%);
-            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: #fff;
             overflow-x: hidden;
-            min-height: 100vh;
         }
 
-        /* ======== SIDEBAR (Riot Style) ======== */
-        .sidebar {
-            width: 80px;
-            background: var(--sidebar-bg);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(61, 139, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            height: 100vh;
+        /* ================= SIDEBAR ================= */
+        .tx-sidebar {
             position: fixed;
             left: 0;
             top: 0;
-            z-index: 1000;
+            bottom: 0;
+            width: var(--sidebar-w);
+            background: black;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px 0;
+            z-index: 2000;
         }
 
         .logo-container {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             margin-bottom: 40px;
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 800px;
         }
 
         .side-logo {
             width: 100%;
-            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            filter: drop-shadow(0 0 5px var(--accent-blue));
+            transition: 0.3s;
         }
 
         .logo-container:hover .side-logo {
-            transform: rotateY(360deg) scale(1.1);
-            filter: drop-shadow(0 0 15px var(--accent-blue));
+            filter: drop-shadow(0 0 10px var(--accent));
         }
 
-        .sidebar nav {
+        .nav-stack {
             display: flex;
             flex-direction: column;
-            gap: 0px;
-            width: 100%;
-            align-items: center;
+            gap: 35px;
+            flex-grow: 1;
         }
 
-        .sidebar nav a {
-            color: var(--text-dim);
-            font-size: 18px;
-            transition: var(--transition);
+        .nav-item {
             position: relative;
-            width: 100%;
-            height: 60px;
             display: flex;
             justify-content: center;
             align-items: center;
             text-decoration: none;
+            opacity: 0.6;
+            transition: var(--transition);
         }
 
-        .sidebar nav a:hover {
-            color: var(--text-light);
-            background: rgba(255, 255, 255, 0.05);
+        .nav-item i {
+            font-size: 22px;
+            transition: var(--transition);
         }
 
-        /* Active State */
-        .sidebar nav a.active {
-            color: var(--accent-blue);
-            background: rgba(61, 139, 255, 0.1);
+        .nav-item:hover,
+        .nav-item.active {
+            opacity: 1;
         }
 
-        /* Active indicator line */
-        .sidebar nav a.active::after {
+        .nav-item.active i {
+            color: var(--accent) !important;
+        }
+
+        /* ACTIVE INDICATOR */
+        .nav-item.active::before {
             content: '';
             position: absolute;
-            left: 0;
-            top: 15%;
-            width: 3px;
-            height: 70%;
-            background: var(--accent-blue);
-            box-shadow: 0 0 10px var(--accent-blue);
+            left: -25px;
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
         }
 
-        /* ======== HEADER & DROPDOWN ======== */
-        .header {
+        .nav-item span {
+            position: absolute;
+            left: 45px;
+            background: var(--surface);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-10px);
+            pointer-events: none;
+            transition: var(--transition);
+            border-left: 2px solid var(--accent);
+        }
+
+        .nav-item:hover span {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ================= HEADER ================= */
+        .tx-header {
             position: fixed;
             top: 0;
-            left: 80px;
+            left: var(--sidebar-w);
             right: 0;
             height: 75px;
             display: flex;
             justify-content: flex-end;
             align-items: center;
             padding: 0 40px;
-            z-index: 999;
+            z-index: 1000;
         }
-
-        .auth-wrapper { position: relative; }
 
         .auth-trigger {
             width: 45px;
             height: 45px;
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
+            display: grid;
+            place-items: center;
             cursor: pointer;
             transition: 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .auth-trigger:hover {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 15px rgba(61, 139, 255, 0.3);
+            border-color: var(--accent);
         }
 
-        .user-img { width: 100%; height: 100%; object-fit: cover; }
+        .user-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
 
         .riot-dropdown {
             position: absolute;
-            top: 60px;
+            top: 55px;
             right: 0;
-            width: 240px;
-            background: #0a1428;
-            border: 1px solid #1e2328;
+            width: 260px;
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: none;
             flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: menuIn 0.2s ease-out;
         }
 
-        .riot-dropdown.show { display: flex; }
-
-        @keyframes menuIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .riot-dropdown.show {
+            display: flex;
         }
 
         .drop-info {
             padding: 20px;
-            border-bottom: 1px solid #1e2328;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             text-align: center;
         }
 
@@ -209,104 +214,141 @@ $current_page = basename($_SERVER['PHP_SELF']);
             padding: 15px 20px;
             display: block;
             text-decoration: none;
-            color: #cdbe91; /* Hextech Gold color */
-            font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            transition: 0.2s;
-            text-transform: uppercase;
+            color: #bbb;
+            font-size: 13px;
         }
 
         .drop-links a:hover {
-            background: rgba(61, 139, 255, 0.1);
+            background: rgba(0, 212, 255, 0.1);
             color: #fff;
         }
 
-        /* Hero Content Just for visualization */
-        .main-content {
-            margin-left: 80px;
-            padding-top: 100px;
-            text-align: center;
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-w: 0px;
+            }
+
+            .tx-sidebar {
+                flex-direction: row;
+                height: 70px;
+                width: 100%;
+                bottom: 0;
+                top: auto;
+                border-right: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                justify-content: space-around;
+                padding: 0;
+            }
+
+            .logo-container {
+                display: none;
+            }
+
+            .nav-stack {
+                flex-direction: row;
+                width: 100%;
+                justify-content: space-around;
+                margin: 0;
+            }
+
+            .nav-item.active::before {
+                left: 50%;
+                bottom: -2px;
+                top: auto;
+                width: 20px;
+                height: 3px;
+                transform: translateX(-50%);
+            }
+
+            .tx-header {
+                left: 0;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <aside class="sidebar">
-        <div class="logo-container">
+    <aside class="tx-sidebar">
+        <a href="organizerDashboard.php" class="logo-container">
             <img src="../images/TX blue.png" class="side-logo" alt="TX">
-        </div>
-        <nav>
-            <a href="organizerDashboard.php" class="<?= ($current_page == 'organizerDashboard.php' || $current_page == '') ? 'active' : '' ?>" title="Home">
-                <i class="fas fa-home"></i>
+        </a>
+
+        <nav class="nav-stack">
+            <a href="organizerDashboard.php" class="nav-item <?= ($current_page == 'organizerDashboard.php' || $current_page == '') ? 'active' : '' ?>">
+                <i class="fa-solid fa-house" style="color: #fff;"></i>
+                <span>HOME</span>
             </a>
-            
-            <a href="tournaments.php" class="<?= ($current_page == 'tournaments.php' || $current_page == 'manageTournament.php' ) ? 'active' : '' ?>" title="Tournaments">
-                <i class="fas fa-trophy"></i>
+
+            <a href="manageTournament.php" class="nav-item <?= ($current_page == 'manageTournament.php') ? 'active' : '' ?>">
+                <i class="fa-solid fa-trophy" style="color: #fff;"></i>
+                <span>TOURNAMENTS</span>
             </a>
-            
-            <a href="teams.php" class="<?= ($current_page == 'teams.php') ? 'active' : '' ?>" title="Teams">
-                <i class="fas fa-users"></i>
+
+            <a href="teams.php" class="nav-item <?= ($current_page == 'teams.php') ? 'active' : '' ?>">
+                <i class="fa-solid fa-users" style="color: #fff;"></i>
+                <span>TEAMS</span>
             </a>
-            
-            <a href="stats.php" class="<?= ($current_page == 'stats.php') ? 'active' : '' ?>" title="Stats">
-                <i class="fas fa-chart-bar"></i>
+
+            <a href="leaderboard.php" class="nav-item <?= ($current_page == 'leaderboard.php') ? 'active' : '' ?>">
+                <i class="fa-solid fa-ranking-star" style="color: #fff;"></i>
+                <span>LEADERBOARD</span>
             </a>
-            
-            <a href="settings.php" class="<?= ($current_page == 'settings.php') ? 'active' : '' ?>" title="Settings">
-                <i class="fas fa-cog"></i>
+
+            <a href="contact.php" class="nav-item <?= ($current_page == 'contact.php') ? 'active' : '' ?>">
+                <i class="fa-solid fa-envelope" style="color: #fff;"></i>
+                <span>CONTACT US</span>
             </a>
         </nav>
+
+        <div class="nav-item" style="margin-top: auto; margin-bottom: 20px;">
+            <i class="fa-solid fa-gear" style="color: #fff;"></i>
+        </div>
     </aside>
 
-    <header class="header">
-        <div class="auth-wrapper">
+    <header class="tx-header">
+        <div class="auth-wrapper" style="position: relative;">
             <div class="auth-trigger" onclick="toggleUserMenu()">
                 <?php if ($isLoggedIn): ?>
                     <img src="../images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" class="user-img">
                 <?php else: ?>
-                    <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" colors="primary:#ffffff" style="width:30px;height:30px"></lord-icon>
+                    <i class="fa-solid fa-circle-user" style="font-size: 30px; color: #fff;"></i>
                 <?php endif; ?>
             </div>
 
             <div id="userDropdown" class="riot-dropdown">
                 <?php if ($isLoggedIn): ?>
                     <div class="drop-info">
-                        <h4 style="color: var(--accent-blue);"><?= htmlspecialchars($user['username']) ?></h4>
+                        <h4 style="color: var(--accent);"><?= htmlspecialchars($user['username']) ?></h4>
                         <p style="font-size: 10px; opacity: 0.5;"><?= htmlspecialchars($user['email']) ?></p>
                     </div>
                     <div class="drop-links">
-                        <a href="userprofile.php">Customize Profile</a>
-                        <a href="../logout.php" style="color: var(--riot-red)">Logout</a>
+                        <a href="userprofile.php">CUSTOMIZE PROFILE</a>
+                        <a href="changePassword.php">CHANGE PASSWORD</a>
+                        <a href="logout.php" style="color: var(--accent)">LOGOUT</a>
                     </div>
                 <?php else: ?>
                     <div class="drop-links">
-                        <a href="login.php">Login</a>
-                        <a href="signUp.php">Create Account</a>
+                        <a href="login.php">LOGIN</a>
+                        <a href="signUp.php">CREATE ACCOUNT</a>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
     </header>
 
-    <main class="main-content">
-        </main>
-
     <script>
         function toggleUserMenu() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
+            document.getElementById('userDropdown').classList.toggle('show');
         }
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
-            const trigger = document.querySelector('.auth-trigger');
-            if (dropdown && trigger && !trigger.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.remove('show');
+        window.onclick = function(e) {
+            if (!e.target.closest('.auth-wrapper')) {
+                const dropdown = document.getElementById('userDropdown');
+                if (dropdown) dropdown.classList.remove('show');
             }
-        });
+        }
     </script>
+
 </body>
+
 </html>
