@@ -30,6 +30,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>
 :root {
@@ -256,6 +257,7 @@ canvas#bg {
         flex-direction: row;
         width: 100%;
         justify-content: space-around;
+        margin-left: 30px;
     }
 
     .nav-item.active::before {
@@ -279,6 +281,66 @@ canvas#bg {
 
     .tx-header { left: 0; }
 }
+
+.fa-bell{
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
+    position: relative;
+}
+
+#notif-icon {
+      position: absolute;
+      right: 100px;
+      cursor: pointer;
+      align-items: center;
+    }
+
+    #notif-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: red;
+      color: white;
+      font-size: 0.8rem;
+      padding: 2px 6px;
+      border-radius: 50%;
+    }
+
+    #notif-dropdown {
+      display: none;
+      position: absolute;
+      right: 20px;
+      top: 60px;
+      width: 300px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .notification {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    .notification.unread {
+      background: #facc15;
+      color: #000;
+    }
+
+    .notification.read {
+      background: #f1f5f9;
+      color: #333;
+    }
+
+    .notification:last-child {
+      border-bottom: none;
+    }
 </style>
 </head>
 
@@ -332,6 +394,25 @@ canvas#bg {
 </aside>
 
 <header class="tx-header">
+
+    <span id="notif-icon">
+      <i class="fa-solid fa-bell"></i>
+    </span>
+
+    <div id="notif-dropdown">
+    <?php if (empty($notifications)): ?>
+      <div class="notification read">No notifications</div>
+    <?php else: ?>
+      <?php foreach ($notifications as $n): ?>
+        <div class="notification <?php echo $n['is_read'] ? 'read' : 'unread'; ?>" data-id="<?php echo $n['notification_id']; ?>">
+          <strong><?php echo htmlspecialchars($n['title']); ?></strong><br>
+          <?php echo htmlspecialchars($n['message']); ?><br>
+          <small><?php echo $n['created_at']; ?></small>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
+
     <div class="auth-wrapper">
         <div class="auth-trigger" onclick="toggleUserMenu()">
             <?php if ($isLoggedIn): ?>
@@ -372,5 +453,17 @@ window.onclick = function(e) {
         if(dropdown) dropdown.classList.remove('show');
     }
 }
+
+// --- Toggle dropdown ---
+    const notifIcon = document.getElementById("notif-icon");
+    const notifDropdown = document.getElementById("notif-dropdown");
+    notifIcon.addEventListener("click", () => {
+      notifDropdown.style.display = notifDropdown.style.display === "block" ? "none" : "block";
+    });
+    document.addEventListener("click", (e) => {
+      if (!notifIcon.contains(e.target) && !notifDropdown.contains(e.target)) {
+        notifDropdown.style.display = "none";
+      }
+    });
 </script>
 

@@ -306,10 +306,10 @@ include('partial/header.php');
             </div>
 
             <button type="submit" name="btnsave" class="btn-signup-red">
-                Initialize Account
+                Register
             </button>
 
-            <a href="index.php" class="btn-cancel">Abort Protocol</a>
+            <a href="index.php" class="btn-cancel">Cancel</a>
         </form>
     </div>
 </main>
