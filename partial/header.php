@@ -40,6 +40,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
     --transition: all 0.25s ease;
 }
 
+/* Hide default scroll bar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -63,7 +68,7 @@ canvas#bg {
     top: 0;
     bottom: 0;
     width: var(--sidebar-w);
-    background: black;
+    background: transparent;
     border-right: 1px solid rgba(255,255,255,0.08);
     display: flex;
     flex-direction: column;
@@ -344,7 +349,6 @@ canvas#bg {
                 </div>
                 <div class="drop-links">
                     <a href="userprofile.php">CUSTOMIZE PROFILE</a>
-                    <a href="#">MY TEAM</a>
                     <a href="changePassword.php">CHANGE PASSWORD</a>
                     <a href="logout.php" style="color: var(--riot)">LOGOUT</a>
                 </div>

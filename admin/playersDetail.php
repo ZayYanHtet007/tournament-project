@@ -2,59 +2,64 @@
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
 
-
 $user_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ban_user'])) {
     $ban_id = intval($_POST['user_id']);
-
     $ban_stmt = $conn->prepare("UPDATE users SET is_banned = 1 WHERE user_id = ?");
     $ban_stmt->bind_param("i", $ban_id);
     $ban_stmt->execute();
     echo "<script>alert('Player has been banned successfully!'); window.location.href='playersDetail.php?id=$ban_id';</script>";
 }
 
-
+// Player Data
 $user_sql = "SELECT * FROM users WHERE user_id = $user_id";
 $user_result = mysqli_query($conn, $user_sql);
 $player = mysqli_fetch_assoc($user_result);
-
 
 if (!$player) {
     die("Player not found.");
 }
 
-
-$teams = [
-    ['team_name' => 'Falcon Esports', 'game_name' => 'Mobile Legends'],
-    ['team_name' => 'Yangon Galacticos', 'game_name' => 'Dota 2'],
-    ['team_name' => 'Burmese Ghouls', 'game_name' => 'PUBG Mobile'],
-    ['team_name' => 'AI Esports', 'game_name' => 'Valorant'],
-    ['team_name' => 'Team Flash', 'game_name' => 'Arena of Valor'],
-    ['team_name' => 'Mythic Crew', 'game_name' => 'Free Fire'],
-    ['team_name' => 'Liquid BG', 'game_name' => 'Mobile Legends'],
-    ['team_name' => 'Yangon Galacticos', 'game_name' => 'PUBG Mobile'],
-    ['team_name' => 'Team Flash', 'game_name' => 'Arena of Valor'],
-    ['team_name' => 'Mythic Crew', 'game_name' => 'Free Fire'],
-    ['team_name' => 'Liquid BG', 'game_name' => 'Mobile Legends'],
-    ['team_name' => 'Old School', 'game_name' => 'Dota 2']
-];
+$teams = [];
+$tournaments = [];
 
 
-$tournaments = [
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED'],
-    ['name' => 'Summer Tournament', 'game' => 'Mobile Legends', 'status' => 'UPCOMING'],
-    ['name' => 'MPL Season 10', 'game' => 'Mobile Legends', 'status' => 'ONGOING'],
-    ['name' => 'Pubg National', 'game' => 'PUBG Mobile', 'status' => 'COMPLETED']
-];
+$teams_sql = "
+    SELECT DISTINCT
+        t.team_id,
+        t.team_name,
+        t.logo,
+        t.players,
+        u.username AS leader_name,
+        g.name AS game_name
+    FROM team_members tm
+    INNER JOIN teams t ON tm.team_id = t.team_id
+    LEFT JOIN users u ON t.leader_id = u.user_id
+    LEFT JOIN tournament_teams tt ON t.team_id = tt.team_id
+    LEFT JOIN tournaments tr ON tt.tournament_id = tr.tournament_id
+    LEFT JOIN games g ON tr.game_id = g.game_id
+    WHERE tm.user_id = $user_id
+";
 
+$teams_res = mysqli_query($conn, $teams_sql);
+while ($row = mysqli_fetch_assoc($teams_res)) {
+    $teams[] = $row;
+}
+
+// 2. Tournaments Query
+$tournaments_sql = "SELECT tr.title AS name, g.name AS game,tr.status FROM team_members tm
+                    INNER JOIN teams t ON tm.team_id = t.team_id
+                    INNER JOIN tournament_teams tt ON t.team_id = tt.team_id
+                    INNER JOIN tournaments tr ON tt.tournament_id = tr.tournament_id
+                    LEFT JOIN games g ON tr.game_id = g.game_id
+                    WHERE tm.user_id = $user_id
+                    GROUP BY tr.tournament_id";
+$tournaments_res = mysqli_query($conn, $tournaments_sql);
+while ($row = mysqli_fetch_assoc($tournaments_res)) {
+    $tournaments[] = $row;
+}
 ?>
 
 
@@ -63,31 +68,30 @@ $tournaments = [
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h3 fw-bold mb-1">Player Management</h1>
-                <p class="text-muted small">Manage details for <b><?= htmlspecialchars($player['username']) ?></b></p>
+                <p class="small">Manage details for <b><?= htmlspecialchars($player['username']) ?></b></p>
             </div>
 
-            <a href="players.php" class="btn btn-secondary" style="width: auto; ">
-                Back
+            <a href="players.php" class="btn-custom btn-back">
+                ← Back 
             </a>
 
         </div>
 
-        <div class="player-info-box shadow-sm mb-4">
-            <table class="table align-middle m-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Player ID</th>
-                        <th>Player Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="id-badge">#<?= $player['user_id'] ?></span></td>
-                        <td class="fw-bold"><?= htmlspecialchars($player['username']) ?></td>
-                    </tr>
-                </tbody>
-            </table>
+
+        <div class="glass-card">
+            <div class="player-details-grid">
+                <div class="detail-group">
+                    <label>PLAYER ID</label>
+                    <div class="detail-value">#<?= $player['user_id'] ?></div>
+                </div>
+
+                <div class="detail-group">
+                    <label>PLAYER NAME</label>
+                    <div class="detail-value"><?= htmlspecialchars($player['username']) ?></div>
+                </div>
+            </div>
         </div>
+
 
         <form method="POST" onsubmit="return confirm('Ban this player?');">
             <input type="hidden" name="user_id" value="<?= $player['user_id'] ?>">
@@ -108,8 +112,7 @@ $tournaments = [
             }
             ?>
         </form>
-
-        <div class="section-container mt-4">
+        <div class="section-container">
             <h3 class="section-title">Joined Teams</h3>
 
             <div class="scroll-grid-container">
@@ -122,7 +125,7 @@ $tournaments = [
                                         <h6 class="fw-bold mb-0"><?= htmlspecialchars($team['team_name']) ?></h6>
                                         <i class="bi bi-people text-muted"></i>
                                     </div>
-                                    <p class="text-muted x-small mb-1" style="font-size: 0.7rem;">GAME TITLE</p>
+                                    <p class=" x-small mb-1" style="font-size: 0.7rem;">GAME TITLE</p>
                                     <p class="fw-bold text-primary mb-0"><?= htmlspecialchars($team['game_name']) ?></p>
                                 </div>
                             </div>
@@ -148,8 +151,8 @@ $tournaments = [
                             <div class="item-card">
                                 <span class="custom-badge <?= $badge ?> d-inline-block mb-3"><?= strtoupper($status) ?></span>
                                 <h6 class="fw-bold"><?= htmlspecialchars($tour['name']) ?></h6>
-                                <div class="mt-2 pt-2 border-top d-flex justify-content-between small">
-                                    <span class="text-muted">Game</span>
+                                <div class="mt-2 pt-2  d-flex justify-content-between small">
+                                    <span>Game</span>
                                     <span class="fw-bold"><?= htmlspecialchars($tour['game']) ?></span>
                                 </div>
                             </div>
@@ -160,3 +163,5 @@ $tournaments = [
         </div>
     </div>
 </div>
+
+

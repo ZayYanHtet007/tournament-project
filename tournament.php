@@ -59,6 +59,18 @@ $gradients = [
         background-color: var(--deep-black) !important;
     }
 
+    /* ================= FADE IN/OUT ANIMATION CLASS ================= */
+    .game-card {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+
+    .game-card.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     /* ================= GAMES SECTION ================= */
     .games-section {
         padding: 80px 0;
@@ -115,14 +127,19 @@ $gradients = [
         position: relative;
         overflow: hidden;
         transform-style: preserve-3d;
-        transition: 
-            transform 0.35s cubic-bezier(.2,.8,.2,1),
-            box-shadow 0.35s,
-            border-color 0.3s;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
+    }
+
+    /* HOVER TRANSITION (Modified to work with the visibility transform) */
+    .game-card.visible:hover {
+        transform: translateY(-12px) rotateX(6deg) scale(1.03);
+        border-color: var(--primary-red);
+        box-shadow:
+            0 0 25px rgba(255,70,85,0.6),
+            0 0 80px rgba(255,70,85,0.25);
     }
 
     /* SCANLINE TEXTURE INSIDE CARD */
@@ -161,14 +178,6 @@ $gradients = [
 
     @keyframes riotSweep {
         to { transform: translateX(120%); }
-    }
-
-    .game-card:hover {
-        transform: translateY(-12px) rotateX(6deg) scale(1.03);
-        border-color: var(--primary-red);
-        box-shadow:
-            0 0 25px rgba(255,70,85,0.6),
-            0 0 80px rgba(255,70,85,0.25);
     }
 
     .game-icon {
@@ -240,6 +249,7 @@ $gradients = [
         transition: 0.3s;
         letter-spacing: 1px;
         z-index: 2;
+        text-decoration: none;
     }
 
     .btn-game:hover {
@@ -262,65 +272,65 @@ $gradients = [
         opacity: 1;
     }
 
-        /* 2. STRIKE OVERLAY */
-        .strike-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            pointer-events: none;
-        }
+    /* 2. STRIKE OVERLAY */
+    .strike-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        pointer-events: none;
+    }
 
-        /* 3. THE INTENSE NEON STRIKE */
-        .strike {
-            position: absolute;
-            background-color: #fff; /* White core */
-            height: 6px; 
-            width: 0%; 
-            border-radius: 100px;
-            
-            /* Multi-layered Neon Glow */
-            box-shadow: 
-                0 0 10px #fff,
-                0 0 20px #fe1313,
-                0 0 40px #fe1313,
-                0 0 80px #fe1313,
-                0 0 120px rgba(254, 19, 172, 0.5);
-        }
+    /* 3. THE INTENSE NEON STRIKE */
+    .strike {
+        position: absolute;
+        background-color: #fff; /* White core */
+        height: 6px; 
+        width: 0%; 
+        border-radius: 100px;
+        
+        /* Multi-layered Neon Glow */
+        box-shadow: 
+            0 0 10px #fff,
+            0 0 20px #fe1313,
+            0 0 40px #fe1313,
+            0 0 80px #fe1313,
+            0 0 120px rgba(254, 19, 172, 0.5);
+    }
 
-        .strike-1 {
-            transform: rotate(45deg);
-            animation: slash 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+    .strike-1 {
+        transform: rotate(45deg);
+        animation: slash 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
 
-        .strike-2 {
-            transform: rotate(-45deg);
-            animation: slash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-        }
+    .strike-2 {
+        transform: rotate(-45deg);
+        animation: slash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+    }
 
-        /* 4. THE ANIMATION (Slash and Dissolve) */
-        @keyframes slash {
-            0% {
-                width: 0%;
-                opacity: 0;
-                filter: brightness(1);
-            }
-            40% {
-                width: 150%;
-                opacity: 1;
-                filter: brightness(2); /* Extra flash when they cross */
-            }
-            100% {
-                width: 180%;
-                opacity: 0;
-                filter: brightness(1);
-            }
+    /* 4. THE ANIMATION (Slash and Dissolve) */
+    @keyframes slash {
+        0% {
+            width: 0%;
+            opacity: 0;
+            filter: brightness(1);
         }
+        40% {
+            width: 150%;
+            opacity: 1;
+            filter: brightness(2); /* Extra flash when they cross */
+        }
+        100% {
+            width: 180%;
+            opacity: 0;
+            filter: brightness(1);
+        }
+    }
 </style>
 
 <div class="strike-overlay">
@@ -390,6 +400,30 @@ $gradients = [
         </div>
     </div>
 </section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.game-card');
+        
+        const observerOptions = {
+            threshold: 0.1 // Triggers when 10% of the card is visible
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible'); // Fades out when scrolling away
+                }
+            });
+        }, observerOptions);
+
+        cards.forEach(card => {
+            observer.observe(card);
+        });
+    });
+</script>
 
 <?php
 include('partial/footer.php');
