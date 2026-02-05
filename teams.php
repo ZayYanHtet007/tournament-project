@@ -5,7 +5,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 1. DATA FETCHING LOGIC
+// 1. DATA FETCHING LOGIC (UNCHANGED)
 function getTeamsData($conn, $limit, $page, $search)
 {
     $offset = ($page - 1) * $limit;
@@ -17,7 +17,7 @@ function getTeamsData($conn, $limit, $page, $search)
     $total_results = $total_res['count'];
     $total_pages = ceil($total_results / $limit);
 
-    // Main Query - Fetches Leader and Short Name
+    // Main Query
     $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, 
             l.username AS leader_name,
             GROUP_CONCAT(u.username SEPARATOR ', ') as player_list
@@ -37,7 +37,7 @@ function getTeamsData($conn, $limit, $page, $search)
     ];
 }
 
-// 2. AJAX HANDLER
+// 2. AJAX HANDLER (UNCHANGED)
 if (isset($_GET['ajax'])) {
     $limit = 9;
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -85,6 +85,7 @@ function include_grid_content($data)
                     <div class="card-accent"></div>
                     <div class="photo-box">
                         <img src="images/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
+                        <div class="img-overlay"></div>
                     </div>
                     <div class="info-box">
                         <p class="motto-txt"><?= htmlspecialchars($row['motto'] ?? '') ?></p>
@@ -93,7 +94,10 @@ function include_grid_content($data)
                 </div>
             <?php endwhile; ?>
         <?php else: ?>
-            <p style="grid-column: 1/-1; text-align: center; font-size: 1.5rem; opacity: 0.5;">NO TEAMS FOUND MATCHING YOUR SEARCH.</p>
+            <div class="no-results">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>NO TEAMS FOUND IN DATABASE.</p>
+            </div>
         <?php endif; ?>
     </div>
 
@@ -125,34 +129,212 @@ include('partial/header.php');
         --riot-dark: #0f1923;
         --riot-black: #111;
         --riot-gray: #ece8e1;
-        --riot-border: rgba(255, 70, 84, 0.3);
+        --riot-white: #ffffff;
     }
 
+    /* 1. BACKGROUND & GLOBAL */
     body {
         background-color: var(--riot-dark);
-        background-image:
-            linear-gradient(rgba(15, 25, 35, 0.95), rgba(15, 25, 35, 0.95)),
+        /* Layered background */
+        background-image: 
+            linear-gradient(rgba(15, 25, 35, 0.92), rgba(15, 25, 35, 0.92)),
             url('https://images.contentstack.io/v3/assets/bltb6530b271fddd0b1/blt29d7c4f6bc072d93/5eb7cdc1b1f02e23d33930ad/V_AGENTS_5b.jpg');
-        background-attachment: fixed;
         background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
         color: var(--riot-gray);
         font-family: 'Oswald', sans-serif;
+        margin: 0;
+        overflow-x: hidden;
     }
 
-    .teams-container {
-        max-width: 1200px;
-        margin: 60px auto;
-        padding: 0 20px;
+    /* Grid Overlay Effect */
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.1) 4px);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* =========================================
+       2. GAMING INTRO ANIMATION
+       ========================================= */
+    #intro-screen {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: #000;
+        background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+        z-index: 10000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        /* Screen fades out */
+        animation: fadeOutScreen 0.5s ease-in-out 3s forwards;
+    }
+
+    /* Scanline overlay for that retro/tactical feel */
+    #intro-screen::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        z-index: 2;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+    }
+
+    .intro-wrapper {
         position: relative;
+        perspective: 1000px;
+        z-index: 10;
+    }
+
+    .intro-3d-text {
+        font-family: 'Teko', sans-serif;
+        font-size: 12rem;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 15px;
+        line-height: 1;
+        position: relative;
+        display: inline-block;
+        /* The Glitch & Fly In */
+        animation: gamingFlyIn 2.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        text-shadow: 
+            5px 5px 0px var(--riot-red),
+            10px 10px 20px rgba(0,0,0,0.8);
+    }
+
+    /* Glitch layers */
+    .intro-3d-text::before,
+    .intro-3d-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+    }
+
+    .intro-3d-text::before {
+        color: #0ff;
+        z-index: -1;
+        animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
+    }
+
+    .intro-3d-text::after {
+        color: var(--riot-red);
+        z-index: -2;
+        animation: glitch-anim-2 2.5s infinite linear alternate-reverse;
+    }
+
+    .loading-bar {
+        width: 0%;
+        height: 4px;
+        background: var(--riot-red);
+        margin-top: 20px;
+        box-shadow: 0 0 10px var(--riot-red);
+        animation: loadBar 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
+    @keyframes gamingFlyIn {
+        0% {
+            opacity: 0;
+            transform: scale(3) translateZ(500px) rotateX(20deg);
+            letter-spacing: 50px;
+            filter: blur(10px);
+        }
+        20% {
+            opacity: 1;
+            transform: scale(1) translateZ(0) rotateX(0deg);
+            letter-spacing: 15px;
+            filter: blur(0px);
+        }
+        85% {
+            transform: scale(1.05) translateZ(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1.05) translateZ(20px);
+        }
+    }
+
+    @keyframes glitch-anim-1 {
+        0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+        20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+        40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+        60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+        80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
+        100% { clip-path: inset(30% 0 20% 0); transform: translate(1px, -1px); }
+    }
+
+    @keyframes glitch-anim-2 {
+        0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+        20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 1px); }
+        40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 2px); }
+        60% { clip-path: inset(15% 0 80% 0); transform: translate(-2px, -2px); }
+        80% { clip-path: inset(55% 0 10% 0); transform: translate(1px, -1px); }
+        100% { clip-path: inset(40% 0 30% 0); transform: translate(-1px, 1px); }
+    }
+
+    @keyframes loadBar {
+        0% { width: 0%; opacity: 0;}
+        30% { width: 40%; opacity: 1; }
+        70% { width: 70%; }
+        100% { width: 200px; } /* Fixed width at end */
+    }
+
+    @keyframes fadeOutScreen {
+        0% { opacity: 1; pointer-events: all; }
+        90% { opacity: 0; pointer-events: none; }
+        100% { opacity: 0; z-index: -1; display: none; }
+    }
+
+    @media (max-width: 768px) {
+        .intro-3d-text { font-size: 5rem; letter-spacing: 5px; }
+    }
+
+    /* 3. LAYOUT & RESPONSIVENESS */
+    .teams-container {
+        max-width: 1400px;
+        margin: 80px auto;
+        padding: 0 150px;
+        position: relative;
+        z-index: 1;
+        /* Slight delayed entry for content */
+        opacity: 0;
+        animation: fadeInContent 1s ease-out 2.8s forwards;
+    }
+
+    @keyframes fadeInContent {
+        to { opacity: 1; }
     }
 
     .header-flex {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 40px;
+        margin-bottom: 50px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 20px;
     }
 
+    .page-title {
+        font-size: 4.5rem;
+        margin: 0;
+        text-transform: uppercase;
+        font-family: 'Teko', sans-serif;
+        line-height: 1;
+        letter-spacing: -2px;
+    }
+
+    /* Search Bar */
     .search-wrapper {
         position: relative;
         display: flex;
@@ -166,17 +348,18 @@ include('partial/header.php');
         border-bottom: 2px solid var(--riot-red);
         background: transparent;
         color: white;
-        transition: width 0.4s ease, padding 0.4s ease;
+        transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         outline: none;
-        margin-left: -1;
         font-family: 'Teko', sans-serif;
         font-size: 1.5rem;
+        opacity: 0;
     }
 
     .search-input.active {
         width: 250px;
         padding: 10px 15px;
         background: rgba(255, 255, 255, 0.05);
+        opacity: 1;
     }
 
     .search-btn {
@@ -186,31 +369,53 @@ include('partial/header.php');
         background: none;
         border: none;
         z-index: 2;
+        padding: 10px;
+        transition: transform 0.2s;
     }
+    .search-btn:hover { transform: scale(1.1); }
 
+    /* 4. TEAM GRID */
     .team-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 40px;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
     }
 
     .team-card {
         background: var(--riot-black);
         position: relative;
-        border: 1px solid var(--riot-border);
-        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid rgba(255,255,255,0.1);
+        clip-path: polygon(
+            20px 0, 100% 0, 
+            100% calc(100% - 20px), calc(100% - 20px) 100%, 
+            0 100%, 0 20px
+        );
+        transition: all 0.3s ease;
         cursor: pointer;
+        overflow: hidden;
     }
 
     .team-card:hover {
-        transform: scale(1.02);
+        transform: translateY(-5px);
         border-color: var(--riot-red);
-        box-shadow: 0 0 20px rgba(255, 70, 84, 0.3);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
+    .card-accent {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 3px;
+        background: var(--riot-red);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+        z-index: 10;
+    }
+    .team-card:hover .card-accent { transform: scaleX(1); }
+
     .photo-box {
-        height: 200px;
+        height: 180px;
         position: relative;
         overflow: hidden;
         background: #000;
@@ -220,7 +425,7 @@ include('partial/header.php');
         width: 100%;
         height: 100%;
         object-fit: cover;
-        opacity: 0.7;
+        opacity: 0.6;
         transition: 0.5s;
     }
 
@@ -229,124 +434,135 @@ include('partial/header.php');
         transform: scale(1.1);
     }
 
-    .card-accent {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: var(--riot-red);
-    }
-
     .info-box {
-        padding: 25px;
-        background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+        padding: 20px 25px;
+        background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,1) 100%);
     }
 
     .name-txt {
         font-family: 'Teko', sans-serif;
-        font-size: 2.5rem;
+        font-size: 2.2rem;
         text-transform: uppercase;
         line-height: 0.9;
-        margin: 0;
+        margin: 5px 0 0;
+        color: white;
     }
 
     .motto-txt {
         color: var(--riot-red);
         text-transform: uppercase;
         font-size: 0.9rem;
-        letter-spacing: 2px;
-        margin-bottom: 5px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin: 0;
     }
 
+    .no-results {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 50px;
+        border: 2px dashed rgba(255,255,255,0.1);
+        color: #666;
+    }
+    .no-results i { font-size: 3rem; margin-bottom: 10px; color: var(--riot-red); }
+
+    /* 5. PAGINATION */
     .pagination {
         display: flex;
         justify-content: center;
-        gap: 10px;
+        gap: 5px;
         margin-top: 50px;
     }
 
     .pg-link {
-        padding: 10px 18px;
-        background: #1a1a1a;
-        border: 1px solid #333;
+        padding: 10px 20px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
         color: white;
         text-decoration: none;
-        font-weight: bold;
+        font-family: 'Teko', sans-serif;
+        font-size: 1.2rem;
+        letter-spacing: 1px;
         transition: 0.3s;
+        clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     }
 
     .pg-link:hover,
     .pg-link.active {
         background: var(--riot-red);
         border-color: var(--riot-red);
-        color: var(--riot-dark);
+        color: white;
     }
 
-    /* MODAL STYLES */
+    /* 6. MODAL */
     .modal-overlay {
         display: none;
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 25, 35, 0.98);
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
         z-index: 1000;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(8px);
+        padding: 20px;
     }
 
     .modal-content {
-        background: var(--riot-black);
-        width: 90%;
+        background: var(--riot-dark);
+        width: 100%;
         max-width: 600px;
-        padding: 50px;
+        padding: 40px;
         border: 1px solid var(--riot-red);
         position: relative;
         box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        clip-path: polygon(
+            0 0, 100% 0, 
+            100% calc(100% - 30px), calc(100% - 30px) 100%, 
+            30px 100%, 0 calc(100% - 30px)
+        );
     }
 
     .close-btn {
         position: absolute;
-        top: 20px;
-        right: 30px;
-        font-size: 2.5rem;
+        top: 15px; right: 20px;
+        font-size: 2rem;
         color: var(--riot-red);
         cursor: pointer;
+        z-index: 2;
+        transition: 0.3s;
     }
+    .close-btn:hover { color: white; transform: rotate(90deg); }
 
-    .modal-header {
-        margin-bottom: 20px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 20px;
+    .modal-header h2 {
+        font-size: 4rem;
+        margin: 0;
+        line-height: 0.9;
     }
 
     .modal-short {
-        color: var(--riot-red);
-        font-family: 'Teko';
-        font-size: 2rem;
+        color: transparent;
+        -webkit-text-stroke: 1px var(--riot-red);
+        font-size: 2.5rem;
         margin-left: 10px;
     }
 
     .modal-leader {
-        color: #888;
-        font-size: 1rem;
-        text-transform: uppercase;
-        margin-top: 5px;
+        margin-top: 15px;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+        border-left: 3px solid var(--riot-red);
+        padding-left: 10px;
     }
 
     .player-pill {
         display: inline-block;
-        background: #222;
-        padding: 8px 20px;
-        margin: 5px;
-        border-left: 4px solid var(--riot-red);
-        text-transform: uppercase;
+        background: rgba(255,255,255,0.1);
+        padding: 5px 15px;
+        margin: 5px 5px 5px 0;
+        font-size: 0.9rem;
+        clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
     }
 
-    /* Modal Join Button */
     .modal-join-btn {
         display: block;
         width: 100%;
@@ -356,21 +572,49 @@ include('partial/header.php');
         border: none;
         color: white;
         font-family: 'Teko', sans-serif;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         text-transform: uppercase;
         cursor: pointer;
         transition: 0.3s;
+        letter-spacing: 2px;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 20px 100%, 0 calc(100% - 20px));
     }
+    .modal-join-btn:hover { background: white; color: var(--riot-black); }
 
-    .modal-join-btn:hover {
-        background: white;
-        color: var(--riot-red);
+    /* 7. RESPONSIVE MEDIA QUERIES */
+    @media (max-width: 768px) {
+        .teams-container { margin: 40px auto; padding: 0 15px; }
+        
+        .header-flex {
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            text-align: center;
+        }
+
+        .page-title { font-size: 3rem; }
+
+        .search-wrapper { width: 100%; justify-content: center; }
+        .search-input.active { width: 100%; }
+
+        .team-grid { grid-template-columns: 1fr; } /* Single column on mobile */
+        
+        .modal-content { padding: 30px 20px; }
+        .modal-header h2 { font-size: 3rem; }
+        .modal-short { font-size: 1.5rem; display: block; margin: 5px 0 0 0; }
     }
 </style>
 
+<div id="intro-screen">
+    <div class="intro-wrapper">
+        <div class="intro-3d-text" data-text="ROSTER">ROSTER</div>
+    </div>
+    <div class="loading-bar"></div>
+</div>
+
 <div class="teams-container">
     <div class="header-flex">
-        <h1 style="font-size: 4rem; margin: 0; text-transform: uppercase; letter-spacing: -2px;">Roster <span style="color:var(--riot-red)">//</span></h1>
+        <h1 class="page-title">Roster <span style="color:var(--riot-red)">//</span></h1>
 
         <div class="search-wrapper">
             <input type="text" id="teamSearch" class="search-input <?= $search ? 'active' : '' ?>" placeholder="SEARCH TEAM..." onkeyup="handleSearch()" value="<?= htmlspecialchars($search) ?>">
@@ -388,17 +632,17 @@ include('partial/header.php');
         <span class="close-btn" onclick="closeTeam()">&times;</span>
 
         <div class="modal-header">
-            <h2 style="font-size: 3.5rem; margin: 0; text-transform: uppercase; font-family: 'Teko'; line-height: 1;">
+            <h2 style="font-family: 'Teko'; text-transform: uppercase;">
                 <span id="m-name"></span>
                 <span id="m-short" class="modal-short"></span>
             </h2>
             <div class="modal-leader">
-                <i class="fas fa-crown"></i> Leader: <span id="m-leader" style="color:white"></span>
+                <i class="fas fa-crown" style="color:#ffd700; margin-right:5px;"></i> LEADER: <span id="m-leader" style="color:white; font-weight:bold;"></span>
             </div>
-            <p id="m-motto" style="color: var(--riot-red); font-size: 1.1rem; margin-top: 10px; text-transform: uppercase; font-style: italic;"></p>
+            <p id="m-motto" style="color: var(--riot-red); font-size: 1rem; margin-top: 15px; text-transform: uppercase; font-style: italic; opacity: 0.8;"></p>
         </div>
 
-        <h4 style="color:#666; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Players</h4>
+        <h4 style="color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; margin: 25px 0 10px; font-size:0.9rem;">Active Agents</h4>
         <div id="m-players"></div>
 
         <button id="m-join-btn" class="modal-join-btn">Request to Join</button>
@@ -441,28 +685,28 @@ include('partial/header.php');
                     path: newUrl
                 }, '', newUrl);
             })
-            .catch(err => console.warn('Something went wrong.', err));
+            .catch(err => {
+                console.warn('Something went wrong.', err);
+            });
     }
 
     // OPEN MODAL WITH DETAILS
     function openTeam(name, short, motto, leader, players, teamId) {
         document.getElementById('m-name').innerText = name;
         document.getElementById('m-short').innerText = short ? `[${short}]` : '';
-        document.getElementById('m-motto').innerText = `"${motto}"`;
+        document.getElementById('m-motto').innerText = motto ? `"${motto}"` : '';
         document.getElementById('m-leader').innerText = leader;
 
-        // Players Logic
         let html = '';
         if (players && players.trim() !== '') {
             players.split(',').forEach(p => {
                 html += `<div class="player-pill">${p.trim()}</div>`;
             });
         } else {
-            html = '<p style="opacity:0.5">No registered members found.</p>';
+            html = '<p style="opacity:0.5; font-style:italic;">No registered agents found.</p>';
         }
         document.getElementById('m-players').innerHTML = html;
 
-        // Setup Join Button
         const joinBtn = document.getElementById('m-join-btn');
         joinBtn.onclick = function() {
             requestJoin(teamId);
@@ -477,12 +721,40 @@ include('partial/header.php');
 
     function requestJoin(teamId) {
         if (confirm("Do you want to send a request to join this team?")) {
-            // Actual Logic Here (e.g., AJAX or Redirect)
-            // window.location.href = 'join_request.php?team_id=' + teamId;
-            alert("Request sent for Team ID: " + teamId);
+            const joinBtn = document.getElementById('m-join-btn');
+            const originalText = joinBtn.innerText;
+
+            joinBtn.innerText = "SENDING...";
+            joinBtn.disabled = true;
+
+            const formData = new URLSearchParams();
+            formData.append('team_id', teamId);
+
+            fetch('player/request_join.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData.toString()
+                })
+                .then(async response => {
+                    const text = await response.text();
+                    if (!response.ok) throw new Error(text || "Server Error");
+                    return text;
+                })
+                .then(message => {
+                    alert(message);
+                    closeTeam();
+                })
+                .catch(error => {
+                    alert("Failed: " + error.message);
+                })
+                .finally(() => {
+                    joinBtn.innerText = originalText;
+                    joinBtn.disabled = false;
+                });
         }
     }
-
     window.onclick = function(e) {
         if (e.target.className === 'modal-overlay') closeTeam();
     }
