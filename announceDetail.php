@@ -69,46 +69,34 @@ $rulesText  = $announce['rules'];
 $systemText = $announce['system_info'];
 
 $isCompleted = ($tournament['status'] === 'completed');
-
 if (isset($_POST['btnRegister'])) {
-  // 1. Check Login
   if (!isset($_SESSION['user_id'])) {
     echo "<script>alert('Please log in to register.'); window.location.href='login.php';</script>";
     exit;
   }
 
   $user_id = $_SESSION['user_id'];
-
-  // 2. CHECK IF USER IS A LEADER (Query the teams table)
-  // We check if the logged-in user ID exists in the 'leader_id' column
-  $stmt = $pdo->prepare("SELECT team_id, team_name FROM teams WHERE leader_id = ? LIMIT 1");
+  
+  // Check if user is a team leader
+  $stmt = $pdo->prepare("SELECT team_id FROM teams WHERE leader_id = ? LIMIT 1");
   $stmt->execute([$user_id]);
   $team = $stmt->fetch();
 
   if (!$team) {
-    echo "<script>alert('Access Denied: Only team leaders can register for tournaments.');</script>";
+    echo "<script>alert('Only team leaders can register for tournaments.');</script>";
   } else {
     $team_id = $team['team_id'];
-    $team_name = $team['team_name'];
-
-    // 3. Check if this team is already in the tournament
-    $checksql = "SELECT COUNT(*) FROM tournament_teams WHERE tournament_id = ? AND team_id = ?";
-    $stmt = $pdo->prepare($checksql);
+    
+    // Check if already registered
+    $stmt = $pdo->prepare("SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?");
     $stmt->execute([$tournament_id, $team_id]);
-    $count = $stmt->fetchColumn();
-
-    if ($count > 0) {
-      echo "<script>alert('Your team ($team_name) is already registered.');</script>";
+    
+    if ($stmt->fetch()) {
+      echo "<script>alert('Your team is already registered.');</script>";
     } else {
-      // 4. Insert into tournament_teams
-      $insertsql = "INSERT INTO tournament_teams (tournament_id, team_id, registered_at) VALUES (?, ?, NOW())";
-      $stmt = $pdo->prepare($insertsql);
-
-      if ($stmt->execute([$tournament_id, $team_id])) {
-        echo "<script>alert('Registration successful for $team_name!'); window.location.reload();</script>";
-      } else {
-        echo "<script>alert('Registration failed. Please try again.');</script>";
-      }
+      // Redirect to payment
+      header("Location: ./player/player-stripe-payment.php?tournament_id=" . $tournament_id);
+      exit;
     }
   }
 }
