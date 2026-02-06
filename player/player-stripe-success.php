@@ -135,7 +135,7 @@ try {
   </div>
 
   <script>
-    let seconds = 10;
+    let seconds = 30;
     const countdownEl = document.getElementById('countdown');
     const timer = setInterval(() => {
       seconds--;
