@@ -18,8 +18,11 @@ if (
 $organizer_id = $_SESSION['user_id'];
 $username = $_SESSION['username'] ?? 'Organizer';
 
+/* FILTER LOGIC */
+$category = $_GET['category'] ?? 'all';
+$valid_categories = ['pending', 'upcoming', 'ongoing', 'completed'];
 
-$stmt = $conn->prepare("
+$query = "
     SELECT 
         t.tournament_id,
         t.title,
@@ -29,10 +32,23 @@ $stmt = $conn->prepare("
         t.created_at
     FROM tournaments t
     JOIN games g ON t.game_id = g.game_id
-    WHERE t.organizer_id = ? and t.admin_status = 'approved'
-    ORDER BY t.created_at DESC
-");
-$stmt->bind_param("i", $organizer_id);
+    WHERE t.organizer_id = ? AND t.admin_status = 'approved'
+";
+
+if (in_array($category, $valid_categories)) {
+    $query .= " AND t.status = ?";
+}
+
+$query .= " ORDER BY t.created_at DESC";
+
+$stmt = $conn->prepare($query);
+
+if (in_array($category, $valid_categories)) {
+    $stmt->bind_param("is", $organizer_id, $category);
+} else {
+    $stmt->bind_param("i", $organizer_id);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -42,162 +58,202 @@ $result = $stmt->get_result();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Tournaments | Organizer</title>
+  <title>Tournament Management | Official Portal</title>
   <style>
     :root {
-      --riot-blue: #0bc6e3;
-      --riot-dark-blue: #00151e;
-      --riot-navy: #0a1428;
-      --riot-gold: #c8aa6e; /* Hextech Gold accent */
-      --riot-gray: #a0a0a0;
-      --card-bg: #010a13;
-      --card-accent: #051923;
+      --riot-blue: #00eeff;
+      --riot-deep-blue: #051923;
+      --riot-bg: #010a13;
+      --riot-border: rgba(0, 238, 255, 0.3);
+      --riot-gold: #c8aa6e;
+      --riot-gray: #7e7e7e;
+      --panel-bg: rgba(5, 25, 35, 0.8);
     }
 
     body {
-      background-color: var(--riot-dark-blue);
+      background-color: var(--riot-bg);
       color: #f0f5f5;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
       margin: 0;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(0, 238, 255, 0.1) 0%, transparent 50%);
     }
 
-    /* Hero Section */
-    .hero-content h1 {
-      font-size: 2.5rem;
-      margin-top: 40px;
-      margin-bottom: 10px;
-      color: var(--riot-blue);
-      text-shadow: 0 0 15px rgba(11, 198, 227, 0.5);
+    /* Formal Header */
+    .hero-content {
+      padding: 60px 20px 20px;
       text-align: center;
+      border-bottom: 1px solid var(--riot-border);
+      background: linear-gradient(to bottom, rgba(0, 238, 255, 0.05), transparent);
+      position: relative; /* Added for absolute positioning of dropdown */
+    }
+
+    /* Category Dropdown Styling */
+    .category-filter {
+        position: absolute;
+        top: 60px;
+        right: 140px;
+        text-align: left;
+    }
+
+    .category-filter label {
+        display: block;
+        font-size: 0.65rem;
+        color: var(--riot-gray);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+    }
+
+    .category-filter select {
+        background: var(--riot-deep-blue);
+        color: var(--riot-blue);
+        border: 1px solid var(--riot-border);
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .hero-content h1 {
+      font-size: 2rem;
+      margin: 0;
+      color: #fff;
       text-transform: uppercase;
+      letter-spacing: 5px;
+      font-weight: 300;
+    }
+
+    .hero-content .subtitle {
+      color: var(--riot-blue);
+      font-size: 0.8rem;
       letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 10px;
+      opacity: 0.8;
     }
 
     /* Dashboard Grid */
     .dashboard {
       max-width: 1200px;
-      margin: 40px auto;
+      margin: 50px auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 30px;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
       padding: 0 20px;
     }
 
-    /* NEW CARD STYLE - BLUE & BLACK HEXTECH */
+    /* Formal Organizer Card */
     .riot-card {
-      background: linear-gradient(135deg, #010a13 0%, #051923 100%);
-      border-left: 4px solid var(--riot-blue);
-      border-right: 1px solid rgba(11, 198, 227, 0.2);
-      border-top: 1px solid rgba(11, 198, 227, 0.2);
-      border-bottom: 1px solid rgba(11, 198, 227, 0.2);
+      background: var(--panel-bg);
+      border: 1px solid var(--riot-border);
+      backdrop-filter: blur(10px);
       position: relative;
-      padding: 30px;
-      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+      padding: 25px;
+      transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      /* Clipped corner effect */
-      clip-path: polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .riot-card:hover {
-      transform: scale(1.02);
       border-color: var(--riot-blue);
-      background: linear-gradient(135deg, #02121e 0%, #0a2a3a 100%);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(11, 198, 227, 0.1);
+      box-shadow: 0 0 20px rgba(0, 238, 255, 0.2);
+      transform: translateY(-5px);
     }
 
-    .riot-card::after {
-        content: "TX-INTEL";
+    /* Technical details top right */
+    .riot-card::before {
+        content: "OP-REF // " attr(data-id);
         position: absolute;
-        bottom: 5px;
-        right: 40px;
-        font-size: 10px;
-        color: rgba(11, 198, 227, 0.3);
-        font-weight: 900;
-        letter-spacing: 2px;
+        top: 10px;
+        right: 15px;
+        font-size: 9px;
+        color: var(--riot-blue);
+        font-family: monospace;
+        opacity: 0.5;
     }
 
     .riot-card h3 {
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       color: #fff;
-      margin: 10px 0;
-      text-transform: uppercase;
+      margin: 15px 0 5px 0;
       letter-spacing: 1px;
-      font-weight: 800;
+      font-weight: 600;
     }
 
     .game-badge {
-      background: rgba(11, 198, 227, 0.1);
       color: var(--riot-blue);
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      font-weight: 900;
-      display: inline-block;
-      border: 1px solid var(--riot-blue);
+      font-size: 0.7rem;
+      font-weight: 700;
       text-transform: uppercase;
-      margin-bottom: 10px;
+      letter-spacing: 2px;
+      border-left: 2px solid var(--riot-blue);
+      padding-left: 10px;
     }
 
     .stats-row {
-      border-top: 1px solid rgba(11, 198, 227, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
       padding-top: 20px;
       margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .status-text {
       color: var(--riot-gold);
       text-transform: uppercase;
-      font-weight: bold;
-      font-size: 0.75rem;
+      font-weight: 700;
+      font-size: 0.7rem;
       letter-spacing: 1px;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 8px;
     }
 
-    .status-text::before {
-        content: "";
-        width: 8px;
-        height: 8px;
+    .status-dot {
+        width: 6px;
+        height: 6px;
         background: var(--riot-gold);
+        box-shadow: 0 0 10px var(--riot-gold);
         border-radius: 50%;
-        display: inline-block;
-        box-shadow: 0 0 8px var(--riot-gold);
     }
 
-    /* Riot Buttons */
+    /* Action Button */
     .btn-riot {
-      display: block;
-      text-align: center;
-      padding: 14px;
+      display: inline-block;
+      padding: 10px 20px;
       text-transform: uppercase;
-      font-weight: 900;
-      font-size: 0.8rem;
-      letter-spacing: 2px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
       cursor: pointer;
       transition: 0.3s;
       text-decoration: none;
-      margin-top: 20px;
-      background: transparent;
+      background: rgba(0, 238, 255, 0.1);
       border: 1px solid var(--riot-blue);
       color: var(--riot-blue);
-      position: relative;
-      overflow: hidden;
     }
 
     .btn-riot:hover {
       background: var(--riot-blue);
       color: #000;
-      box-shadow: 0 0 25px rgba(11, 198, 227, 0.4);
     }
 
     .empty-state {
       grid-column: 1 / -1;
       text-align: center;
-      padding: 60px;
-      background: rgba(0,0,0,0.3);
-      border: 1px dashed var(--riot-blue);
+      padding: 80px;
+      border: 1px solid var(--riot-border);
+      background: rgba(0, 238, 255, 0.02);
+    }
+
+    .date-label {
+        color: var(--riot-gray);
+        font-size: 0.7rem;
+        text-transform: uppercase;
     }
   </style>
 </head>
@@ -207,33 +263,48 @@ $result = $stmt->get_result();
   <div id="mobileOverlay" class="mobile-overlay" tabindex="-1"></div>
 
     <div class="hero-content">
-      <h1>My Tournaments</h1>
-      <p style="color: var(--riot-gray); text-align:center; letter-spacing: 1px;">Accessing Organizer Database...</p>
+      <h1>Tournament Control Center</h1>
+      <div class="subtitle">Operational Overview • Organizer System</div>
+
+      <div class="category-filter">
+          <label>Filter Status</label>
+          <select onchange="window.location.href='?category=' + this.value">
+              <option value="all" <?= $category == 'all' ? 'selected' : '' ?>>All</option>
+              <option value="pending" <?= $category == 'pending' ? 'selected' : '' ?>>Pending</option>
+              <option value="upcoming" <?= $category == 'upcoming' ? 'selected' : '' ?>>Upcoming</option>
+              <option value="ongoing" <?= $category == 'ongoing' ? 'selected' : '' ?>>Ongoing</option>
+              <option value="completed" <?= $category == 'completed' ? 'selected' : '' ?>>Completed</option>
+          </select>
+      </div>
     </div>
 
   <section class="dashboard">
 
     <?php if ($result->num_rows === 0): ?>
       <div class="empty-state">
-        <p style="font-size: 1.2rem; margin-bottom: 20px;">No active deployments found.</p>
-        <a href="createTournament.php" class="btn-riot" style="display:inline-block; padding: 14px 40px;">Initiate Tournament</a>
+        <p style="font-size: 1rem; color: var(--riot-gray); margin-bottom: 25px; letter-spacing: 1px;">NO DEPLOYMENTS FOUND FOR THIS CATEGORY</p>
+        <a href="createTournament.php" class="btn-riot" style="padding: 15px 50px;">Create New Tournament</a>
       </div>
     <?php endif; ?>
 
     <?php while ($row = $result->fetch_assoc()): ?>
-      <div class="riot-card">
+      <div class="riot-card" data-id="<?= $row['tournament_id'] ?>">
         <div>
           <span class="game-badge"><?= htmlspecialchars($row['game_name']) ?></span>
           <h3><?= htmlspecialchars($row['title']) ?></h3>
-          <p class="status-text"><?= htmlspecialchars($row['status']) ?></p>
+          <div class="status-text">
+              <span class="status-dot"></span>
+              <?= htmlspecialchars($row['status']) ?>
+          </div>
         </div>
 
         <div class="stats-row">
-          <p style="color: var(--riot-gray); margin: 0; font-size: 0.8rem; text-transform: uppercase;">
-            Date Logged: <span style="color: #fff;"><?= date('d M Y', strtotime($row['created_at'])) ?></span>
-          </p>
+          <div>
+              <div class="date-label">System Date</div>
+              <div style="font-size: 0.85rem; font-weight: 500;"><?= date('d M Y', strtotime($row['created_at'])) ?></div>
+          </div>
           <a href="manageTournament.php?id=<?= $row['tournament_id'] ?>" class="btn-riot">
-            Modify Intel
+            Manage
           </a>
         </div>
       </div>
