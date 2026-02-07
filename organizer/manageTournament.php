@@ -38,8 +38,6 @@ while ($row = $res->fetch_assoc()) {
     ];
 }
 
-
-
 // Get the ID from the URL (defaulting to 5 as seen in your screenshot)
 $id = isset($_GET['id']) ? $_GET['id'] : 5;
 $stmt = $conn->prepare("SELECT g.genre FROM games g JOIN tournaments t ON t.game_id = g.game_id    WHERE t.tournament_id = ?");
@@ -61,66 +59,75 @@ if ($genre === 'BATTLE_ROYALE') {
 
 <style>
     :root {
-        --riot-blue: #0bc6e3;
+        --riot-blue: #00eeff;
         --deep-black: #010a13;
         --obsidian: #051923;
         --hex-gold: #c8aa6e;
+    }
+
+    body {
+        background-color: var(--deep-black);
+        background-image: radial-gradient(circle at 50% 0%, rgba(0, 238, 255, 0.08) 0%, transparent 50%);
     }
 
     .container {
         max-width: 1200px;
         margin: 50px auto;
         padding: 0 20px;
+        height: calc(100vh - 100px);
         text-align: center;
     }
 
+    /* TOP ACTION BAR */
+
     h1 {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 3rem;
-        color: var(--riot-blue);
+        font-family: 'Inter', sans-serif;
+        font-size: 2.8rem;
+        color: #fff;
         letter-spacing: 4px;
-        text-shadow: 0 0 20px rgba(11, 198, 227, 0.4);
+        font-weight: 200;
         margin-bottom: 5px;
+        text-transform: uppercase;
     }
 
     .subtitle {
-        color: #a0a0a0;
-        margin-bottom: 40px;
+        color: var(--riot-blue);
+        margin-bottom: 50px;
         text-transform: uppercase;
-        font-size: 0.9rem;
-        letter-spacing: 2px;
+        font-size: 0.8rem;
+        letter-spacing: 3px;
+        opacity: 0.6;
     }
 
-    /* ======== NEW MANAGEMENT CARD GRID ======== */
+    /* ======== SMOOTH CARD GRID ======== */
     .managecard {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 25px;
+        gap: 30px;
         margin-top: 20px;
     }
 
     .mgmt-card {
-        background: linear-gradient(145deg, var(--deep-black) 0%, var(--obsidian) 100%);
-        border: 1px solid rgba(11, 198, 227, 0.2);
-        padding: 40px 20px;
+        background: rgba(5, 25, 35, 0.8);
+        border: 1px solid rgba(0, 238, 255, 0.15);
+        padding: 50px 20px;
         text-decoration: none;
         display: flex;
         flex-direction: column;
         align-items: center;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         position: relative;
-        overflow: hidden;
-        /* Clipped tactical corners */
-        clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+        backdrop-filter: blur(10px);
     }
 
     .mgmt-card:hover {
         transform: translateY(-10px);
         border-color: var(--riot-blue);
-        box-shadow: 0 0 30px rgba(11, 198, 227, 0.2);
+        background: rgba(11, 198, 227, 0.05);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
     }
 
-    /* Card Accent Glow */
+    /* Animated Border Accent */
     .mgmt-card::before {
         content: "";
         position: absolute;
@@ -129,34 +136,34 @@ if ($genre === 'BATTLE_ROYALE') {
         width: 100%;
         height: 2px;
         background: linear-gradient(90deg, transparent, var(--riot-blue), transparent);
-        opacity: 0;
-        transition: 0.3s;
+        transform: scaleX(0);
+        transition: 0.5s;
     }
 
     .mgmt-card:hover::before {
-        opacity: 1;
+        transform: scaleX(1);
     }
 
     /* ICON BOX */
     .icon-box {
-        width: 70px;
-        height: 70px;
+        width: 65px;
+        height: 65px;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 20px;
-        font-size: 2rem;
-        border-radius: 50%;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(11, 198, 227, 0.3);
+        margin-bottom: 25px;
+        font-size: 1.8rem;
         color: var(--riot-blue);
-        transition: 0.3s;
+        border: 1px solid rgba(0, 238, 255, 0.2);
+        background: rgba(0, 0, 0, 0.3);
+        transition: 0.5s;
     }
 
     .mgmt-card:hover .icon-box {
-        color: #fff;
+        color: #000;
         background: var(--riot-blue);
         box-shadow: 0 0 20px var(--riot-blue);
+        border-color: var(--riot-blue);
     }
 
     /* TEXT STYLES */
@@ -165,7 +172,7 @@ if ($genre === 'BATTLE_ROYALE') {
         font-family: 'Inter', sans-serif;
         text-transform: uppercase;
         letter-spacing: 2px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         font-weight: 800;
     }
 
@@ -177,26 +184,21 @@ if ($genre === 'BATTLE_ROYALE') {
     }
 
     .mgmt-card:hover p {
-        color: #ccc;
+        color: #f0f5f5;
     }
 
-    /* SPECIFIC ACCENTS - All Blue for your request */
-    .blue,
-    .purple
-     {
-        color: var(--riot-blue) !important;
-    }
 </style>
 
 <div class="container">
+
     <h1>Tournament Management</h1>
-    <p class="subtitle">Select a category to manage your gaming tournament</p>
+    <p class="subtitle">Select a category to manage tournament <p>
 
     <div class="managecard">
         <a href="editTournament.php?id=<?php echo $id; ?>" class="mgmt-card">
             <div class="icon-box"><i class="fa-solid fa-trophy"></i></div>
             <h3>Tournaments</h3>
-            <p>Edit Tournament</p>
+            <p>Edit Tournament Details</p>
         </a>
 
         <a href="participants.php?tournament_id=<?php echo $id; ?>" class="mgmt-card">
@@ -218,7 +220,3 @@ if ($genre === 'BATTLE_ROYALE') {
         </a>
     </div>
 </div>
-
-<?php
-include('footer.php');
-?>

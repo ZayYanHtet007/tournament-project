@@ -138,75 +138,150 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edit Tournament</title>
 <style>
-body {
-  background:#f3f4f6;
-  font-family: system-ui;
-}
-.container {
-  max-width:900px;
-  margin:30px auto;
-  background:#fff;
-  padding:25px;
-  border-radius:10px;
-}
-h1 {
-  text-align:center;
-  margin-bottom:20px;
-}
-h2 {
-  margin-top:25px;
-  font-size:18px;
-  color:#111827;
-}
-input, textarea {
-  width:100%;
-  padding:10px;
-  border:1px solid #d1d5db;
-  border-radius:6px;
-  margin-top:6px;
-}
-textarea {
-  resize:vertical;
-}
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:15px;
-}
-button {
-  margin-top:30px;
-  width:100%;
-  padding:12px;
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-  cursor:pointer;
-}
-button:disabled {
-  opacity:.5;
-  cursor:not-allowed;
-}
-.alert {
-  padding:12px;
-  border-radius:6px;
-  margin-bottom:15px;
-}
-.alert.error { background:#fee2e2; color:#991b1b; }
-.alert.success { background:#dcfce7; color:#166534; }
+    body {
+      background-color: #010a13;
+      color: #f0f5f5;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #051923;
+      padding: 40px;
+      border: 1px solid #00eeff;
+      border-radius: 4px;
+    }
+
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        border-bottom: 1px solid rgba(0, 238, 255, 0.2);
+        padding-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .btn-back {
+        text-decoration: none;
+        color: #00eeff;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        border: 1px solid #00eeff;
+        padding: 8px 15px;
+        transition: 0.3s;
+    }
+
+    .btn-back:hover {
+        background: #00eeff;
+        color: #000;
+    }
+
+    h2 {
+      margin-top: 30px;
+      font-size: 1rem;
+      color: #00eeff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    label {
+        display: block;
+        font-size: 0.75rem;
+        color: #a0a0a0;
+        margin-top: 15px;
+        margin-bottom: 5px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      background: #010a13;
+      border: 1px solid #1a2e38;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #00eeff;
+    }
+
+    input[readonly], textarea[readonly] {
+        background: rgba(255,255,255,0.05);
+        color: #777;
+        cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    button {
+      margin-top: 40px;
+      width: 100%;
+      padding: 15px;
+      background: #00eeff;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #00c2cf;
+    }
+
+    button:disabled {
+      background: #1a2e38;
+      color: #555;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .alert.error { background: #fee2e2; color: #991b1b; }
+    .alert.success { background: #dcfce7; color: #166534; }
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<h1>Edit Tournament</h1>
+<div class="header-row">
+    <h1>Edit Tournament</h1>
+    <a href="manageTournament.php" class="btn-back">← Back</a>
+</div>
 
 <?php if ($message): ?>
 <div class="alert <?= str_contains($message,'❌')?'error':'success' ?>">
@@ -217,37 +292,56 @@ button:disabled {
 <form method="post">
 
 <h2>🏷 Tournament Information</h2>
+<label>Title</label>
 <input type="text" name="title" value="<?= htmlspecialchars($tournament['title']) ?>" <?= $readOnly ?>>
-<textarea name="description" <?= $readOnly ?>><?= htmlspecialchars($tournament['description']) ?></textarea>
+
+<label>Description</label>
+<textarea name="description" rows="3" <?= $readOnly ?>><?= htmlspecialchars($tournament['description']) ?></textarea>
 
 <div class="grid">
-<input type="number" name="max_participants" value="<?= $tournament['max_participants'] ?>" min="12" <?= $readOnly ?>>
-<input type="number" name="team_size" value="<?= $tournament['team_size'] ?>" min="1" <?= $readOnly ?>>
+    <div>
+        <label>Max Participants</label>
+        <input type="number" name="max_participants" value="<?= $tournament['max_participants'] ?>" min="12" <?= $readOnly ?>>
+    </div>
+    <div>
+        <label>Team Size</label>
+        <input type="number" name="team_size" value="<?= $tournament['team_size'] ?>" min="1" <?= $readOnly ?>>
+    </div>
 </div>
 
 <h2>💰 Fees & Prize Pool</h2>
 <div class="grid">
-<input type="number" step="0.01" name="fee" value="<?= $tournament['fee'] ?>" <?= $readOnly ?>>
-<input type="number" step="0.01" name="prize_pool" value="<?= $tournament['prize_pool'] ?>" <?= $readOnly ?>>
+    <div>
+        <label>Fee</label>
+        <input type="number" step="0.01" name="fee" value="<?= $tournament['fee'] ?>" <?= $readOnly ?>>
+    </div>
+    <div>
+        <label>Prize Pool</label>
+        <input type="number" step="0.01" name="prize_pool" value="<?= $tournament['prize_pool'] ?>" <?= $readOnly ?>>
+    </div>
 </div>
 
 <h2>📅 Tournament Dates</h2>
 <div class="grid">
- <input type="date" name="registration_start_date" 
- value="<?= $tournament['registration_start_date'] ?>" <?= $readOnly ?>>
-
- <input type="date" name="registration_deadline" 
- value="<?= $tournament['registration_deadline'] ?>" <?= $readOnly ?>>
-
- <input type="date" name="start_date" 
- value="<?= $tournament['start_date'] ?>" <?= $readOnly ?>>
+  <div>
+    <label>Registration Start</label>
+    <input type="date" name="registration_start_date" value="<?= $tournament['registration_start_date'] ?>" <?= $readOnly ?>>
+  </div>
+  <div>
+    <label>Deadline</label>
+    <input type="date" name="registration_deadline" value="<?= $tournament['registration_deadline'] ?>" <?= $readOnly ?>>
+  </div>
+  <div>
+    <label>Start Date</label>
+    <input type="date" name="start_date" value="<?= $tournament['start_date'] ?>" <?= $readOnly ?>>
+  </div>
 </div>
 
 <h2>📜 Rules & Regulations</h2>
-<textarea name="rules" rows="6" <?= $readOnly ?>><?= htmlspecialchars($announcement['rules']) ?></textarea>
+<textarea name="rules" rows="5" <?= $readOnly ?>><?= htmlspecialchars($announcement['rules']) ?></textarea>
 
 <h2>⚙ Tournament System</h2>
-<textarea name="system_info" rows="5" <?= $readOnly ?>><?= htmlspecialchars($announcement['system_info']) ?></textarea>
+<textarea name="system_info" rows="4" <?= $readOnly ?>><?= htmlspecialchars($announcement['system_info']) ?></textarea>
 
 <button <?= $disabled ?>>Update Tournament</button>
 

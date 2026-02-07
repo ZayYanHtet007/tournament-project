@@ -280,7 +280,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span>HOME</span>
             </a>
 
-            <a href="manageTournament.php" class="nav-item <?= ($current_page == 'manageTournament.php') ? 'active' : '' ?>">
+            <a href="tournaments.php" class="nav-item <?= ($current_page == 'tournaments.php') ? 'active' : '' ?>">
                 <i class="fa-solid fa-trophy" style="color: #fff;"></i>
                 <span>TOURNAMENTS</span>
             </a>
