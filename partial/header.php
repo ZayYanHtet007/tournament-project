@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . "/init.php";
+require "database/dbConfig.php";
 
 $isLoggedIn = isset($_SESSION['user_id']);
 $uid = $_SESSION['user_id'] ?? null;
@@ -13,6 +14,19 @@ if ($isLoggedIn) {
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $user = mysqli_fetch_assoc($result);
+    
+    $notifications =[];
+    $notiFetch = $conn->prepare("SELECT * FROM notifications WHERE user_id = ?");
+    $notiFetch->bind_param("i",$uid);
+    $notiFetch->execute();
+    $notiResult = mysqli_stmt_get_result($notiFetch);
+    //$notifications = mysqli_fetch_assoc($notiResult);
+    while($row = mysqli_fetch_assoc($notiResult)){
+          $notifications[] = $row;
+    }
+     
+        
+
 }
 
 // ✅ Detect current page for active state
@@ -398,16 +412,19 @@ canvas#bg {
     <span id="notif-icon">
       <i class="fa-solid fa-bell"></i>
     </span>
+    
 
     <div id="notif-dropdown">
     <?php if (empty($notifications)): ?>
       <div class="notification read">No notifications</div>
     <?php else: ?>
+        <?php print_r($notifications);?>
       <?php foreach ($notifications as $n): ?>
-        <div class="notification <?php echo $n['is_read'] ? 'read' : 'unread'; ?>" data-id="<?php echo $n['notification_id']; ?>">
+        <div class="notification <?php echo $n['is_read'] ? 'read' : 'unread'; ?>" data-id="<?php echo $n['notification_id']; ?>" onclick="notiClick('<?= $n['token'] ?>')">
           <strong><?php echo htmlspecialchars($n['title']); ?></strong><br>
           <?php echo htmlspecialchars($n['message']); ?><br>
           <small><?php echo $n['created_at']; ?></small>
+          
         </div>
       <?php endforeach; ?>
     <?php endif; ?>
@@ -465,5 +482,9 @@ window.onclick = function(e) {
         notifDropdown.style.display = "none";
       }
     });
-</script>
 
+function notiClick(token){
+    window.location.href="player/accept_invite.php?token=" + token;
+}    
+
+</script>
