@@ -7,32 +7,18 @@ require_once "database/dbConfig.php";
 $error = "";
 $success = "";
 
+/* DEFAULT IMAGE */
+$profile_image = "default.png";
+
 if (isset($_POST['btnsave'])) {
+
     $username = trim($_POST['username']);
     $email    = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm  = $_POST['confirmPassword'];
     $isOrganizerChecked = isset($_POST['isOrganizer']);
-    
-    // File upload logic 
-        if (empty($errors)) {
-            $image = time() . "_" . basename($_FILES['image']['name']); // max file size 2 MB
-            $tmp = $_FILES['image']['tmp_name'];
 
-            $uploadDir = __DIR__ . "/images/";
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
-
-            $path = $uploadDir . $image;
-
-            if (!move_uploaded_file($tmp, $path)) {
-                $errors[] = "Image upload failed.";
-            }
-        } else {
-            $errors[] = "Invalid image file.";
-        }
-
+    /* ---------- BASIC VALIDATION ---------- */
     if (strlen($username) < 3) {
         $error = "Username must be at least 3 characters";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -41,7 +27,38 @@ if (isset($_POST['btnsave'])) {
         $error = "Password must be at least 8 characters";
     } elseif ($password !== $confirm) {
         $error = "Passwords do not match";
-    } else {
+    }
+
+    /* ---------- IMAGE UPLOAD ---------- */
+    if (empty($error) && isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        $fileType = $_FILES['profile_image']['type'];
+        $fileSize = $_FILES['profile_image']['size'];
+
+        if (!in_array($fileType, $allowedTypes)) {
+            $error = "Only JPG, PNG, WEBP images allowed";
+        } elseif ($fileSize > 2 * 1024 * 1024) {
+            $error = "Image must be under 2MB";
+        } else {
+
+            $imageName = time() . "_" . basename($_FILES['profile_image']['name']);
+            $uploadDir = __DIR__ . "/images/";
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadDir . $imageName)) {
+                $profile_image = $imageName; // ✅ SAVED TO DB
+            } else {
+                $error = "Image upload failed";
+            }
+        }
+    }
+
+    /* ---------- CHECK DUPLICATE USER ---------- */
+    if (empty($error)) {
         $check = "SELECT user_id FROM users WHERE username = ? OR email = ?";
         $stmt = mysqli_prepare($conn, $check);
         mysqli_stmt_bind_param($stmt, "ss", $username, $email);
@@ -50,27 +67,42 @@ if (isset($_POST['btnsave'])) {
 
         if (mysqli_stmt_num_rows($stmt) > 0) {
             $error = "Username or Email already exists";
+        }
+    }
+
+    /* ---------- INSERT USER ---------- */
+    if (empty($error)) {
+
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $is_organizer = $isOrganizerChecked ? 1 : 0;
+        $organizer_status = $isOrganizerChecked ? "pending" : NULL;
+
+        $sql = "INSERT INTO users 
+                (username, email, password, is_organizer, organizer_status, image) 
+                VALUES (?, ?, ?, ?, ?, ?)";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param(
+            $stmt,
+            "sssiss",
+            $username,
+            $email,
+            $hashed_password,
+            $is_organizer,
+            $organizer_status,
+            $profile_image
+        );
+
+        if (mysqli_stmt_execute($stmt)) {
+            header("Location: login.php");
+            exit();
         } else {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $is_organizer = $isOrganizerChecked ? 1 : 0;
-            $organizer_status = $isOrganizerChecked ? "pending" : NULL;
-
-            $sql = "INSERT INTO users (username, email, password, is_organizer, organizer_status, image) VALUES (?, ?, ?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "sssiss", $username, $email, $hashed_password, $is_organizer, $organizer_status, $profile_image);
-
-            if (mysqli_stmt_execute($stmt)) {
-                $success = "Signup successful.";
-                header("Location: login.php");
-                exit();
-            } else {
-                $error = "Signup failed. Please try again.";
-            }
+            $error = "Signup failed. Please try again.";
         }
     }
 }
-include('partial/header.php'); 
 ?>
+
 
 <style>
     :root {
@@ -78,14 +110,17 @@ include('partial/header.php');
         --sidebar-w: 80px;
     }
 
-    body { background-color: #000 !important; margin: 0; }
+    body {
+        background-color: #000 !important;
+        margin: 0;
+    }
 
     .signup-main-wrapper {
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        background-image: 
+        background-image:
             linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px),
             radial-gradient(circle at center, rgba(80, 0, 0, 0.5) 0%, #000000 85%);
@@ -97,7 +132,8 @@ include('partial/header.php');
     .signup-panel {
         background: rgba(15, 15, 15, 0.98);
         width: 100%;
-        max-width: 850px; /* Wider for side-by-side layout */
+        max-width: 850px;
+        /* Wider for side-by-side layout */
         border: 1px solid #333;
         border-top: 4px solid var(--primary-red);
         box-shadow: 0 0 50px rgba(255, 51, 68, 0.15);
@@ -129,15 +165,35 @@ include('partial/header.php');
         margin-bottom: 20px;
     }
 
-    .photo-preview-box::before { /* Corner Accents */
-        content: ''; position: absolute; top: -5px; left: -5px; width: 20px; height: 20px;
-        border-top: 2px solid var(--primary-red); border-left: 2px solid var(--primary-red);
+    .photo-preview-box::before {
+        /* Corner Accents */
+        content: '';
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        width: 20px;
+        height: 20px;
+        border-top: 2px solid var(--primary-red);
+        border-left: 2px solid var(--primary-red);
     }
 
-    .photo-preview-box img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-preview-box i { color: #222; font-size: 60px; }
+    .photo-preview-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-    .file-input-wrapper { position: relative; width: 100%; text-align: center; }
+    .photo-preview-box i {
+        color: #222;
+        font-size: 60px;
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        width: 100%;
+        text-align: center;
+    }
+
     .file-label-custom {
         display: block;
         padding: 10px;
@@ -150,7 +206,11 @@ include('partial/header.php');
         cursor: pointer;
         transition: 0.3s;
     }
-    .file-label-custom:hover { border-color: var(--primary-red); color: #fff; }
+
+    .file-label-custom:hover {
+        border-color: var(--primary-red);
+        color: #fff;
+    }
 
     /* RIGHT SIDE: FORM SECTION */
     .signup-right {
@@ -166,10 +226,23 @@ include('partial/header.php');
         letter-spacing: 2px;
     }
 
-    .tagline { color: #666; font-size: 10px; text-transform: uppercase; margin-bottom: 30px; letter-spacing: 2px; }
+    .tagline {
+        color: #666;
+        font-size: 10px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+        letter-spacing: 2px;
+    }
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .full-row { grid-column: span 2; }
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .full-row {
+        grid-column: span 2;
+    }
 
     .form-field-signup label {
         display: block;
@@ -189,7 +262,11 @@ include('partial/header.php');
         font-family: monospace;
     }
 
-    .form-field-signup input:focus { border-color: var(--primary-red); outline: none; background: #110505; }
+    .form-field-signup input:focus {
+        border-color: var(--primary-red);
+        outline: none;
+        background: #110505;
+    }
 
     /* ORGANIZER CLEARANCE STYLE */
     .organizer-toggle-card {
@@ -208,62 +285,129 @@ include('partial/header.php');
         background: rgba(255, 51, 68, 0.05);
     }
 
-    .org-text h4 { color: #fff; margin: 0; font-size: 14px; text-transform: uppercase; }
-    .org-text p { color: #555; margin: 0; font-size: 10px; }
+    .org-text h4 {
+        color: #fff;
+        margin: 0;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .org-text p {
+        color: #555;
+        margin: 0;
+        font-size: 10px;
+    }
 
     .switch {
-        position: relative; display: inline-block; width: 50px; height: 24px;
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
     }
-    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
     .slider {
-        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #333; transition: .4s; border-radius: 2px;
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #333;
+        transition: .4s;
+        border-radius: 2px;
     }
+
     .slider:before {
-        position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
-        background-color: white; transition: .4s; border-radius: 2px;
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 2px;
     }
-    input:checked + .slider { background-color: var(--primary-red); }
-    input:checked + .slider:before { transform: translateX(26px); }
+
+    input:checked+.slider {
+        background-color: var(--primary-red);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(26px);
+    }
 
     .btn-signup-red {
-        width: 100%; padding: 18px; background: var(--primary-red); color: #fff;
-        border: none; font-family: 'Bebas Neue', sans-serif; font-size: 24px;
-        text-transform: uppercase; cursor: pointer; margin-top: 30px;
+        width: 100%;
+        padding: 18px;
+        background: var(--primary-red);
+        color: #fff;
+        border: none;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 24px;
+        text-transform: uppercase;
+        cursor: pointer;
+        margin-top: 30px;
     }
 
-    .btn-cancel { display: block; text-align: center; margin-top: 15px; color: #444; text-decoration: none; font-size: 10px; text-transform: uppercase; }
+    .btn-cancel {
+        display: block;
+        text-align: center;
+        margin-top: 15px;
+        color: #444;
+        text-decoration: none;
+        font-size: 10px;
+        text-transform: uppercase;
+    }
 
     @media (max-width: 850px) {
-        .signup-panel { flex-direction: column; }
-        .signup-main-wrapper { margin-left: 0; }
-        .form-grid { grid-template-columns: 1fr; }
-        .full-row { grid-column: span 1; }
+        .signup-panel {
+            flex-direction: column;
+        }
+
+        .signup-main-wrapper {
+            margin-left: 0;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .full-row {
+            grid-column: span 1;
+        }
     }
 </style>
 
 <main class="signup-main-wrapper">
-    <div class="signup-panel">
-        <div class="signup-left">
-            <div class="photo-preview-box" id="imagePreview">
-                <i class="fas fa-user-secret"></i>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="signup-panel">
+            <div class="signup-left">
+                <div class="photo-preview-box" id="imagePreview">
+                    <i class="fas fa-user-secret"></i>
+                </div>
+                <div class="file-input-wrapper">
+                    <label for="profileInput" class="file-label-custom">Upload Identity</label>
+                    <input type="file" name="profile_image" id="profileInput" accept="image/*" onchange="previewImage(event)" style="display:none">
+                </div>
+                <p style="color: #444; font-size: 9px; margin-top: 20px; text-align: center;">IMAGE WILL BE USED FOR<br>GLOBAL RANKING PROFILES</p>
             </div>
-            <div class="file-input-wrapper">
-                <label for="profileInput" class="file-label-custom">Upload Identity</label>
-                <input type="file" name="profile_image" id="profileInput" accept="image/*" onchange="previewImage(event)" style="display:none">
-            </div>
-            <p style="color: #444; font-size: 9px; margin-top: 20px; text-align: center;">IMAGE WILL BE USED FOR<br>GLOBAL RANKING PROFILES</p>
-        </div>
 
-        <div class="signup-right">
-            <h1>JOIN THE <span style="color: var(--primary-red);">ARENA</span></h1>
-            <p class="tagline">Creating Account</p>
+            <div class="signup-right">
+                <h1>JOIN THE <span style="color: var(--primary-red);">ARENA</span></h1>
+                <p class="tagline">Creating Account</p>
 
-            <?php if ($error): ?>
-                <div style="color:var(--primary-red); font-size:11px; margin-bottom:15px;">[ERR] <?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
+                <?php if ($error): ?>
+                    <div style="color:var(--primary-red); font-size:11px; margin-bottom:15px;">[ERR] <?= htmlspecialchars($error) ?></div>
+                <?php endif; ?>
 
-            <form method="POST" enctype="multipart/form-data">
+
                 <div class="form-grid">
                     <div class="form-field-signup full-row">
                         <label>Username</label>
@@ -299,8 +443,8 @@ include('partial/header.php');
 
                 <button type="submit" name="btnsave" class="btn-signup-red">Create Account</button>
                 <a href="login.php" class="btn-cancel">Return to Login</a>
-            </form>
-        </div>
+    </form>
+    </div>
     </div>
 </main>
 
