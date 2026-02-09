@@ -23,11 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($new !== $confirm) {
         $alert = "Passwords do not match!";
         $alertType = "error";
-    } elseif (!preg_match('/^[A-Z]/', $new)) {
-        $alert = "First letter must be Uppercase!";
+    } elseif (!preg_match('/[A-Z]/', $new)) {
+        $alert = "At least one letter must be Uppercase!"; //
         $alertType = "error";
     } elseif (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $new)) {
         $alert = "At least one special character required!";
+        $alertType = "error";
+    } elseif (!preg_match('/[0-9]/', $new)) {
+        $alert = "At least one number required!";
         $alertType = "error";
     } elseif (strlen($new) < 8) {
         $alert = "Password must be at least 8 characters!";
@@ -131,25 +134,25 @@ require_once __DIR__ . '/sidebar.php';
 
         // Logic for strength score
         if (val.length < 8) {
-            message = "❌ Too Short";
+            message = "❌ Password too short (min 8)";
             score = 1;
-            gradient = "linear-gradient(90deg, #ff4d4d, #ff9e4d)"; // Red to Orange
-        } else if (!/^[A-Z]/.test(val)) {
-            message = "❌ Must start with Uppercase";
+            gradient = "linear-gradient(90deg, #ff4d4d, #ff9e4d)";
+        } else if (!/[A-Z]/.test(val)) {
+            message = "❌ Need one Uppercase letter";
             score = 2;
-            gradient = "linear-gradient(90deg, #ff9e4d, #ffcf4d)"; // Orange to Yellow
-        } else if (!/\d/.test(val)) {
-            message = "❌ Add a number";
+            gradient = "linear-gradient(90deg, #ff9e4d, #ffcf4d)";
+        } else if (!/[0-9]/.test(val)) {
+            message = "❌ Add at least one number";
             score = 3;
-            gradient = "linear-gradient(90deg, #ffcf4d, #4dff88)"; // Yellow to Light Green
+            gradient = "linear-gradient(90deg, #ffcf4d, #4dff88)";
         } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(val)) {
             message = "❌ Add a special character";
             score = 4;
-            gradient = "linear-gradient(90deg, #4dff88, #00e676)"; 
+            gradient = "linear-gradient(90deg, #4dff88, #00e676)";
         } else {
             message = "✅ Password is Strong";
             score = 5;
-            gradient = "linear-gradient(90deg, #00e676, #00c853)"; 
+            gradient = "linear-gradient(90deg, #00e676, #00c853)";
         }
 
         feedback.textContent = message;
