@@ -74,29 +74,6 @@
         padding-left: 5px;
     }
 
-    /* Social Icons with Lordicon */
-    .social-links {
-        display: flex;
-        gap: 15px;
-        margin-top: 30px;
-    }
-
-    .social-btn {
-        width: 45px;
-        height: 45px;
-        background: rgba(255, 255, 255, 0.03);
-        display: grid;
-        place-items: center;
-        border-radius: 4px;
-        transition: 0.3s;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .social-btn:hover {
-        background: var(--riot);
-        transform: translateY(-5px);
-    }
-
     /* Footer Bottom Section */
     .footer-bottom {
         margin-top: 50px;
@@ -149,18 +126,6 @@
         <div class="footer-col about">
             <img src="images/TX.png" class="footer-logo" alt="TournaX">
             <p>The ultimate arena for competitive gaming. Join daily tournaments, climb the global leaderboard, and win legendary prizes in the most secure environment.</p>
-            
-            <div class="social-links">
-                <a href="#" class="social-btn">
-                    <lord-icon src="https://cdn.lordicon.com/hpivxauj.json" trigger="hover" colors="primary:#ffffff" style="width:24px;height:24px"></lord-icon>
-                </a>
-                <a href="#" class="social-btn">
-                    <lord-icon src="https://cdn.lordicon.com/iqaguvqv.json" trigger="hover" colors="primary:#ffffff" style="width:24px;height:24px"></lord-icon>
-                </a>
-                <a href="#" class="social-btn">
-                    <lord-icon src="https://cdn.lordicon.com/khheayfj.json" trigger="hover" colors="primary:#ffffff" style="width:24px;height:24px"></lord-icon>
-                </a>
-            </div>
         </div>
 
         <div class="footer-col links">
