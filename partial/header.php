@@ -52,13 +52,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
     --bg: #06080f;
     --surface: #11141d;
     --sidebar-w: 85px;
-    --transition: all 0.25s ease;
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Hide default scroll bar */
-        ::-webkit-scrollbar {
-            display: none;
-        }
+::-webkit-scrollbar {
+    display: none;
+}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -116,7 +116,7 @@ canvas#bg {
 .nav-stack {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 32px;
     flex-grow: 1;
 }
 
@@ -126,12 +126,24 @@ canvas#bg {
     justify-content: center;
     align-items: center;
     text-decoration: none;
-    opacity: 0.6;
+    color: rgba(255,255,255,0.5);
+    transition: var(--transition);
+}
+
+/* Gaming Icon Style */
+.nav-item i {
+    font-size: 22px;
     transition: var(--transition);
 }
 
 .nav-item:hover, .nav-item.active { 
+    color: #fff;
     opacity: 1; 
+}
+
+.nav-item.active i {
+    color: var(--riot);
+    filter: drop-shadow(0 0 8px rgba(255, 70, 85, 0.6));
 }
 
 /* 🔥 ACTIVE INDICATOR */
@@ -147,7 +159,7 @@ canvas#bg {
 
 .nav-item span {
     position: absolute;
-    left: 45px;
+    left: 55px;
     background: var(--surface);
     padding: 6px 12px;
     border-radius: 4px;
@@ -160,9 +172,10 @@ canvas#bg {
     pointer-events: none;
     transition: var(--transition);
     border-left: 2px solid var(--riot);
+    z-index: 10;
 }
 
-.nav-item:hover span, .nav-item.active:hover span {
+.nav-item:hover span {
     opacity: 1;
     transform: translateX(0);
     color: #fff;
@@ -248,59 +261,14 @@ canvas#bg {
     color: #fff;
 }
 
-/* ================= MOBILE ================= */
-
-@media (max-width: 768px) {
-    :root { --sidebar-w: 0px; }
-
-    .tx-sidebar {
-        flex-direction: row;
-        height: 70px;
-        width: 100%;
-        bottom: 0;
-        top: auto;
-        border-right: none;
-        border-top: 1px solid rgba(255,255,255,0.08);
-        padding: 0;
-        justify-content: space-around;
-    }
-
-    .logo-container { display: none; }
-
-    .nav-stack {
-        flex-direction: row;
-        width: 100%;
-        justify-content: space-around;
-        margin-left: 30px;
-    }
-
-    .nav-item.active::before {
-        left: 50%;
-        bottom: -2px;
-        top: auto;
-        width: 20px;
-        height: 3px;
-        transform: translateX(-50%);
-    }
-
-    .nav-item span {
-        left: 50%;
-        bottom: 45px;
-        transform: translateX(-50%) translateY(5px);
-    }
-
-    .nav-item:hover span {
-        transform: translateX(-50%) translateY(0);
-    }
-
-    .tx-header { left: 0; }
-}
+/* ================= NOTIFICATIONS ================= */
 
 .fa-bell{
     font-size: 1.5rem;
     color: #fff;
     cursor: pointer;
     position: relative;
+    top: 3.5px;
 }
 
 #notif-icon {
@@ -352,9 +320,48 @@ canvas#bg {
       color: #333;
     }
 
-    .notification:last-child {
-      border-bottom: none;
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+    :root { --sidebar-w: 0px; }
+
+    .tx-sidebar {
+        flex-direction: row;
+        height: 70px;
+        width: 100%;
+        bottom: 0;
+        top: auto;
+        border-right: none;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        padding: 0;
+        justify-content: space-around;
     }
+
+    .logo-container { display: none; }
+
+    .nav-stack {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-around;
+        margin-left: 0;
+        gap: 0;
+    }
+
+    .nav-item.active::before {
+        left: 50%;
+        bottom: 0;
+        top: auto;
+        width: 30px;
+        height: 3px;
+        transform: translateX(-50%);
+    }
+
+    .nav-item span {
+        display: none; /* Hide tooltips on mobile bottom nav */
+    }
+
+    .tx-header { left: 0; }
+}
 </style>
 </head>
 
@@ -367,44 +374,30 @@ canvas#bg {
 
     <nav class="nav-stack">
         <a href="index.php" class="nav-item <?= ($current_page == 'index.php' || $current_page == '') ? 'active' : '' ?>">
-            <lord-icon src="https://cdn.lordicon.com/wmwqvixz.json" trigger="hover" 
-                colors="primary:<?= ($current_page == 'index.php' || $current_page == '') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
-            </lord-icon>
+            <i class="fa-solid fa-house"></i>
             <span>HOME</span>
         </a>
 
         <a href="tournament.php" class="nav-item <?= ($current_page == 'tournament.php') ? 'active' : '' ?>">
-            <lord-icon src="https://cdn.lordicon.com/dxjqoygy.json" trigger="hover" 
-                colors="primary:<?= ($current_page == 'tournament.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
-            </lord-icon>
+            <i class="fa-solid fa-trophy"></i>
             <span>TOURNAMENTS</span>
         </a>
 
         <a href="teams.php" class="nav-item <?= ($current_page == 'teams.php') ? 'active' : '' ?>">
-            <lord-icon src="https://cdn.lordicon.com/mrdiiocb.json" trigger="hover" 
-                colors="primary:<?= ($current_page == 'teams.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
-            </lord-icon>
+            <i class="fa-solid fa-users-rays"></i>
             <span>TEAMS</span>
         </a>
 
         <a href="leaderboard.php" class="nav-item <?= ($current_page == 'leaderboard.php') ? 'active' : '' ?>">
-            <lord-icon src="https://cdn.lordicon.com/hjeefwhm.json" trigger="hover" 
-                colors="primary:<?= ($current_page == 'leaderboard.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
-            </lord-icon>
+            <i class="fa-solid fa-ranking-star"></i>
             <span>LEADERBOARD</span>
         </a>
 
         <a href="contact.php" class="nav-item <?= ($current_page == 'contact.php') ? 'active' : '' ?>">
-            <lord-icon src="https://cdn.lordicon.com/hpivxauj.json" trigger="hover" 
-                colors="primary:<?= ($current_page == 'contact.php') ? '#ff4655' : '#ffffff' ?>" style="width:32px;height:32px">
-            </lord-icon>
-            <span>CONTACT US</span>
+            <i class="fa-solid fa-headset"></i>
+            <span>SUPPORT</span>
         </a>
     </nav>
-
-    <div class="nav-item" style="margin-top: auto; margin-bottom: 20px;">
-        <lord-icon src="https://cdn.lordicon.com/lecfrjdy.json" trigger="hover" colors="primary:#ffffff" style="width:32px;height:32px"></lord-icon>
-    </div>
 </aside>
 
 <header class="tx-header">
@@ -472,13 +465,13 @@ window.onclick = function(e) {
 }
 
 // --- Toggle dropdown ---
-    const notifIcon = document.getElementById("notif-icon");
-    const notifDropdown = document.getElementById("notif-dropdown");
-    notifIcon.addEventListener("click", () => {
-      notifDropdown.style.display = notifDropdown.style.display === "block" ? "none" : "block";
-    });
-    document.addEventListener("click", (e) => {
-      if (!notifIcon.contains(e.target) && !notifDropdown.contains(e.target)) {
+const notifIcon = document.getElementById("notif-icon");
+const notifDropdown = document.getElementById("notif-dropdown");
+notifIcon.addEventListener("click", () => {
+    notifDropdown.style.display = notifDropdown.style.display === "block" ? "none" : "block";
+});
+document.addEventListener("click", (e) => {
+    if (!notifIcon.contains(e.target) && !notifDropdown.contains(e.target)) {
         notifDropdown.style.display = "none";
       }
     });

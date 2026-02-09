@@ -274,7 +274,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: #ece8e1;
       font-family: 'Rajdhani', sans-serif;
       background-image: linear-gradient(rgba(255, 70, 85, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 70, 85, 0.05) 1px, transparent 1px);
-      background-size: 30px 30px;
+      background-image: url('../images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
 
     h1,
@@ -331,6 +334,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       cursor: pointer;
     }
 
+    .back-btn {
+      display: flex;
+      justify-content: flex-end;
+    }
+
     .status-pill {
       background: rgba(255, 70, 85, 0.1);
       border: 1px solid var(--riot-red);
@@ -351,6 +359,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Leader: <span class="text-white"><?= htmlspecialchars($team['leader_id'] == $user_id ? 'You' : 'Leader #' . $team['leader_id']) ?></span> —
         <span class="status-pill">MEMBERS: <?= count($members) ?> / <?= (int)($team['players'] ?? 0) ?></span>
       </p>
+
+      <a href="../index.php" class="text-red-500 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors back-btn">
+        &larr; Back to home
+      </a>
     </header>
 
     <?php if ($message): ?>
@@ -469,11 +481,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
       </div>
     <?php endif; ?>
-
-    <div class="mt-12 mb-10 border-t border-gray-800 pt-6">
-      <a href="../index.php" class="text-red-500 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors">
-        &larr; Back to tournaments
-      </a>
-    </div>
   </div>
-  

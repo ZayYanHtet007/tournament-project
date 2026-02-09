@@ -4,11 +4,21 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once "database/dbConfig.php";
 
+// PHPMailer requirements
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+require 'phpmailer/PHPMailer.php';
+require 'phpmailer/SMTP.php';
+require 'phpmailer/Exception.php';
+
 $error = $_SESSION['error'] ?? '';
-unset($_SESSION['error']);
+$success = $_SESSION['success'] ?? '';
+unset($_SESSION['error'], $_SESSION['success']);
 
+/* -------------------------------------------------------------------------- */
+/* LOGIC 1: LOGIN HANDLER                                                     */
+/* -------------------------------------------------------------------------- */
 if (isset($_POST['btnlogin'])) {
-
     $email = trim($_POST['txtemail']);
     $password = $_POST['txtpwd'];
 
@@ -19,117 +29,94 @@ if (isset($_POST['btnlogin'])) {
     $result = mysqli_stmt_get_result($stmt);
 
     if ($user = mysqli_fetch_assoc($result)) {
-
         if (!password_verify($password, $user['password'])) {
             $_SESSION['error'] = "Invalid email or password";
             header("Location: login.php");
             exit;
         }
 
-        /* ORGANIZER LOGIN */
         if ((int)$user['is_organizer'] === 1) {
-
             $status = strtolower(trim($user['organizer_status']));
-
             if ($status !== 'approved') {
                 $_SESSION['error'] = "Organizer account not approved";
                 header("Location: login.php");
                 exit;
             }
-
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['is_organizer'] = 1;
-            $_SESSION['organizer_status'] = $status;
-
             header("Location: organizer/organizerDashboard.php");
             exit;
         }
 
-        /* PLAYER LOGIN */
         session_regenerate_id(true);
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['is_organizer'] = 0;
-
         header("Location: index.php");
         exit;
     }
-
     $_SESSION['error'] = "Invalid email or password";
     header("Location: login.php");
     exit;
 }
-// 1. INCLUDE YOUR ORIGINAL HEADER
+
+/* -------------------------------------------------------------------------- */
+/* LOGIC 2: FORGOT PASSWORD HANDLER                                           */
+/* -------------------------------------------------------------------------- */
+if (isset($_POST['btnForgot'])) {
+    $email = $_POST['email'];
+    $code = rand(100000, 999999);
+    $_SESSION['reset_email'] = $email;
+    $_SESSION['resetcode'] = $code;
+
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'theintnandarsoe16@gmail.com';
+        $mail->Password = 'cqmx tiwi oqoe rpyr';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+        $mail->setFrom('myattheingikyaw200234@gmail.com', 'Theint');
+        $mail->addAddress($email);
+
+        $mail->isHTML(true);
+        $mail->Subject = "Your Password Reset Code";
+        $mail->Body = "<h2>Password Reset Request</h2><p>Your verification code is:</p><h1>$code</h1><p>Enter this code in the reset page.</p>";
+
+        $mail->send();
+        header("Location: verifyCode.php");
+        exit;
+    } catch (Exception $e) {
+        $_SESSION['error'] = "Mail Error: " . $mail->ErrorInfo;
+        header("Location: login.php");
+        exit;
+    }
+}
+
 include('partial/header.php'); 
 ?>
 
 <script src="https://cdn.lordicon.com/lordicon.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 
 <style>
-    /* ================= SIDEBAR & SHELL LAYOUT ================= */
     :root {
-        --primary-red: #ff3344; /* Brighter Gaming Red */
+        --primary-red: #ff3344;
         --dark-red: #4a0a0a;
         --deep-black: #050505;
         --panel-bg: #0f0f0f;
-        --sidebar-w: 80px; 
     }
 
-    /* THE SIDEBAR */
-    .riot-sidebar {
-        position: fixed;
-        left: 0; top: 0; bottom: 0;
-        width: var(--sidebar-w);
-        background: #000;
-        border-right: 1px solid rgba(255, 51, 68, 0.3);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 20px;
-        z-index: 9999; 
-    }
-
-    .side-icon-btn {
-        margin: 25px 0;
-        text-decoration: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        opacity: 0.6;
-        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .side-icon-btn:hover {
-        opacity: 1;
-        transform: translateX(5px);
-    }
-
-    .side-icon-btn span {
-        font-size: 9px;
-        color: #fff;
-        font-weight: 800;
-        margin-top: 6px;
-        letter-spacing: 1px;
-    }
-
-    /* ================= OFFSET FOR ORIGINAL ELEMENTS ================= */
-    .legacy-header, 
-    .site-footer, 
-    .login-container-wrapper {
-        margin-left: var(--sidebar-w) !important;
-        width: calc(100% - var(--sidebar-w)) !important;
-    }
-
-    /* ================= LOGIN DESIGN (HEAVY RED & RESPONSIVE) ================= */
     .login-container-wrapper {
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
         background-color: #000;
-        /* Gaming Grid Background */
         background-image: 
             linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px),
@@ -138,30 +125,60 @@ include('partial/header.php');
         position: relative;
     }
 
-    /* Vignette Overlay */
-    .login-container-wrapper::after {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-        pointer-events: none;
+    /* THE FIX: Absolute Stack Container */
+    .card-stack {
+        position: relative;
+        width: 100%;
+        max-width: 420px;
+        min-height: 550px; /* Ensure space for the absolute children */
+        perspective: 1000px;
     }
 
     .login-panel {
-        background: rgba(15, 15, 15, 0.95);
+        position: absolute; /* Stacked on top of each other */
+        top: 0;
+        left: 0;
         width: 100%;
-        max-width: 420px;
+        background: rgba(15, 15, 15, 0.95);
         padding: 50px 40px;
         border: 1px solid #333;
         border-top: 4px solid var(--primary-red);
         border-bottom: 4px solid var(--primary-red);
-        box-shadow: 
-            0 0 50px rgba(255, 51, 68, 0.15),
-            inset 0 0 20px rgba(0,0,0,0.8);
-        position: relative;
-        z-index: 2;
+        box-shadow: 0 0 50px rgba(255, 51, 68, 0.15);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        backface-visibility: hidden;
+        box-sizing: border-box;
     }
 
+    /* Initial state: Login visible, Forgot rotated away */
+    #login-panel {
+        z-index: 2;
+        transform: rotateY(0deg);
+        opacity: 1;
+    }
+
+    #forgot-panel {
+        z-index: 1;
+        transform: rotateY(180deg);
+        opacity: 0;
+        pointer-events: none; /* Can't click through when hidden */
+    }
+
+    /* Flip States */
+    .card-stack.show-forgot #login-panel {
+        transform: rotateY(-180deg);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .card-stack.show-forgot #forgot-panel {
+        transform: rotateY(0deg);
+        opacity: 1;
+        z-index: 3;
+        pointer-events: auto;
+    }
+
+    /* Internal Styling */
     .login-panel h2 {
         font-family: 'Bebas Neue', sans-serif;
         font-size: 42px;
@@ -169,10 +186,9 @@ include('partial/header.php');
         text-align: center;
         margin-bottom: 5px;
         letter-spacing: 3px;
-        text-shadow: 0 0 10px rgba(255, 51, 68, 0.5);
     }
 
-    .login-panel p.subtitle {
+    .subtitle {
         color: #888;
         font-size: 11px;
         text-transform: uppercase;
@@ -184,10 +200,7 @@ include('partial/header.php');
         padding-bottom: 15px;
     }
 
-    .form-group-custom {
-        margin-bottom: 25px;
-    }
-
+    .form-group-custom { margin-bottom: 25px; }
     .form-group-custom label {
         display: block;
         color: var(--primary-red);
@@ -195,7 +208,6 @@ include('partial/header.php');
         font-weight: 900;
         margin-bottom: 8px;
         text-transform: uppercase;
-        letter-spacing: 1px;
     }
 
     .form-group-custom input {
@@ -204,17 +216,13 @@ include('partial/header.php');
         background: #0a0a0a;
         border: 1px solid #333;
         color: #fff;
-        font-weight: 600;
         transition: 0.3s;
-        font-family: monospace;
-        letter-spacing: 1px;
+        box-sizing: border-box;
     }
 
     .form-group-custom input:focus {
         border-color: var(--primary-red);
-        background: #110505; /* Slight red tint on focus */
         outline: none;
-        box-shadow: 0 0 15px rgba(255, 51, 68, 0.2);
     }
 
     .btn-red-action {
@@ -229,14 +237,9 @@ include('partial/header.php');
         cursor: pointer;
         transition: 0.3s;
         letter-spacing: 2px;
-        box-shadow: 0 5px 15px rgba(255, 51, 68, 0.3);
     }
 
-    .btn-red-action:hover {
-        background: #ff5566;
-        box-shadow: 0 0 25px rgba(255, 51, 68, 0.6);
-        transform: translateY(-2px);
-    }
+    .btn-red-action:hover { background: #ff5566; transform: translateY(-2px); }
 
     .login-helper-links {
         margin-top: 25px;
@@ -244,11 +247,15 @@ include('partial/header.php');
         justify-content: space-between;
         font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
-    .login-helper-links a { color: #666; text-decoration: none; transition: 0.2s; }
-    .login-helper-links a:hover { color: var(--primary-red); }
+    .login-helper-links a, .back-to-login { 
+        color: #666; 
+        text-decoration: none; 
+        cursor: pointer;
+        transition: 0.2s; 
+    }
+    .login-helper-links a:hover, .back-to-login:hover { color: var(--primary-red); }
 
     .error-notice {
         background: rgba(255, 51, 68, 0.1);
@@ -257,77 +264,73 @@ include('partial/header.php');
         border: 1px solid var(--primary-red);
         margin-bottom: 25px;
         font-size: 12px;
-        font-weight: bold;
-        text-align: center;
         text-transform: uppercase;
-        box-shadow: 0 0 10px rgba(255, 51, 68, 0.2);
+        text-align: center;
     }
 
-    /* ================= RESPONSIVE MEDIA QUERIES ================= */
-    @media (max-width: 768px) {
-        /* Hide sidebar on mobile to save space */
-        .riot-sidebar {
-            display: none;
-        }
-
-        /* Reset margins since sidebar is gone */
-        .legacy-header, 
-        .site-footer, 
-        .login-container-wrapper {
-            margin-left: 0 !important;
-            width: 100% !important;
-        }
-
-        /* Adjust Login Panel for smaller screens */
-        .login-panel {
-            margin: 20px;
-            padding: 40px 25px;
-            max-width: 100%;
-            border-left: none;
-            border-right: none;
-        }
-
-        .login-panel h2 {
-            font-size: 32px;
-        }
-
-        .btn-red-action {
-            font-size: 20px;
-            padding: 15px;
-        }
+    .back-to-login {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        font-size: 11px;
+        font-weight: bold;
     }
 </style>
 
 <main class="login-container-wrapper">
-    <div class="login-panel">
-        <h2>LOGIN TO <span style="color: var(--primary-red);">TX</span></h2>
-        <p class="subtitle">Global Esports Network</p>
+    <div class="card-stack" id="cardStack">
+        
+        <div class="login-panel" id="login-panel">
+            <h2>LOGIN TO <span style="color: var(--primary-red);">TX</span></h2>
+            <p class="subtitle">Global Esports Network</p>
 
-        <?php if (!empty($error)) : ?>
-            <div class="error-notice">
-                <?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
+            <?php if (!empty($error)) : ?>
+                <div class="error-notice"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
 
-        <form method="POST">
-            <div class="form-group-custom">
-                <label>E-Mail Access</label>
-                <input type="email" name="txtemail" placeholder="AGENT@TOURNX.COM" required>
-            </div>
+            <form method="POST">
+                <div class="form-group-custom">
+                    <label>E-Mail Access</label>
+                    <input type="email" name="txtemail" placeholder="TOURNX@gmail.com" required>
+                </div>
+                <div class="form-group-custom">
+                    <label>Password</label>
+                    <input type="password" name="txtpwd" placeholder="••••••••" required>
+                </div>
+                <button type="submit" name="btnlogin" class="btn-red-action">Login</button>
+                <div class="login-helper-links">
+                    <a href="signup.php">Register New Acc</a>
+                    <a onclick="toggleCard(true)">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
 
-            <div class="form-group-custom">
-                <label>Password</label>
-                <input type="password" name="txtpwd" placeholder="••••••••" required>
-            </div>
+        <div class="login-panel" id="forgot-panel">
+            <h2>RESET <span style="color: var(--primary-red);">Password</span></h2>
+            <p class="subtitle">Recover your account access</p>
 
-            <button type="submit" name="btnlogin" class="btn-red-action">
-                Login
-            </button>
+            <form method="POST">
+                <div class="form-group-custom">
+                    <label>Registered E-Mail</label>
+                    <input type="email" name="email" placeholder="ENTER YOUR EMAIL" required>
+                </div>
+                <button type="submit" name="btnForgot" class="btn-red-action">Send Reset Code</button>
+                <a class="back-to-login" onclick="toggleCard(false)">
+                    BACK TO LOGIN
+                </a>
+            </form>
+        </div>
 
-            <div class="login-helper-links">
-                <a href="signup.php">Register New Acc</a>
-                <a href="forget_password.php">Forgot Password?</a>
-            </div>
-        </form>
     </div>
 </main>
+
+<script>
+    function toggleCard(showForgot) {
+        const stack = document.getElementById('cardStack');
+        if (showForgot) {
+            stack.classList.add('show-forgot');
+        } else {
+            stack.classList.remove('show-forgot');
+        }
+    }
+</script>

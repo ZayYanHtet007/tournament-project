@@ -207,16 +207,16 @@ if ($genre === 'BATTLE_ROYALE') {
             <p>Manage player profiles and stats</p>
         </a>
 
-        <a href="<?php echo $scorePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
-            <div class="icon-box"><i class="fa-solid fa-code-branch"></i></div>
-            <h3>Matches</h3>
-            <p>Manage Score</p>
-        </a>
-
         <a href="<?php echo $schedulePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
             <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
             <h3>Schedule</h3>
             <p>Manage Schedule</p>
+        </a>
+
+        <a href="<?php echo $scorePage; ?>?tournament_id=<?php echo $id; ?>" class="mgmt-card">
+            <div class="icon-box"><i class="fa-solid fa-code-branch"></i></div>
+            <h3>Matches</h3>
+            <p>Manage Score</p>
         </a>
     </div>
 </div>
