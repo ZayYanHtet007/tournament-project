@@ -36,6 +36,35 @@ if ($stmt) {
     error_log('DB prepare failed: ' . $conn->error);
 }
 
+$gameLabels = [];
+$participantCounts = [];
+
+$sql = "
+SELECT 
+    g.name AS game_name,
+    COUNT(tt.id) AS teams_joined
+FROM tournaments t
+JOIN games g ON g.game_id = t.game_id
+JOIN tournament_teams tt ON tt.tournament_id = t.tournament_id
+WHERE 
+    t.organizer_id = ?
+    AND t.admin_status = 'approved'
+GROUP BY g.game_id, g.name
+ORDER BY teams_joined DESC
+LIMIT 4
+";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $gameLabels[] = $row['game_name'];
+    $participantCounts[] = (int)$row['teams_joined'];
+}
+
+
 include("header.php");
 ?>
 
@@ -144,64 +173,78 @@ include("header.php");
 
     <!-- Chart.js + init -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const commonOptions = {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#fff',
-                        font: {
-                            size: 12
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: '#fff'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#fff'
+<script>
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#fff',
+                    font: {
+                        size: 12
                     }
                 }
             }
-        };
-
-        const ctx1 = document.getElementById('participantsChart').getContext('2d');
-        new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: ['Valorant', 'CS:GO', 'League', 'Dota'],
-                datasets: [{
-                    label: 'Participants',
-                    data: [120, 190, 150, 250],
-                    backgroundColor: 'rgba(0,242,255,0.45)'
-                }]
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: '#fff'
+                }
             },
-            options: commonOptions
-        });
+            x: {
+                ticks: {
+                    color: '#fff'
+                }
+            }
+        }
+    };
 
-        const ctx2 = document.getElementById('revenueChart').getContext('2d');
-        new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr'],
-                datasets: [{
-                    label: 'Revenue',
-                    data: [5000, 8500, 6000, 11000],
-                    borderColor: '#1e90ff',
-                    backgroundColor: 'rgba(30,144,255,0.15)',
-                    tension: 0.3
-                }]
-            },
-            options: commonOptions
-        });
-    </script>
+    /* =========================
+       PARTICIPANTS BAR CHART
+       (REAL DATABASE DATA)
+    ========================== */
+
+    const gameLabels = <?= json_encode($gameLabels) ?>;
+    const participantData = <?= json_encode($participantCounts) ?>;
+
+    const ctx1 = document.getElementById('participantsChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: gameLabels,
+            datasets: [{
+                label: 'Teams Joined',
+                data: participantData,
+                backgroundColor: 'rgba(0,242,255,0.45)'
+            }]
+        },
+        options: commonOptions
+    });
+
+    /* =========================
+       REVENUE LINE CHART
+       (UNCHANGED / STATIC)
+    ========================== */
+
+    const ctx2 = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+            datasets: [{
+                label: 'Revenue',
+                data: [5000, 8500, 6000, 11000],
+                borderColor: '#1e90ff',
+                backgroundColor: 'rgba(30,144,255,0.15)',
+                tension: 0.3
+            }]
+        },
+        options: commonOptions
+    });
+</script>
+
 
     <?php include("footer.php"); ?>

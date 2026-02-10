@@ -25,8 +25,18 @@ if (isset($_POST['save_all'])) {
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
         if (in_array($ext, $allowed)) {
+            // FOLDER FIX: Define and check path
+            $target_dir = "images/";
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0777, true); // Creates folder if missing
+            }
+
             $newImage = "user_" . $userId . "_" . time() . "." . $ext;
-            move_uploaded_file($file['tmp_name'], "uploads/" . $newImage);
+            if (move_uploaded_file($file['tmp_name'], $target_dir . $newImage)) {
+                // Success
+            } else {
+                $error = "Failed to move uploaded file.";
+            }
         } else {
             $error = "Invalid image format";
         }
