@@ -226,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
 <body>
 
     <div class="login-card">
-        <h2>ADMIN <span>ACCESS</span></h2>
+        <h2>ADMIN <span>LOGIN</span></h2>
         <p class="subtitle">Global Esports Network</p>
 
         <?php if (!empty($message)): ?>
@@ -241,24 +241,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
 
         <form method="POST">
             <div class="input-group">
-                <label>Admin Identifier</label>
+                <label>Admin Username</label>
                 <input type="email" name="email" placeholder="ADMIN@TOURNX.COM" required
                     <?php echo $is_locked ? 'disabled' : ''; ?>>
             </div>
 
             <div class="input-group">
-                <label>Security Key</label>
+                <label>Password</label>
                 <input type="password" name="password" placeholder="••••••••" required
                     <?php echo $is_locked ? 'disabled' : ''; ?>>
             </div>
 
             <button type="submit" <?php echo $is_locked ? 'disabled' : ''; ?>>
-                <?php echo $is_locked ? 'System Lockdown' : 'Authorize Login'; ?>
+                <?php echo $is_locked ? 'System Lockdown' : ' Login'; ?>
             </button>
 
             <div class="footer-links">
-                <a href="#">Network Status: Online</a>
-                <a href="forgetPassword.php">Recover Key</a>
+                <a href="forgetPassword.php">Forget Password</a>
             </div>
         </form>
     </div>
