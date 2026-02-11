@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['match_id'])) {
 
   $q = $conn->prepare("
         SELECT * FROM matches 
-        WHERE match_id=? AND tournament_id=? AND status='pending'
+        WHERE match_id=? AND tournament_id =? AND status='pending'
     ");
   $q->bind_param("ii", $match_id, $tournament_id);
   $q->execute();
