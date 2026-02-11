@@ -165,7 +165,7 @@ $result = $stmt->get_result();
 
     /* Technical details top right */
     .riot-card::before {
-        content: "OP-REF // " attr(data-id);
+        content: "Tour ID : " attr(data-id);
         position: absolute;
         top: 10px;
         right: 15px;

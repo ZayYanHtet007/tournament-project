@@ -106,7 +106,7 @@ include('partial/header.php');
 
 <style>
     :root {
-        --primary-red: #ff3344;
+        --primary-red: #ff4d5a;
         --dark-red: #4a0a0a;
         --deep-black: #050505;
         --riot-dark: #080a0c;
@@ -126,14 +126,17 @@ include('partial/header.php');
         background-attachment: fixed;
     }
 
-    /* INTERACTIVE MOUSE GLOW */
+    /* INTENSIFIED RED ATMOSPHERIC LIGHTING */
     body::before {
         content: "";
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                    rgba(255, 51, 68, 0.12) 0%, 
-                    transparent 50%);
+        background: 
+            radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(255, 51, 68, 0.25) 0%, 
+                    transparent 60%),
+            radial-gradient(circle at 10% 10%, rgba(255, 0, 0, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 90%, rgba(255, 0, 0, 0.15) 0%, transparent 40%);
         z-index: -1;
         pointer-events: none;
     }
@@ -388,5 +391,3 @@ include('partial/header.php');
         }
     }
 </script>
-
-<?php include('partial/footer.php'); ?>
