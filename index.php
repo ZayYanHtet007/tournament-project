@@ -25,7 +25,6 @@ $errors = [];
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
-    echo '$isLoggedIn=' . ($isLoggedIn ? 'true' : 'false');
 
     if (!$isLoggedIn) {
         $errors[] = "You must be logged in to create a team.";
@@ -75,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $stmt->close();
         }
 
-        print_r($errors);
 
         if (empty($errors)) {
 
@@ -845,7 +843,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             <form method="POST" enctype="multipart/form-data">
                 <div class="form-row-top">
                     <label for="uploadInput" style="cursor:pointer;">
-                        <img src="images/gif9.gif" class="upload_photo" id="img">
+                        <img src="images/TX.png" class="upload_photo" id="img">
                     </label>
                     <input type="file" name="image" id="uploadInput" hidden required onchange="previewImage(event)">
                     <div style="flex:1">
@@ -1008,33 +1006,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         }
         animate();
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Fallback/explicit scroll handler: map page scroll to 3D scene values
-        // This ensures the 3D core and camera respond even if ScrollTrigger isn't active
-        function updateSceneByScroll() {
-            const scrollTop = window.scrollY || window.pageYOffset;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const progress = docHeight > 0 ? scrollTop / docHeight : 0;
-
-            // Rotate core on X/Y based on scroll progress
-            core.rotation.x = progress * Math.PI * 2; // full two turns
-            core.rotation.y = progress * Math.PI * 4; // faster yaw
-
-            // Move camera closer as user scrolls down
-            camera.position.z = 30 - (progress * 15); // from 30 -> 15
-        }
-
-        // Use passive listener for performance
-        window.addEventListener('scroll', updateSceneByScroll, {
-            passive: true
-        });
-        // Initialize once on load
-        updateSceneByScroll();
 
         // MODAL LOGIC
         const openBtn = document.getElementById("openTeam");

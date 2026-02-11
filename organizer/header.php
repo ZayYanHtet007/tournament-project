@@ -325,7 +325,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <div class="drop-links">
                         <a href="userprofile.php">CUSTOMIZE PROFILE</a>
                         <a href="changePassword.php">CHANGE PASSWORD</a>
-                        <a href="logout.php" style="color: var(--accent)">LOGOUT</a>
+                        <a href="../logout.php" style="color: var(--accent)">LOGOUT</a>
                     </div>
                 <?php else: ?>
                     <div class="drop-links">

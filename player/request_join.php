@@ -19,6 +19,17 @@ if ($team_id <= 0) {
   exit("Error: Invalid Team ID.");
 }
 
+$membership_check = $conn->prepare("SELECT team_id FROM team_members WHERE user_id = ? LIMIT 1");
+$membership_check->bind_param("i", $user_id);
+$membership_check->execute();
+$res = $membership_check->get_result();
+
+if ($res->num_rows > 0) {
+  http_response_code(403); // Forbidden
+  exit("Error: You must leave your current team before joining another.");
+}
+$membership_check->close();
+
 $stmt = $conn->prepare("SELECT players FROM teams WHERE team_id = ? LIMIT 1");
 $stmt->bind_param("i", $team_id);
 $stmt->execute();
