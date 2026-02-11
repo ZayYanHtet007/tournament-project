@@ -128,6 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $errors[] = "Team is full.";
     } else {
       $token = bin2hex(random_bytes(16));
+      $getToken ="accept_invite.php?token=$token";
       $u = $conn->prepare("SELECT user_id, username FROM users WHERE username = ? OR email = ? LIMIT 1");
       $u->bind_param("ss", $by, $by);
       $u->execute();
@@ -145,7 +146,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $ins->bind_param("iis", $team_id, $user['user_id'], $token);
           $ins->execute();
           $ins->close();
+          
+          $invitMsg = "Whould you like to join our team?";
+          $title      = "We need you in our team to be better.";
+          $notiInsert = $conn->prepare("INSERT INTO notifications (user_id, message, title ,created_at,token) VALUES (?,?,?,NOW(),?)");
+          $notiInsert->bind_param("isss",$user['user_id'],$invitMsg,$title,$token);
+          $notiInsert->execute();
+          $notiInsert->close();
           $message = "Invite sent to {$user['username']}";
+
+          
         }
         $chk->close();
       } else {

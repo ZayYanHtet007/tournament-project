@@ -35,6 +35,13 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
 <html lang="en">
 
 <head>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') ||
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tournament Admin Dashboard</title>
@@ -43,6 +50,8 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="../css/admin.css">
 </head>
+
+
 
 <body>
     <button class="mobile-toggle" onclick="toggleSidebar()">
@@ -383,45 +392,41 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                 });
 
                 // Dark mode and light mode toggle
-                document.addEventListener('DOMContentLoaded', () => {
+                document.addEventListener('DOMContentLoaded', function() {
                     const themeToggle = document.getElementById('theme-toggle');
                     const themeIcon = themeToggle.querySelector('i');
 
-                    // Get saved theme or default to 'light'
-                    const savedTheme = localStorage.getItem('theme');
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    // Determine initial theme
-                    let currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-
-                    // Apply theme on load
-                    applyTheme(currentTheme);
-
-                    themeToggle.addEventListener('click', () => {
-                        // Toggle between light and dark
-                        const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                        applyTheme(newTheme);
-                        localStorage.setItem('theme', newTheme);
-                    });
-
                     function applyTheme(theme) {
                         document.documentElement.setAttribute('data-theme', theme);
+                        localStorage.setItem('theme', theme);
 
-                        // Update icon
+                        // Update Icon appearance
                         if (theme === 'dark') {
-                            themeIcon.classList.remove('fa-moon');
-                            themeIcon.classList.add('fa-sun');
-
-                        } else {
                             themeIcon.classList.remove('fa-sun');
                             themeIcon.classList.add('fa-moon');
-                            themeIcon.style.color = '#64748b'; // Gray for moon
+                            themeIcon.style.color = '#f8fafc'; // Light color for moon
+                        } else {
+                            themeIcon.classList.remove('fa-moon');
+                            themeIcon.classList.add('fa-sun');
+                            themeIcon.style.color = '#eab308'; // Yellow for sun
                         }
                     }
 
+                    // Toggle logic
+                    themeToggle.addEventListener('click', () => {
+                        const currentTheme = document.documentElement.getAttribute('data-theme');
+                        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                        applyTheme(newTheme);
+                    });
+
+                    // Initial check to set correct icon on load
+                    const savedTheme = localStorage.getItem('theme') ||
+                        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    applyTheme(savedTheme);
+
                     // Listen for system theme changes
                     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                        if (!localStorage.getItem('theme')) { // Only if user hasn't set a preference
+                        if (!localStorage.getItem('theme')) {
                             applyTheme(e.matches ? 'dark' : 'light');
                         }
                     });
