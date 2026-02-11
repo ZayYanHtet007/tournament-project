@@ -14,14 +14,23 @@ $errors = [];
 
 if (!$team_id) die("Missing team_id");
 
-/* ---------- FETCH TEAM ---------- */
-$stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = ? LIMIT 1");
-$stmt->bind_param("i", $team_id);
-$stmt->execute();
-$team = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+    /* ---------- FETCH TEAM ---------- */
+    $stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = ? LIMIT 1");
+    $stmt->bind_param("i", $team_id);
+    $stmt->execute();
+    $team = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-if (!$team) die("Team not found.");
+    if (!$team) die("Team not found.");
+
+    // Check if team is disbanded
+    if ($team['status'] === 'disbanded') {
+      echo "<div class='p-10 text-center'><h1 class='neon-red'>This team has been disbanded.</h1>";
+      echo "<a href='../index.php' class='btn-riot'>Back to Home</a></div>";
+      exit;
+    }
+
+
 
 /* ---------- ENSURE LEADER EXISTS IN team_members ---------- */
 $chkLeader = $conn->prepare("

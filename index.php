@@ -25,7 +25,6 @@ $errors = [];
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
-    echo '$isLoggedIn=' . ($isLoggedIn ? 'true' : 'false');
 
     if (!$isLoggedIn) {
         $errors[] = "You must be logged in to create a team.";
@@ -75,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $stmt->close();
         }
 
-        print_r($errors);
 
         if (empty($errors)) {
 

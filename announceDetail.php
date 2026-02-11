@@ -71,33 +71,59 @@ $systemText = $announce['system_info'];
 $isCompleted = ($tournament['status'] === 'completed');
 if (isset($_POST['btnRegister'])) {
   if (!isset($_SESSION['user_id'])) {
-    echo "<script>alert('Please log in to register.'); window.location.href='login.php';</script>";
+    echo "<script>alert('Please login to register.'); window.location.href='login.php';</script>";
     exit;
   }
 
-  $user_id = $_SESSION['user_id'];
-  
-  // Check if user is a team leader
-  $stmt = $pdo->prepare("SELECT team_id FROM teams WHERE leader_id = ? LIMIT 1");
-  $stmt->execute([$user_id]);
-  $team = $stmt->fetch();
+  $user_id = (int)$_SESSION['user_id'];
+  $t_id = (int)$tournament_id;
 
-  if (!$team) {
-    echo "<script>alert('Only team leaders can register for tournaments.');</script>";
-  } else {
-    $team_id = $team['team_id'];
-    
-    // Check if already registered
-    $stmt = $pdo->prepare("SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?");
-    $stmt->execute([$tournament_id, $team_id]);
-    
-    if ($stmt->fetch()) {
-      echo "<script>alert('Your team is already registered.');</script>";
+  try {
+    // 1. Fetch the user's team and the required team size for this tournament
+    $teamSql = "
+        SELECT t.team_id, t.status, tourn.team_size as required_size
+        FROM teams t
+        JOIN team_members tm ON t.team_id = tm.team_id
+        CROSS JOIN tournaments tourn
+        WHERE tm.user_id = ? 
+        AND tm.role = 'leader' 
+        AND tourn.tournament_id = ?
+        LIMIT 1";
+
+    $teamStmt = $pdo->prepare($teamSql);
+    $teamStmt->execute([$user_id, $t_id]);
+    $userTeam = $teamStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$userTeam) {
+      echo "<script>alert('Error: You must be a team leader to register.');</script>";
+    } elseif (strtolower($userTeam['status']) === 'disban' || strtolower($userTeam['status']) === 'disbanded') {
+      echo "<script>alert('Registration Failed: This team is inactive.');</script>";
     } else {
-      // Redirect to payment
-      header("Location: ./player/player-stripe-payment.php?tournament_id=" . $tournament_id);
-      exit;
+      // 2. NEW: Check the current number of members in that team
+      $countSql = "SELECT COUNT(*) FROM team_members WHERE team_id = ?";
+      $countStmt = $pdo->prepare($countSql);
+      $countStmt->execute([$userTeam['team_id']]);
+      $currentMemberCount = (int)$countStmt->fetchColumn();
+
+      $requiredSize = (int)$userTeam['required_size'];
+
+      if ($currentMemberCount < $requiredSize) {
+        echo "<script>alert('Registration Failed: Your team only has $currentMemberCount members. This tournament requires $requiredSize members.');</script>";
+      } else {
+        // 3. Check if already registered
+        $checkReg = $pdo->prepare("SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?");
+        $checkReg->execute([$t_id, $userTeam['team_id']]);
+
+        if ($checkReg->rowCount() > 0) {
+          echo "<script>alert('Your team is already registered.');</script>";
+        } else {
+          header("Location: ./player/player-stripe-payment.php?tournament_id=" . $tournament_id);
+          exit;
+        }
+      }
     }
+  } catch (Exception $e) {
+    echo "<script>alert('An error occurred: " . $e->getMessage() . "');</script>";
   }
 }
 ?>
