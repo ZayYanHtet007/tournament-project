@@ -12,7 +12,7 @@
         background: var(--dark-bg);
         /* Replace the URL below with your actual gaming wallpaper */
         background-image: linear-gradient(rgba(15, 25, 35, 0.85), rgba(15, 25, 35, 0.85)), 
-                          url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop');
+                          url('images/anonymous.jpg');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
@@ -122,7 +122,7 @@
         <form action="#" method="POST">
             <div class="form-group">
                 <label>Your Name</label>
-                <input type="text" placeholder="ENTER IDENTIFICATION..." required>
+                <input type="text" placeholder="ENTER NAME..." required>
             </div>
 
             <div class="form-group">
@@ -135,7 +135,7 @@
                 <textarea placeholder="TYPE YOUR MESSAGE HERE..."></textarea>
             </div>
 
-            <button type="submit">Send Dispatch</button>
+            <button type="submit">Send</button>
         </form>
     </div>
 </section>

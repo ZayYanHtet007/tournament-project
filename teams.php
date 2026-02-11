@@ -126,44 +126,78 @@ include('partial/header.php');
 <style>
     :root {
         --riot-red: #ff4654;
-        --riot-dark: #0f1923;
+        --riot-dark: #080a0c;
         --riot-black: #111;
         --riot-gray: #ece8e1;
         --riot-white: #ffffff;
     }
 
-    /* 1. BACKGROUND & GLOBAL */
+    /* 1. UPDATED DYNAMIC BACKGROUND */
     body {
         background-color: var(--riot-dark);
-        /* Layered background */
-        background-image: 
-            linear-gradient(rgba(15, 25, 35, 0.92), rgba(15, 25, 35, 0.92)),
-            url('https://images.contentstack.io/v3/assets/bltb6530b271fddd0b1/blt29d7c4f6bc072d93/5eb7cdc1b1f02e23d33930ad/V_AGENTS_5b.jpg');
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
         color: var(--riot-gray);
         font-family: 'Oswald', sans-serif;
         margin: 0;
         overflow-x: hidden;
+        min-height: 100vh;
+        position: relative;
+        background-image:
+            linear-gradient(rgba(255, 70, 85, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 70, 85, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+        background-attachment: fixed;
     }
 
-    /* Grid Overlay Effect */
+    /* Interactive Mouse Glow Layer */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 70, 85, 0.12) 0%,
+                transparent 50%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    /* Animated Scanline Overlay */
     body::after {
         content: "";
         position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.1) 4px);
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(255, 70, 85, 0.03) 50%,
+                transparent 100%);
+        background-size: 100% 4px;
+        animation: scanline 10s linear infinite;
         pointer-events: none;
         z-index: 0;
     }
 
-    /* =========================================
-       2. GAMING INTRO ANIMATION
-       ========================================= */
+    @keyframes scanline {
+        0% {
+            transform: translateY(-100%);
+        }
+
+        100% {
+            transform: translateY(100%);
+        }
+    }
+
+    /* 2. GAMING INTRO ANIMATION */
     #intro-screen {
         position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background-color: #000;
         background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
         z-index: 10000;
@@ -171,16 +205,17 @@ include('partial/header.php');
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        /* Screen fades out */
         animation: fadeOutScreen 0.5s ease-in-out 3s forwards;
     }
 
-    /* Scanline overlay for that retro/tactical feel */
     #intro-screen::before {
         content: " ";
         display: block;
         position: absolute;
-        top: 0; left: 0; bottom: 0; right: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
         z-index: 2;
         background-size: 100% 2px, 3px 100%;
@@ -203,14 +238,10 @@ include('partial/header.php');
         line-height: 1;
         position: relative;
         display: inline-block;
-        /* The Glitch & Fly In */
         animation: gamingFlyIn 2.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-        text-shadow: 
-            5px 5px 0px var(--riot-red),
-            10px 10px 20px rgba(0,0,0,0.8);
+        text-shadow: 5px 5px 0px var(--riot-red), 10px 10px 20px rgba(0, 0, 0, 0.8);
     }
 
-    /* Glitch layers */
     .intro-3d-text::before,
     .intro-3d-text::after {
         content: attr(data-text);
@@ -250,15 +281,18 @@ include('partial/header.php');
             letter-spacing: 50px;
             filter: blur(10px);
         }
+
         20% {
             opacity: 1;
             transform: scale(1) translateZ(0) rotateX(0deg);
             letter-spacing: 15px;
             filter: blur(0px);
         }
+
         85% {
             transform: scale(1.05) translateZ(20px);
         }
+
         100% {
             opacity: 1;
             transform: scale(1.05) translateZ(20px);
@@ -266,38 +300,105 @@ include('partial/header.php');
     }
 
     @keyframes glitch-anim-1 {
-        0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
-        20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
-        40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
-        60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
-        80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
-        100% { clip-path: inset(30% 0 20% 0); transform: translate(1px, -1px); }
+        0% {
+            clip-path: inset(20% 0 80% 0);
+            transform: translate(-2px, 1px);
+        }
+
+        20% {
+            clip-path: inset(60% 0 10% 0);
+            transform: translate(2px, -1px);
+        }
+
+        40% {
+            clip-path: inset(40% 0 50% 0);
+            transform: translate(-2px, 2px);
+        }
+
+        60% {
+            clip-path: inset(80% 0 5% 0);
+            transform: translate(2px, -2px);
+        }
+
+        80% {
+            clip-path: inset(10% 0 70% 0);
+            transform: translate(-1px, 1px);
+        }
+
+        100% {
+            clip-path: inset(30% 0 20% 0);
+            transform: translate(1px, -1px);
+        }
     }
 
     @keyframes glitch-anim-2 {
-        0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
-        20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 1px); }
-        40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 2px); }
-        60% { clip-path: inset(15% 0 80% 0); transform: translate(-2px, -2px); }
-        80% { clip-path: inset(55% 0 10% 0); transform: translate(1px, -1px); }
-        100% { clip-path: inset(40% 0 30% 0); transform: translate(-1px, 1px); }
+        0% {
+            clip-path: inset(10% 0 60% 0);
+            transform: translate(2px, -1px);
+        }
+
+        20% {
+            clip-path: inset(80% 0 5% 0);
+            transform: translate(-2px, 1px);
+        }
+
+        40% {
+            clip-path: inset(30% 0 20% 0);
+            transform: translate(2px, 2px);
+        }
+
+        60% {
+            clip-path: inset(15% 0 80% 0);
+            transform: translate(-2px, -2px);
+        }
+
+        80% {
+            clip-path: inset(55% 0 10% 0);
+            transform: translate(1px, -1px);
+        }
+
+        100% {
+            clip-path: inset(40% 0 30% 0);
+            transform: translate(-1px, 1px);
+        }
     }
 
     @keyframes loadBar {
-        0% { width: 0%; opacity: 0;}
-        30% { width: 40%; opacity: 1; }
-        70% { width: 70%; }
-        100% { width: 200px; } /* Fixed width at end */
+        0% {
+            width: 0%;
+            opacity: 0;
+        }
+
+        30% {
+            width: 40%;
+            opacity: 1;
+        }
+
+        70% {
+            width: 70%;
+        }
+
+        100% {
+            width: 200px;
+        }
     }
 
     @keyframes fadeOutScreen {
-        0% { opacity: 1; pointer-events: all; }
-        90% { opacity: 0; pointer-events: none; }
-        100% { opacity: 0; z-index: -1; display: none; }
-    }
+        0% {
+            opacity: 1;
+            pointer-events: all;
+        }
 
-    @media (max-width: 768px) {
-        .intro-3d-text { font-size: 5rem; letter-spacing: 5px; }
+        90% {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        100% {
+            opacity: 0;
+            z-index: -1;
+            display: none;
+        }
     }
 
     /* 3. LAYOUT & RESPONSIVENESS */
@@ -306,14 +407,15 @@ include('partial/header.php');
         margin: 80px auto;
         padding: 0 150px;
         position: relative;
-        z-index: 1;
-        /* Slight delayed entry for content */
+        z-index: 10;
         opacity: 0;
         animation: fadeInContent 1s ease-out 2.8s forwards;
     }
 
     @keyframes fadeInContent {
-        to { opacity: 1; }
+        to {
+            opacity: 1;
+        }
     }
 
     .header-flex {
@@ -321,7 +423,7 @@ include('partial/header.php');
         justify-content: space-between;
         align-items: center;
         margin-bottom: 50px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         padding-bottom: 20px;
     }
 
@@ -334,7 +436,6 @@ include('partial/header.php');
         letter-spacing: -2px;
     }
 
-    /* Search Bar */
     .search-wrapper {
         position: relative;
         display: flex;
@@ -372,7 +473,10 @@ include('partial/header.php');
         padding: 10px;
         transition: transform 0.2s;
     }
-    .search-btn:hover { transform: scale(1.1); }
+
+    .search-btn:hover {
+        transform: scale(1.1);
+    }
 
     /* 4. TEAM GRID */
     .team-grid {
@@ -383,14 +487,10 @@ include('partial/header.php');
     }
 
     .team-card {
-        background: var(--riot-black);
+        background: #0f1923;
         position: relative;
-        border: 1px solid rgba(255,255,255,0.1);
-        clip-path: polygon(
-            20px 0, 100% 0, 
-            100% calc(100% - 20px), calc(100% - 20px) 100%, 
-            0 100%, 0 20px
-        );
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
         transition: all 0.3s ease;
         cursor: pointer;
         overflow: hidden;
@@ -399,20 +499,25 @@ include('partial/header.php');
     .team-card:hover {
         transform: translateY(-5px);
         border-color: var(--riot-red);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
     .card-accent {
         position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 3px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
         background: var(--riot-red);
         transform: scaleX(0);
         transform-origin: left;
         transition: transform 0.4s ease;
         z-index: 10;
     }
-    .team-card:hover .card-accent { transform: scaleX(1); }
+
+    .team-card:hover .card-accent {
+        transform: scaleX(1);
+    }
 
     .photo-box {
         height: 180px;
@@ -436,7 +541,7 @@ include('partial/header.php');
 
     .info-box {
         padding: 20px 25px;
-        background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,1) 100%);
+        background: linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 1) 100%);
     }
 
     .name-txt {
@@ -457,15 +562,6 @@ include('partial/header.php');
         margin: 0;
     }
 
-    .no-results {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 50px;
-        border: 2px dashed rgba(255,255,255,0.1);
-        color: #666;
-    }
-    .no-results i { font-size: 3rem; margin-bottom: 10px; color: var(--riot-red); }
-
     /* 5. PAGINATION */
     .pagination {
         display: flex;
@@ -476,13 +572,12 @@ include('partial/header.php');
 
     .pg-link {
         padding: 10px 20px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: white;
         text-decoration: none;
         font-family: 'Teko', sans-serif;
         font-size: 1.2rem;
-        letter-spacing: 1px;
         transition: 0.3s;
         clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     }
@@ -491,16 +586,18 @@ include('partial/header.php');
     .pg-link.active {
         background: var(--riot-red);
         border-color: var(--riot-red);
-        color: white;
     }
 
-    /* 6. MODAL */
+    /* 6. MODAL & NEW PLAYER CARDS */
     .modal-overlay {
         display: none;
         position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: rgba(0, 0, 0, 0.85);
-        z-index: 1000;
+        z-index: 11000;
         align-items: center;
         justify-content: center;
         backdrop-filter: blur(8px);
@@ -508,30 +605,30 @@ include('partial/header.php');
     }
 
     .modal-content {
-        background: var(--riot-dark);
+        background: #0f1923;
         width: 100%;
-        max-width: 600px;
+        max-width: 650px;
         padding: 40px;
         border: 1px solid var(--riot-red);
         position: relative;
         box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-        clip-path: polygon(
-            0 0, 100% 0, 
-            100% calc(100% - 30px), calc(100% - 30px) 100%, 
-            30px 100%, 0 calc(100% - 30px)
-        );
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 30px 100%, 0 calc(100% - 30px));
     }
 
     .close-btn {
         position: absolute;
-        top: 15px; right: 20px;
+        top: 15px;
+        right: 20px;
         font-size: 2rem;
         color: var(--riot-red);
         cursor: pointer;
-        z-index: 2;
         transition: 0.3s;
     }
-    .close-btn:hover { color: white; transform: rotate(90deg); }
+
+    .close-btn:hover {
+        color: white;
+        transform: rotate(90deg);
+    }
 
     .modal-header h2 {
         font-size: 4rem;
@@ -549,18 +646,52 @@ include('partial/header.php');
     .modal-leader {
         margin-top: 15px;
         font-size: 1.1rem;
-        letter-spacing: 1px;
         border-left: 3px solid var(--riot-red);
         padding-left: 10px;
     }
 
-    .player-pill {
-        display: inline-block;
-        background: rgba(255,255,255,0.1);
-        padding: 5px 15px;
-        margin: 5px 5px 5px 0;
-        font-size: 0.9rem;
-        clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+    /* Player Card Grid in Modal */
+    #m-players {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .player-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 12px;
+        border-left: 3px solid var(--riot-red);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: 0.3s;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+
+    .player-card:hover {
+        background: rgba(255, 70, 85, 0.1);
+        transform: translateX(5px);
+    }
+
+    .player-avatar {
+        width: 35px;
+        height: 35px;
+        background: var(--riot-red);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        color: white;
+    }
+
+    .player-info-name {
+        font-family: 'Teko', sans-serif;
+        font-size: 1.2rem;
+        color: #fff;
+        text-transform: uppercase;
     }
 
     .modal-join-btn {
@@ -573,35 +704,42 @@ include('partial/header.php');
         color: white;
         font-family: 'Teko', sans-serif;
         font-size: 1.8rem;
-        text-transform: uppercase;
         cursor: pointer;
         transition: 0.3s;
-        letter-spacing: 2px;
         clip-path: polygon(0 0, 100% 0, 100% 100%, 20px 100%, 0 calc(100% - 20px));
     }
-    .modal-join-btn:hover { background: white; color: var(--riot-black); }
 
-    /* 7. RESPONSIVE MEDIA QUERIES */
+    .modal-join-btn:hover {
+        background: white;
+        color: #000;
+    }
+
     @media (max-width: 768px) {
-        .teams-container { margin: 40px auto; padding: 0 15px; }
-        
+        .teams-container {
+            margin: 40px auto;
+            padding: 0 15px;
+        }
+
         .header-flex {
             flex-direction: column;
-            gap: 20px;
-            align-items: center;
             text-align: center;
         }
 
-        .page-title { font-size: 3rem; }
+        .page-title {
+            font-size: 3rem;
+        }
 
-        .search-wrapper { width: 100%; justify-content: center; }
-        .search-input.active { width: 100%; }
+        .search-input.active {
+            width: 100%;
+        }
 
-        .team-grid { grid-template-columns: 1fr; } /* Single column on mobile */
-        
-        .modal-content { padding: 30px 20px; }
-        .modal-header h2 { font-size: 3rem; }
-        .modal-short { font-size: 1.5rem; display: block; margin: 5px 0 0 0; }
+        .team-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-header h2 {
+            font-size: 3rem;
+        }
     }
 </style>
 
@@ -615,13 +753,11 @@ include('partial/header.php');
 <div class="teams-container">
     <div class="header-flex">
         <h1 class="page-title">Roster <span style="color:var(--riot-red)">//</span></h1>
-
         <div class="search-wrapper">
             <input type="text" id="teamSearch" class="search-input <?= $search ? 'active' : '' ?>" placeholder="SEARCH TEAM..." onkeyup="handleSearch()" value="<?= htmlspecialchars($search) ?>">
             <button class="search-btn" onclick="toggleSearch()"><i class="fas fa-search"></i></button>
         </div>
     </div>
-
     <div id="dynamic-content">
         <?php include_grid_content($data); ?>
     </div>
@@ -630,7 +766,6 @@ include('partial/header.php');
 <div id="teamModal" class="modal-overlay">
     <div class="modal-content">
         <span class="close-btn" onclick="closeTeam()">&times;</span>
-
         <div class="modal-header">
             <h2 style="font-family: 'Teko'; text-transform: uppercase;">
                 <span id="m-name"></span>
@@ -641,10 +776,8 @@ include('partial/header.php');
             </div>
             <p id="m-motto" style="color: var(--riot-red); font-size: 1rem; margin-top: 15px; text-transform: uppercase; font-style: italic; opacity: 0.8;"></p>
         </div>
-
         <h4 style="color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; margin: 25px 0 10px; font-size:0.9rem;">Active Agents</h4>
         <div id="m-players"></div>
-
         <button id="m-join-btn" class="modal-join-btn">Request to Join</button>
     </div>
 </div>
@@ -652,7 +785,13 @@ include('partial/header.php');
 <script>
     let searchTimer;
 
-    // Toggle Search Bar
+    window.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.setProperty('--mouse-x', x + '%');
+        document.body.style.setProperty('--mouse-y', y + '%');
+    });
+
     function toggleSearch() {
         const input = document.getElementById('teamSearch');
         input.classList.toggle('active');
@@ -671,15 +810,12 @@ include('partial/header.php');
     function fetchTeams(page) {
         const search = document.getElementById('teamSearch').value;
         const dynamicContent = document.getElementById('dynamic-content');
-
         dynamicContent.style.opacity = '0.5';
-
         fetch(`?ajax=1&page=${page}&search=${encodeURIComponent(search)}`)
             .then(response => response.text())
             .then(html => {
                 dynamicContent.innerHTML = html;
                 dynamicContent.style.opacity = '1';
-
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?page=${page}&search=${encodeURIComponent(search)}`;
                 window.history.pushState({
                     path: newUrl
@@ -690,7 +826,7 @@ include('partial/header.php');
             });
     }
 
-    // OPEN MODAL WITH DETAILS
+    // OPEN MODAL WITH ENHANCED PLAYER CARDS
     function openTeam(name, short, motto, leader, players, teamId) {
         document.getElementById('m-name').innerText = name;
         document.getElementById('m-short').innerText = short ? `[${short}]` : '';
@@ -700,7 +836,13 @@ include('partial/header.php');
         let html = '';
         if (players && players.trim() !== '') {
             players.split(',').forEach(p => {
-                html += `<div class="player-pill">${p.trim()}</div>`;
+                const nameTrimmed = p.trim();
+                const initial = nameTrimmed.charAt(0).toUpperCase();
+                html += `
+                    <div class="player-card">
+                        <div class="player-avatar">${initial}</div>
+                        <div class="player-info-name">${nameTrimmed}</div>
+                    </div>`;
             });
         } else {
             html = '<p style="opacity:0.5; font-style:italic;">No registered agents found.</p>';
@@ -711,7 +853,6 @@ include('partial/header.php');
         joinBtn.onclick = function() {
             requestJoin(teamId);
         };
-
         document.getElementById('teamModal').style.display = 'flex';
     }
 
@@ -723,13 +864,10 @@ include('partial/header.php');
         if (confirm("Do you want to send a request to join this team?")) {
             const joinBtn = document.getElementById('m-join-btn');
             const originalText = joinBtn.innerText;
-
             joinBtn.innerText = "SENDING...";
             joinBtn.disabled = true;
-
             const formData = new URLSearchParams();
             formData.append('team_id', teamId);
-
             fetch('player/request_join.php', {
                     method: 'POST',
                     headers: {

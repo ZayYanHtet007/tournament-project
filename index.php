@@ -843,7 +843,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             <form method="POST" enctype="multipart/form-data">
                 <div class="form-row-top">
                     <label for="uploadInput" style="cursor:pointer;">
-                        <img src="images/gif9.gif" class="upload_photo" id="img">
+                        <img src="images/TX.png" class="upload_photo" id="img">
                     </label>
                     <input type="file" name="image" id="uploadInput" hidden required onchange="previewImage(event)">
                     <div style="flex:1">

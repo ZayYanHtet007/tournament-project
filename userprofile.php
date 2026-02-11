@@ -1,5 +1,6 @@
 <?php
 require_once "partial/init.php"; // this now defines $pdo
+include('partial/header.php');
 
 $userId = $_SESSION['user_id'];
 
@@ -59,7 +60,6 @@ if (isset($_POST['save_all'])) {
         }
     }
 }
- include('partial/header.php');
 ?>
 
     <style>
@@ -68,12 +68,12 @@ if (isset($_POST['save_all'])) {
             --riot-bg: #0f1923;
             --riot-white: #ece8e1;
             --riot-border: rgba(255, 255, 255, 0.15);
-            --gaming-bg: #1a1d23; 
+            --gaming-dark: #080a0c; 
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* PULSING GAMING BACKGROUND */
+        /* CYBER-GRID ANIMATED BACKGROUND */
         .profile-wrapper {
             margin-left: 85px;
             margin-top: 75px;
@@ -82,55 +82,60 @@ if (isset($_POST['save_all'])) {
             justify-content: center;
             align-items: center;
             padding: 40px 20px;
-            background-color: var(--gaming-bg);
+            background-color: var(--gaming-dark);
             position: relative;
             overflow: hidden;
+            /* The Grid */
             background-image: 
-                radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: 0;
+                linear-gradient(rgba(255, 70, 85, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 70, 85, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center center;
         }
 
-        /* Pulsing Red Glow Layer */
+        /* Moving Gradient Glow */
         .profile-wrapper::before {
             content: "";
             position: absolute;
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(circle, rgba(255, 70, 85, 0.15) 0%, transparent 65%);
-            top: -200px;
-            right: -200px;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                        rgba(255, 70, 85, 0.12) 0%, 
+                        transparent 50%);
             z-index: 0;
-            animation: pulse-glow 6s ease-in-out infinite;
+            pointer-events: none;
         }
 
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.1); }
-        }
-
+        /* Animated Scanline */
         .profile-wrapper::after {
             content: "";
             position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(15, 25, 35, 0.5) 0%, transparent 70%);
-            bottom: -200px;
-            left: -200px;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(255, 70, 85, 0.05) 50%,
+                transparent 100%
+            );
+            background-size: 100% 4px;
+            animation: scanline 10s linear infinite;
             z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
         }
 
         .profile-container {
             width: 100%;
             max-width: 450px;
-            background: #111;
+            background: #0f1923; /* Solid Riot Dark */
             border: 1px solid var(--riot-border);
             padding: 50px 40px;
             position: relative;
             z-index: 1;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255, 70, 85, 0.05);
         }
 
         h2 {
@@ -140,6 +145,7 @@ if (isset($_POST['save_all'])) {
             margin-bottom: 40px;
             letter-spacing: 1px;
             color: #fff;
+            text-shadow: 2px 2px 0px var(--riot-red);
         }
 
         .close-btn{
@@ -177,11 +183,13 @@ if (isset($_POST['save_all'])) {
             background: #000;
             transition: 0.3s;
             object-fit: cover;
+            box-shadow: 0 0 15px rgba(255, 70, 85, 0.3);
         }
 
         .avatar-upload-wrapper:hover .avatar-preview {
             filter: brightness(0.6);
-            transform: scale(1.02);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 70, 85, 0.5);
         }
 
         .upload-hint {
@@ -217,7 +225,7 @@ if (isset($_POST['save_all'])) {
         input[type="text"], input[type="email"] {
             width: 100%;
             padding: 15px;
-            background: #1a1a1a;
+            background: rgba(255,255,255,0.03);
             border: 1px solid transparent;
             border-bottom: 2px solid var(--riot-border);
             color: #fff;
@@ -228,7 +236,7 @@ if (isset($_POST['save_all'])) {
 
         input:focus {
             outline: none;
-            background: #222;
+            background: rgba(255,255,255,0.07);
             border-bottom-color: var(--riot-red);
         }
 
@@ -267,11 +275,11 @@ if (isset($_POST['save_all'])) {
             margin-bottom: 20px;
             text-transform: uppercase;
         }
-        .msg { color: #00ff99; }
+        .msg { color: #00ff99; text-shadow: 0 0 10px rgba(0,255,153,0.3); }
         .err { color: var(--riot-red); }
     </style>
 
-<div class="profile-wrapper">
+<div class="profile-wrapper" id="bg-wrapper">
 <div class="profile-container">
     <h2>EDIT PREFERENCES</h2>
 
@@ -307,6 +315,7 @@ if (isset($_POST['save_all'])) {
 </div>
 
 <script>
+    // Preview image logic
     function previewImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
@@ -316,8 +325,14 @@ if (isset($_POST['save_all'])) {
             reader.readAsDataURL(input.files[0]);
         }
     }
-</script>
 
-<?php
- include('partial/footer.php');
-?>
+    // Interactive Background Glow
+    const wrapper = document.getElementById('bg-wrapper');
+    wrapper.addEventListener('mousemove', e => {
+        const rect = wrapper.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        wrapper.style.setProperty('--mouse-x', x + '%');
+        wrapper.style.setProperty('--mouse-y', y + '%');
+    });
+</script>

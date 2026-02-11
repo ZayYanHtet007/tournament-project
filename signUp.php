@@ -108,11 +108,54 @@ if (isset($_POST['btnsave'])) {
     :root {
         --primary-red: #ff3344;
         --sidebar-w: 80px;
+        --riot-dark: #080a0c;
     }
 
     body {
-        background-color: #000 !important;
+        background-color: var(--riot-dark) !important;
         margin: 0;
+        overflow-x: hidden;
+        position: relative;
+        /* CYBER GRID BACKGROUND */
+        background-image: 
+            linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+        background-attachment: fixed;
+    }
+
+    /* INTERACTIVE MOUSE GLOW */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(255, 50, 68, 0.12) 0%, 
+                    transparent 50%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    /* GLOBAL ANIMATED SCANLINE */
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: linear-gradient(
+            to bottom,
+            transparent 0%,
+            rgba(255, 51, 68, 0.03) 50%,
+            transparent 100%
+        );
+        background-size: 100% 4px;
+        animation: globalScanline 10s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    @keyframes globalScanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
     }
 
     .signup-main-wrapper {
@@ -127,16 +170,18 @@ if (isset($_POST['btnsave'])) {
         background-size: 30px 30px, 30px 30px, 100% 100%;
         padding: 40px 20px;
         margin-left: var(--sidebar-w);
+        position: relative;
+        z-index: 1;
     }
 
     .signup-panel {
-        background: rgba(15, 15, 15, 0.98);
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(10px);
         width: 100%;
         max-width: 850px;
-        /* Wider for side-by-side layout */
-        border: 1px solid #333;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-top: 4px solid var(--primary-red);
-        box-shadow: 0 0 50px rgba(255, 51, 68, 0.15);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
         display: flex;
         overflow: hidden;
     }
@@ -144,7 +189,7 @@ if (isset($_POST['btnsave'])) {
     /* LEFT SIDE: PHOTO SECTION */
     .signup-left {
         flex: 1;
-        background: rgba(255, 51, 68, 0.03);
+        background: rgba(255, 51, 68, 0.02);
         border-right: 1px solid #222;
         display: flex;
         flex-direction: column;
@@ -156,17 +201,17 @@ if (isset($_POST['btnsave'])) {
     .photo-preview-box {
         width: 180px;
         height: 180px;
-        border: 1px solid #444;
+        border: 1px solid #333;
         background: #050505;
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
         margin-bottom: 20px;
+        transition: 0.3s;
     }
 
     .photo-preview-box::before {
-        /* Corner Accents */
         content: '';
         position: absolute;
         top: -5px;
@@ -260,15 +305,16 @@ if (isset($_POST['btnsave'])) {
         border: 1px solid #333;
         color: #fff;
         font-family: monospace;
+        transition: 0.3s;
     }
 
     .form-field-signup input:focus {
         border-color: var(--primary-red);
         outline: none;
         background: #110505;
+        box-shadow: 0 0 10px rgba(255, 51, 68, 0.1);
     }
 
-    /* ORGANIZER CLEARANCE STYLE */
     .organizer-toggle-card {
         margin-top: 25px;
         padding: 20px;
@@ -305,19 +351,12 @@ if (isset($_POST['btnsave'])) {
         height: 24px;
     }
 
-    .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
+    .switch input { opacity: 0; width: 0; height: 0; }
 
     .slider {
         position: absolute;
         cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
         background-color: #333;
         transition: .4s;
         border-radius: 2px;
@@ -335,13 +374,8 @@ if (isset($_POST['btnsave'])) {
         border-radius: 2px;
     }
 
-    input:checked+.slider {
-        background-color: var(--primary-red);
-    }
-
-    input:checked+.slider:before {
-        transform: translateX(26px);
-    }
+    input:checked+.slider { background-color: var(--primary-red); }
+    input:checked+.slider:before { transform: translateX(26px); }
 
     .btn-signup-red {
         width: 100%;
@@ -354,6 +388,12 @@ if (isset($_POST['btnsave'])) {
         text-transform: uppercase;
         cursor: pointer;
         margin-top: 30px;
+        transition: 0.3s;
+    }
+
+    .btn-signup-red:hover {
+        filter: brightness(1.2);
+        box-shadow: 0 0 20px rgba(255, 51, 68, 0.4);
     }
 
     .btn-cancel {
@@ -404,9 +444,8 @@ if (isset($_POST['btnsave'])) {
                 <p class="tagline">Creating Account</p>
 
                 <?php if ($error): ?>
-                    <div style="color:var(--primary-red); font-size:11px; margin-bottom:15px;">[ERR] <?= htmlspecialchars($error) ?></div>
+                    <div style="color:var(--primary-red); font-size:11px; margin-bottom:15px; background: rgba(255,0,0,0.1); padding: 10px; border-left: 3px solid var(--primary-red);">[ERR] <?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
-
 
                 <div class="form-grid">
                     <div class="form-field-signup full-row">
@@ -443,12 +482,21 @@ if (isset($_POST['btnsave'])) {
 
                 <button type="submit" name="btnsave" class="btn-signup-red">Create Account</button>
                 <a href="login.php" class="btn-cancel">Return to Login</a>
+            </div>
+      </div>
     </form>
-    </div>
-    </div>
+    
 </main>
 
 <script>
+    // MOUSE GLOW TRACKING
+    window.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.setProperty('--mouse-x', x + '%');
+        document.body.style.setProperty('--mouse-y', y + '%');
+    });
+
     function previewImage(event) {
         var reader = new FileReader();
         reader.onload = function() {
@@ -456,6 +504,10 @@ if (isset($_POST['btnsave'])) {
             output.innerHTML = '<img src="' + reader.result + '">';
             output.style.borderColor = "var(--primary-red)";
         }
-        reader.readAsDataURL(event.target.files[0]);
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
     }
 </script>
+
+<?php include('partial/footer.php'); ?>
