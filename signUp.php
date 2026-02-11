@@ -47,6 +47,7 @@ if (isset($_POST['btnsave'])) {
         } else {
             $check = "SELECT user_id FROM users WHERE username = ? OR email = ?";
             $stmt = mysqli_prepare($conn, $check);
+            $stmt = mysqli_prepare($conn, $check);
             mysqli_stmt_bind_param($stmt, "ss", $username, $email);
             mysqli_stmt_execute($stmt);
             mysqli_stmt_store_result($stmt);
@@ -77,7 +78,7 @@ include('partial/header.php');
 
 <style>
     :root {
-        --primary-red: #ff3344;
+        --primary-red: #ff4d5a;
         --sidebar-w: 80px;
         --riot-dark: #080a0c;
     }
@@ -95,14 +96,17 @@ include('partial/header.php');
         background-attachment: fixed;
     }
 
-    /* INTERACTIVE MOUSE GLOW */
+    /* INTENSIFIED RED ATMOSPHERIC LIGHTING */
     body::before {
         content: "";
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                    rgba(255, 50, 68, 0.12) 0%, 
-                    transparent 50%);
+        background: 
+            radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(255, 50, 68, 0.25) 0%, 
+                    transparent 60%),
+            radial-gradient(circle at 10% 10%, rgba(255, 0, 0, 0.15) 0%, transparent 45%),
+            radial-gradient(circle at 90% 90%, rgba(255, 0, 0, 0.15) 0%, transparent 45%);
         z-index: -1;
         pointer-events: none;
     }
@@ -388,7 +392,7 @@ include('partial/header.php');
                     <i class="fas fa-user-secret"></i>
                 </div>
                 <div class="file-input-wrapper">
-                    <label for="profileInput" class="file-label-custom">Upload Identity</label>
+                    <label for="profileInput" class="file-label-custom">Upload Photo</label>
                     <input type="file" name="profile_image" id="profileInput" accept="image/*" onchange="previewImage(event)" style="display:none">
                 </div>
                 <p style="color: #444; font-size: 9px; margin-top: 20px; text-align: center;">IMAGE WILL BE USED FOR<br>GLOBAL RANKING PROFILES</p>
@@ -437,10 +441,9 @@ include('partial/header.php');
 
                 <button type="submit" name="btnsave" class="btn-signup-red">Create Account</button>
                 <a href="login.php" class="btn-cancel">Return to Login</a>
-            </form>
             </div>
-            </div>
-        
+        </div>
+    </form>
 </main>
 
 <script>
@@ -464,5 +467,3 @@ include('partial/header.php');
         }
     }
 </script>
-
-<?php include('partial/footer.php'); ?>

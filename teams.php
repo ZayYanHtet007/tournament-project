@@ -125,14 +125,14 @@ include('partial/header.php');
 
 <style>
     :root {
-        --riot-red: #ff4654;
-        --riot-dark: #080a0c;
+        --riot-red: #ff4d5a;
+        --riot-dark: #050505; /* Darkened for better contrast with red glow */
         --riot-black: #111;
         --riot-gray: #ece8e1;
         --riot-white: #ffffff;
     }
 
-    /* 1. UPDATED DYNAMIC BACKGROUND */
+    /* 1. UPDATED DYNAMIC BACKGROUND WITH MORE RED LIGHTING */
     body {
         background-color: var(--riot-dark);
         color: var(--riot-gray);
@@ -141,23 +141,23 @@ include('partial/header.php');
         overflow-x: hidden;
         min-height: 100vh;
         position: relative;
+        /* Layered red lighting effects */
         background-image:
-            linear-gradient(rgba(255, 70, 85, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 70, 85, 0.05) 1px, transparent 1px);
-        background-size: 50px 50px;
+            radial-gradient(circle at 15% 15%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 85% 85%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
+            linear-gradient(rgba(255, 70, 85, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 70, 85, 0.08) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
         background-attachment: fixed;
     }
 
-    /* Interactive Mouse Glow Layer */
+    /* Interactive Mouse Glow Layer - Increased intensity */
     body::before {
         content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
         background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgba(255, 70, 85, 0.12) 0%,
+                rgba(255, 70, 85, 0.22) 0%, 
                 transparent 50%);
         z-index: -1;
         pointer-events: none;
@@ -167,13 +167,10 @@ include('partial/header.php');
     body::after {
         content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
+        top: 0; left: 0; width: 100vw; height: 100vh;
         background: linear-gradient(to bottom,
                 transparent 0%,
-                rgba(255, 70, 85, 0.03) 50%,
+                rgba(255, 70, 85, 0.04) 50%,
                 transparent 100%);
         background-size: 100% 4px;
         animation: scanline 10s linear infinite;
@@ -182,22 +179,14 @@ include('partial/header.php');
     }
 
     @keyframes scanline {
-        0% {
-            transform: translateY(-100%);
-        }
-
-        100% {
-            transform: translateY(100%);
-        }
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
     }
 
-    /* 2. GAMING INTRO ANIMATION */
+    /* 2. GAMING INTRO ANIMATION (UNCHANGED) */
     #intro-screen {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0; width: 100%; height: 100%;
         background-color: #000;
         background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
         z-index: 10000;
@@ -212,10 +201,7 @@ include('partial/header.php');
         content: " ";
         display: block;
         position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
+        top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
         z-index: 2;
         background-size: 100% 2px, 3px 100%;
@@ -246,10 +232,7 @@ include('partial/header.php');
     .intro-3d-text::after {
         content: attr(data-text);
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0; width: 100%; height: 100%;
         opacity: 0.8;
     }
 
@@ -275,130 +258,23 @@ include('partial/header.php');
     }
 
     @keyframes gamingFlyIn {
-        0% {
-            opacity: 0;
-            transform: scale(3) translateZ(500px) rotateX(20deg);
-            letter-spacing: 50px;
-            filter: blur(10px);
-        }
-
-        20% {
-            opacity: 1;
-            transform: scale(1) translateZ(0) rotateX(0deg);
-            letter-spacing: 15px;
-            filter: blur(0px);
-        }
-
-        85% {
-            transform: scale(1.05) translateZ(20px);
-        }
-
-        100% {
-            opacity: 1;
-            transform: scale(1.05) translateZ(20px);
-        }
-    }
-
-    @keyframes glitch-anim-1 {
-        0% {
-            clip-path: inset(20% 0 80% 0);
-            transform: translate(-2px, 1px);
-        }
-
-        20% {
-            clip-path: inset(60% 0 10% 0);
-            transform: translate(2px, -1px);
-        }
-
-        40% {
-            clip-path: inset(40% 0 50% 0);
-            transform: translate(-2px, 2px);
-        }
-
-        60% {
-            clip-path: inset(80% 0 5% 0);
-            transform: translate(2px, -2px);
-        }
-
-        80% {
-            clip-path: inset(10% 0 70% 0);
-            transform: translate(-1px, 1px);
-        }
-
-        100% {
-            clip-path: inset(30% 0 20% 0);
-            transform: translate(1px, -1px);
-        }
-    }
-
-    @keyframes glitch-anim-2 {
-        0% {
-            clip-path: inset(10% 0 60% 0);
-            transform: translate(2px, -1px);
-        }
-
-        20% {
-            clip-path: inset(80% 0 5% 0);
-            transform: translate(-2px, 1px);
-        }
-
-        40% {
-            clip-path: inset(30% 0 20% 0);
-            transform: translate(2px, 2px);
-        }
-
-        60% {
-            clip-path: inset(15% 0 80% 0);
-            transform: translate(-2px, -2px);
-        }
-
-        80% {
-            clip-path: inset(55% 0 10% 0);
-            transform: translate(1px, -1px);
-        }
-
-        100% {
-            clip-path: inset(40% 0 30% 0);
-            transform: translate(-1px, 1px);
-        }
+        0% { opacity: 0; transform: scale(3) translateZ(500px) rotateX(20deg); letter-spacing: 50px; filter: blur(10px); }
+        20% { opacity: 1; transform: scale(1) translateZ(0) rotateX(0deg); letter-spacing: 15px; filter: blur(0px); }
+        85% { transform: scale(1.05) translateZ(20px); }
+        100% { opacity: 1; transform: scale(1.05) translateZ(20px); }
     }
 
     @keyframes loadBar {
-        0% {
-            width: 0%;
-            opacity: 0;
-        }
-
-        30% {
-            width: 40%;
-            opacity: 1;
-        }
-
-        70% {
-            width: 70%;
-        }
-
-        100% {
-            width: 200px;
-        }
+        0% { width: 0%; opacity: 0; }
+        30% { width: 40%; opacity: 1; }
+        70% { width: 70%; }
+        100% { width: 200px; }
     }
 
     @keyframes fadeOutScreen {
-        0% {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        90% {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        100% {
-            opacity: 0;
-            z-index: -1;
-            display: none;
-        }
+        0% { opacity: 1; pointer-events: all; }
+        90% { opacity: 0; pointer-events: none; }
+        100% { opacity: 0; z-index: -1; display: none; }
     }
 
     /* 3. LAYOUT & RESPONSIVENESS */
@@ -412,11 +288,7 @@ include('partial/header.php');
         animation: fadeInContent 1s ease-out 2.8s forwards;
     }
 
-    @keyframes fadeInContent {
-        to {
-            opacity: 1;
-        }
-    }
+    @keyframes fadeInContent { to { opacity: 1; } }
 
     .header-flex {
         display: flex;
@@ -436,11 +308,7 @@ include('partial/header.php');
         letter-spacing: -2px;
     }
 
-    .search-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
+    .search-wrapper { position: relative; display: flex; align-items: center; }
 
     .search-input {
         width: 0;
@@ -474,9 +342,7 @@ include('partial/header.php');
         transition: transform 0.2s;
     }
 
-    .search-btn:hover {
-        transform: scale(1.1);
-    }
+    .search-btn:hover { transform: scale(1.1); }
 
     /* 4. TEAM GRID */
     .team-grid {
@@ -499,15 +365,12 @@ include('partial/header.php');
     .team-card:hover {
         transform: translateY(-5px);
         border-color: var(--riot-red);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 20px rgba(255, 77, 90, 0.2);
     }
 
     .card-accent {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
+        top: 0; left: 0; width: 100%; height: 3px;
         background: var(--riot-red);
         transform: scaleX(0);
         transform-origin: left;
@@ -515,61 +378,22 @@ include('partial/header.php');
         z-index: 10;
     }
 
-    .team-card:hover .card-accent {
-        transform: scaleX(1);
-    }
+    .team-card:hover .card-accent { transform: scaleX(1); }
 
-    .photo-box {
-        height: 180px;
-        position: relative;
-        overflow: hidden;
-        background: #000;
-    }
-
-    .photo-box img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0.6;
-        transition: 0.5s;
-    }
-
-    .team-card:hover .photo-box img {
-        opacity: 1;
-        transform: scale(1.1);
-    }
+    .photo-box { height: 180px; position: relative; overflow: hidden; background: #000; }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: 0.5s; }
+    .team-card:hover .photo-box img { opacity: 1; transform: scale(1.1); }
 
     .info-box {
         padding: 20px 25px;
         background: linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 1) 100%);
     }
 
-    .name-txt {
-        font-family: 'Teko', sans-serif;
-        font-size: 2.2rem;
-        text-transform: uppercase;
-        line-height: 0.9;
-        margin: 5px 0 0;
-        color: white;
-    }
-
-    .motto-txt {
-        color: var(--riot-red);
-        text-transform: uppercase;
-        font-size: 0.9rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-        margin: 0;
-    }
+    .name-txt { font-family: 'Teko', sans-serif; font-size: 2.2rem; text-transform: uppercase; line-height: 0.9; margin: 5px 0 0; color: white; }
+    .motto-txt { color: var(--riot-red); text-transform: uppercase; font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; margin: 0; }
 
     /* 5. PAGINATION */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        gap: 5px;
-        margin-top: 50px;
-    }
-
+    .pagination { display: flex; justify-content: center; gap: 5px; margin-top: 50px; }
     .pg-link {
         padding: 10px 20px;
         background: rgba(255, 255, 255, 0.05);
@@ -581,21 +405,13 @@ include('partial/header.php');
         transition: 0.3s;
         clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     }
-
-    .pg-link:hover,
-    .pg-link.active {
-        background: var(--riot-red);
-        border-color: var(--riot-red);
-    }
+    .pg-link:hover, .pg-link.active { background: var(--riot-red); border-color: var(--riot-red); }
 
     /* 6. MODAL & NEW PLAYER CARDS */
     .modal-overlay {
         display: none;
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.85);
         z-index: 11000;
         align-items: center;
@@ -611,53 +427,17 @@ include('partial/header.php');
         padding: 40px;
         border: 1px solid var(--riot-red);
         position: relative;
-        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        box-shadow: 0 0 50px rgba(255, 77, 90, 0.2);
         clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 30px 100%, 0 calc(100% - 30px));
     }
 
-    .close-btn {
-        position: absolute;
-        top: 15px;
-        right: 20px;
-        font-size: 2rem;
-        color: var(--riot-red);
-        cursor: pointer;
-        transition: 0.3s;
-    }
+    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 2rem; color: var(--riot-red); cursor: pointer; transition: 0.3s; }
+    .close-btn:hover { color: white; transform: rotate(90deg); }
+    .modal-header h2 { font-size: 4rem; margin: 0; line-height: 0.9; }
+    .modal-short { color: transparent; -webkit-text-stroke: 1px var(--riot-red); font-size: 2.5rem; margin-left: 10px; }
+    .modal-leader { margin-top: 15px; font-size: 1.1rem; border-left: 3px solid var(--riot-red); padding-left: 10px; }
 
-    .close-btn:hover {
-        color: white;
-        transform: rotate(90deg);
-    }
-
-    .modal-header h2 {
-        font-size: 4rem;
-        margin: 0;
-        line-height: 0.9;
-    }
-
-    .modal-short {
-        color: transparent;
-        -webkit-text-stroke: 1px var(--riot-red);
-        font-size: 2.5rem;
-        margin-left: 10px;
-    }
-
-    .modal-leader {
-        margin-top: 15px;
-        font-size: 1.1rem;
-        border-left: 3px solid var(--riot-red);
-        padding-left: 10px;
-    }
-
-    /* Player Card Grid in Modal */
-    #m-players {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
-    }
-
+    #m-players { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
     .player-card {
         background: rgba(255, 255, 255, 0.05);
         padding: 12px;
@@ -668,78 +448,44 @@ include('partial/header.php');
         transition: 0.3s;
         clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
     }
-
-    .player-card:hover {
-        background: rgba(255, 70, 85, 0.1);
-        transform: translateX(5px);
-    }
-
-    .player-avatar {
-        width: 35px;
-        height: 35px;
-        background: var(--riot-red);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 0.8rem;
-        color: white;
-    }
-
-    .player-info-name {
-        font-family: 'Teko', sans-serif;
-        font-size: 1.2rem;
-        color: #fff;
-        text-transform: uppercase;
-    }
+    .player-card:hover { background: rgba(255, 70, 85, 0.1); transform: translateX(5px); }
+    .player-avatar { width: 35px; height: 35px; background: var(--riot-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: white; }
+    .player-info-name { font-family: 'Teko', sans-serif; font-size: 1.2rem; color: #fff; text-transform: uppercase; }
 
     .modal-join-btn {
-        display: block;
-        width: 100%;
-        margin-top: 30px;
-        padding: 15px;
-        background: var(--riot-red);
-        border: none;
-        color: white;
-        font-family: 'Teko', sans-serif;
-        font-size: 1.8rem;
-        cursor: pointer;
-        transition: 0.3s;
+        display: block; width: 100%; margin-top: 30px; padding: 15px;
+        background: var(--riot-red); border: none; color: white; font-family: 'Teko', sans-serif;
+        font-size: 1.8rem; cursor: pointer; transition: 0.3s;
         clip-path: polygon(0 0, 100% 0, 100% 100%, 20px 100%, 0 calc(100% - 20px));
     }
+    .modal-join-btn:hover { background: white; color: #000; }
 
-    .modal-join-btn:hover {
-        background: white;
-        color: #000;
+    /* Unchanged Animations */
+    @keyframes glitch-anim-1 {
+        0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+        20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+        40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+        60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+        80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
+        100% { clip-path: inset(30% 0 20% 0); transform: translate(1px, -1px); }
+    }
+
+    @keyframes glitch-anim-2 {
+        0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+        20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 1px); }
+        40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 2px); }
+        60% { clip-path: inset(15% 0 80% 0); transform: translate(-2px, -2px); }
+        80% { clip-path: inset(55% 0 10% 0); transform: translate(1px, -1px); }
+        100% { clip-path: inset(40% 0 30% 0); transform: translate(-1px, 1px); }
     }
 
     @media (max-width: 768px) {
-        .teams-container {
-            margin: 40px auto;
-            padding: 0 15px;
-        }
-
-        .header-flex {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .page-title {
-            font-size: 3rem;
-        }
-
-        .search-input.active {
-            width: 100%;
-        }
-
-        .team-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .modal-header h2 {
-            font-size: 3rem;
-        }
+        .teams-container { margin: 40px auto; padding: 0 15px; }
+        .header-flex { flex-direction: column; text-align: center; }
+        .page-title { font-size: 3rem; }
+        .search-input.active { width: 100%; }
+        .team-grid { grid-template-columns: 1fr; }
+        .modal-header h2 { font-size: 3rem; }
     }
 </style>
 
@@ -817,16 +563,13 @@ include('partial/header.php');
                 dynamicContent.innerHTML = html;
                 dynamicContent.style.opacity = '1';
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?page=${page}&search=${encodeURIComponent(search)}`;
-                window.history.pushState({
-                    path: newUrl
-                }, '', newUrl);
+                window.history.pushState({ path: newUrl }, '', newUrl);
             })
             .catch(err => {
                 console.warn('Something went wrong.', err);
             });
     }
 
-    // OPEN MODAL WITH ENHANCED PLAYER CARDS
     function openTeam(name, short, motto, leader, players, teamId) {
         document.getElementById('m-name').innerText = name;
         document.getElementById('m-short').innerText = short ? `[${short}]` : '';
@@ -870,9 +613,7 @@ include('partial/header.php');
             formData.append('team_id', teamId);
             fetch('player/request_join.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()
                 })
                 .then(async response => {
