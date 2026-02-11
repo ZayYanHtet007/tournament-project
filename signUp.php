@@ -7,73 +7,102 @@ require_once "database/dbConfig.php";
 $error = "";
 $success = "";
 
+/* DEFAULT IMAGE */
+$profile_image = "default.png";
+
 if (isset($_POST['btnsave'])) {
+
     $username = trim($_POST['username']);
     $email    = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm  = $_POST['confirmPassword'];
     $isOrganizerChecked = isset($_POST['isOrganizer']);
-    
-    $profile_image = "default.png"; // Default fallback
 
-    // File upload logic 
-    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
-        $imageName = time() . "_" . basename($_FILES['profile_image']['name']);
-        $tmp = $_FILES['profile_image']['tmp_name'];
-        $uploadDir = __DIR__ . "/images/";
-
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        $path = $uploadDir . $imageName;
-
-        if (move_uploaded_file($tmp, $path)) {
-            $profile_image = $imageName;
-        } else {
-            $error = "Image upload failed.";
-        }
+    /* ---------- BASIC VALIDATION ---------- */
+    if (strlen($username) < 3) {
+        $error = "Username must be at least 3 characters";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address";
+    } elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters";
+    } elseif ($password !== $confirm) {
+        $error = "Passwords do not match";
     }
 
-    if (empty($error)) {
-        if (strlen($username) < 3) {
-            $error = "Username must be at least 3 characters";
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = "Invalid email address";
-        } elseif (strlen($password) < 8) {
-            $error = "Password must be at least 8 characters";
-        } elseif ($password !== $confirm) {
-            $error = "Passwords do not match";
+    /* ---------- IMAGE UPLOAD ---------- */
+    if (empty($error) && isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        $fileType = $_FILES['profile_image']['type'];
+        $fileSize = $_FILES['profile_image']['size'];
+
+        if (!in_array($fileType, $allowedTypes)) {
+            $error = "Only JPG, PNG, WEBP images allowed";
+        } elseif ($fileSize > 2 * 1024 * 1024) {
+            $error = "Image must be under 2MB";
         } else {
-            $check = "SELECT user_id FROM users WHERE username = ? OR email = ?";
-            $stmt = mysqli_prepare($conn, $check);
-            mysqli_stmt_bind_param($stmt, "ss", $username, $email);
-            mysqli_stmt_execute($stmt);
-            mysqli_stmt_store_result($stmt);
 
-            if (mysqli_stmt_num_rows($stmt) > 0) {
-                $error = "Username or Email already exists";
+            $imageName = time() . "_" . basename($_FILES['profile_image']['name']);
+            $uploadDir = __DIR__ . "/images/";
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadDir . $imageName)) {
+                $profile_image = $imageName; // ✅ SAVED TO DB
             } else {
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $is_organizer = $isOrganizerChecked ? 1 : 0;
-                $organizer_status = $isOrganizerChecked ? "pending" : NULL;
-
-                $sql = "INSERT INTO users (username, email, password, is_organizer, organizer_status, image) VALUES (?, ?, ?, ?, ?, ?)";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "sssiss", $username, $email, $hashed_password, $is_organizer, $organizer_status, $profile_image);
-
-                if (mysqli_stmt_execute($stmt)) {
-                    header("Location: login.php?msg=signup_success");
-                    exit();
-                } else {
-                    $error = "Signup failed. Please try again.";
-                }
+                $error = "Image upload failed";
             }
         }
     }
+
+    /* ---------- CHECK DUPLICATE USER ---------- */
+    if (empty($error)) {
+        $check = "SELECT user_id FROM users WHERE username = ? OR email = ?";
+        $stmt = mysqli_prepare($conn, $check);
+        mysqli_stmt_bind_param($stmt, "ss", $username, $email);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
+
+        if (mysqli_stmt_num_rows($stmt) > 0) {
+            $error = "Username or Email already exists";
+        }
+    }
+
+    /* ---------- INSERT USER ---------- */
+    if (empty($error)) {
+
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $is_organizer = $isOrganizerChecked ? 1 : 0;
+        $organizer_status = $isOrganizerChecked ? "pending" : NULL;
+
+        $sql = "INSERT INTO users 
+                (username, email, password, is_organizer, organizer_status, image) 
+                VALUES (?, ?, ?, ?, ?, ?)";
+
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param(
+            $stmt,
+            "sssiss",
+            $username,
+            $email,
+            $hashed_password,
+            $is_organizer,
+            $organizer_status,
+            $profile_image
+        );
+
+        if (mysqli_stmt_execute($stmt)) {
+            header("Location: login.php");
+            exit();
+        } else {
+            $error = "Signup failed. Please try again.";
+        }
+    }
 }
-include('partial/header.php');
 ?>
+
 
 <style>
     :root {
@@ -134,6 +163,11 @@ include('partial/header.php');
         display: flex;
         justify-content: center;
         align-items: center;
+        background-image:
+            linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px),
+            radial-gradient(circle at center, rgba(80, 0, 0, 0.5) 0%, #000000 85%);
+        background-size: 30px 30px, 30px 30px, 100% 100%;
         padding: 40px 20px;
         margin-left: var(--sidebar-w);
         position: relative;
@@ -373,16 +407,27 @@ include('partial/header.php');
     }
 
     @media (max-width: 850px) {
-        .signup-panel { flex-direction: column; }
-        .signup-main-wrapper { margin-left: 0; }
-        .form-grid { grid-template-columns: 1fr; }
-        .full-row { grid-column: span 1; }
+        .signup-panel {
+            flex-direction: column;
+        }
+
+        .signup-main-wrapper {
+            margin-left: 0;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .full-row {
+            grid-column: span 1;
+        }
     }
 </style>
 
 <main class="signup-main-wrapper">
-    <div class="signup-panel">
-        <form method="POST" enctype="multipart/form-data" style="display: contents;">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="signup-panel">
             <div class="signup-left">
                 <div class="photo-preview-box" id="imagePreview">
                     <i class="fas fa-user-secret"></i>
@@ -438,8 +483,9 @@ include('partial/header.php');
                 <button type="submit" name="btnsave" class="btn-signup-red">Create Account</button>
                 <a href="login.php" class="btn-cancel">Return to Login</a>
             </div>
-        </form>
-    </div>
+      </div>
+    </form>
+    
 </main>
 
 <script>

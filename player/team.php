@@ -14,14 +14,23 @@ $errors = [];
 
 if (!$team_id) die("Missing team_id");
 
-/* ---------- FETCH TEAM ---------- */
-$stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = ? LIMIT 1");
-$stmt->bind_param("i", $team_id);
-$stmt->execute();
-$team = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+    /* ---------- FETCH TEAM ---------- */
+    $stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = ? LIMIT 1");
+    $stmt->bind_param("i", $team_id);
+    $stmt->execute();
+    $team = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-if (!$team) die("Team not found.");
+    if (!$team) die("Team not found.");
+
+    // Check if team is disbanded
+    if ($team['status'] === 'disbanded') {
+      echo "<div class='p-10 text-center'><h1 class='neon-red'>This team has been disbanded.</h1>";
+      echo "<a href='../index.php' class='btn-riot'>Back to Home</a></div>";
+      exit;
+    }
+
+
 
 /* ---------- ENSURE LEADER EXISTS IN team_members ---------- */
 $chkLeader = $conn->prepare("
@@ -128,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $errors[] = "Team is full.";
     } else {
       $token = bin2hex(random_bytes(16));
-      $getToken ="accept_invite.php?token=$token";
+      $getToken = "accept_invite.php?token=$token";
       $u = $conn->prepare("SELECT user_id, username FROM users WHERE username = ? OR email = ? LIMIT 1");
       $u->bind_param("ss", $by, $by);
       $u->execute();
@@ -146,16 +155,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $ins->bind_param("iis", $team_id, $user['user_id'], $token);
           $ins->execute();
           $ins->close();
-          
+
           $invitMsg = "Whould you like to join our team?";
           $title      = "We need you in our team to be better.";
           $notiInsert = $conn->prepare("INSERT INTO notifications (user_id, message, title ,created_at,token) VALUES (?,?,?,NOW(),?)");
-          $notiInsert->bind_param("isss",$user['user_id'],$invitMsg,$title,$token);
+          $notiInsert->bind_param("isss", $user['user_id'], $invitMsg, $title, $token);
           $notiInsert->execute();
           $notiInsert->close();
           $message = "Invite sent to {$user['username']}";
-
-          
         }
         $chk->close();
       } else {
@@ -274,10 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: #ece8e1;
       font-family: 'Rajdhani', sans-serif;
       background-image: linear-gradient(rgba(255, 70, 85, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 70, 85, 0.05) 1px, transparent 1px);
-      background-image: url('../images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      background-size: 30px 30px;
     }
 
     h1,
@@ -334,11 +338,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       cursor: pointer;
     }
 
-    .back-btn {
-      display: flex;
-      justify-content: flex-end;
-    }
-
     .status-pill {
       background: rgba(255, 70, 85, 0.1);
       border: 1px solid var(--riot-red);
@@ -359,10 +358,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Leader: <span class="text-white"><?= htmlspecialchars($team['leader_id'] == $user_id ? 'You' : 'Leader #' . $team['leader_id']) ?></span> —
         <span class="status-pill">MEMBERS: <?= count($members) ?> / <?= (int)($team['players'] ?? 0) ?></span>
       </p>
-
-      <a href="../index.php" class="text-red-500 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors back-btn">
-        &larr; Back to home
-      </a>
     </header>
 
     <?php if ($message): ?>
@@ -380,6 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2 class="text-xl font-bold mb-4 flex items-center">
           <span class="w-2 h-6 bg-red-600 mr-3"></span>Members (<?= count($members) ?>)
         </h2>
+
         <div class="space-y-2">
           <?php foreach ($members as $m): ?>
             <div class="flex justify-between items-center bg-black/40 p-4 border border-gray-800 hover:border-red-900 transition-all">
@@ -394,7 +390,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
               <?php endif; ?>
             </div>
-          <?php endforeach; ?>
+          <?php endforeach; ?><br>
+          <?php if ($is_member): ?>
+            <div class="mb-4 text-right">
+              <form action="team-leave.php?team_id=<?= $team_id ?>" method="POST"
+                onsubmit="return confirm('Are you sure you want to leave? <?= $is_leader ? 'Leadership will pass to the next member.' : '' ?>');">
+                <button type="submit" class="text-gray-400 hover:text-red-500 font-bold uppercase text-xs tracking-widest border border-gray-700 px-3 py-1 hover:border-red-500 transition-all">
+                  Leave Team
+                </button>
+              </form>
+            </div>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -481,4 +487,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
       </div>
     <?php endif; ?>
+
+    <div class="mt-12 mb-10 border-t border-gray-800 pt-6">
+      <a href="../index.php" class="text-red-500 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors">
+        &larr; Back to tournaments
+      </a>
+    </div>
   </div>
