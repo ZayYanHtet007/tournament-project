@@ -194,7 +194,7 @@ if (isset($_POST['submit'])) {
 </head>
 <body>
     <div class="login_container">
-        <h2>KEY <span>RECOVERY</span></h2>
+        <h2>password <span>RECOVERY</span></h2>
         <p class="subtitle">Enter your registered admin email to receive a secure recovery code.</p>
 
         <?php if (!empty($message)): ?>
@@ -205,7 +205,7 @@ if (isset($_POST['submit'])) {
 
         <form method="POST">
             <input type="email" name="email" placeholder="ADMIN_IDENTIFIER@TX.COM" required class="login_input">
-            <button name="submit" class="login_btn">Transmit Code</button>
+            <button name="submit" class="login_btn">Send Code</button>
         </form>
 
         <a href="adminLogin.php" class="back-link">← Return to Login</a>
