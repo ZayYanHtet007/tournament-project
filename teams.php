@@ -16,22 +16,28 @@ function getTeamsData($conn, $limit, $page, $search, $game_type = '')
     if ($search) {
         $conditions[] = "(t.team_name LIKE '%$search%' OR t.short_name LIKE '%$search%')";
     }
+    // Filter by the actual game name in the games table
     if ($game_type) {
-        $conditions[] = "t.aim_for = '$game_type'";
+        $conditions[] = "g.name = '$game_type'";
     }
 
     $whereClause = !empty($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
 
-    // Count total
-    $total_res = $conn->query("SELECT COUNT(*) as count FROM teams t $whereClause")->fetch_assoc();
+    // Updated Count Query with Join
+    $total_sql = "SELECT COUNT(*) as count FROM teams t 
+                  LEFT JOIN games g ON t.aim_for = g.game_id 
+                  $whereClause";
+    $total_res = $conn->query($total_sql)->fetch_assoc();
     $total_results = $total_res['count'];
     $total_pages = ceil($total_results / $limit);
 
-    // Main Query
-    $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, t.aim_for,
+    // Main Query: JOIN games table and SELECT g.name
+    $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, 
+            g.name AS game_name, -- Fetch the actual game name
             l.username AS leader_name,
             GROUP_CONCAT(u.username SEPARATOR ', ') as player_list
             FROM teams t
+            LEFT JOIN games g ON t.aim_for = g.game_id 
             LEFT JOIN users l ON t.leader_id = l.user_id 
             LEFT JOIN team_members tm ON t.team_id = tm.team_id
             LEFT JOIN users u ON tm.user_id = u.user_id
@@ -47,6 +53,8 @@ function getTeamsData($conn, $limit, $page, $search, $game_type = '')
         'game_type' => $game_type
     ];
 }
+$games_sql = "select name from games where game_status = 'available' order by name ASC";
+$games_list = $conn->query($games_sql);
 
 // 2. AJAX HANDLER
 if (isset($_GET['ajax'])) {
@@ -102,7 +110,10 @@ function include_grid_content($data)
                         <div class="img-overlay"></div>
                     </div>
                     <div class="info-box">
-                        <p class="motto-txt"><?= htmlspecialchars($row['motto'] ?? '') ?></p>
+                        <p class="motto-txt">
+                            <?= htmlspecialchars($row['game_name'] ?: 'General') ?>
+                            <?= !empty($row['motto']) ? ' // ' . htmlspecialchars($row['motto']) : '' ?>
+                        </p>
                         <h3 class="name-txt"><?= htmlspecialchars($row['team_name']) ?></h3>
                     </div>
                 </div>
@@ -166,9 +177,12 @@ include('partial/header.php');
     body::before {
         content: "";
         position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgba(255, 70, 85, 0.22) 0%, 
+                rgba(255, 70, 85, 0.22) 0%,
                 transparent 50%);
         z-index: -1;
         pointer-events: none;
@@ -177,7 +191,10 @@ include('partial/header.php');
     body::after {
         content: "";
         position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
         background: linear-gradient(to bottom, transparent 0%, rgba(255, 70, 85, 0.04) 50%, transparent 100%);
         background-size: 100% 4px;
         animation: scanline 10s linear infinite;
@@ -186,8 +203,13 @@ include('partial/header.php');
     }
 
     @keyframes scanline {
-        0% { transform: translateY(-100%); }
-        100% { transform: translateY(100%); }
+        0% {
+            transform: translateY(-100%);
+        }
+
+        100% {
+            transform: translateY(100%);
+        }
     }
 
     /* --- ENHANCED PUNCH THROUGH INTRO --- */
@@ -229,20 +251,55 @@ include('partial/header.php');
     }
 
     @keyframes portalFlyThrough {
-        0% { transform: scale(0.5); opacity: 0; letter-spacing: 100px; filter: blur(10px); }
-        20% { transform: scale(1); opacity: 1; letter-spacing: 15px; filter: blur(0px); }
-        70% { transform: scale(1.1); opacity: 1; letter-spacing: 15px; }
-        100% { transform: scale(80); opacity: 0; letter-spacing: -20px; }
+        0% {
+            transform: scale(0.5);
+            opacity: 0;
+            letter-spacing: 100px;
+            filter: blur(10px);
+        }
+
+        20% {
+            transform: scale(1);
+            opacity: 1;
+            letter-spacing: 15px;
+            filter: blur(0px);
+        }
+
+        70% {
+            transform: scale(1.1);
+            opacity: 1;
+            letter-spacing: 15px;
+        }
+
+        100% {
+            transform: scale(80);
+            opacity: 0;
+            letter-spacing: -20px;
+        }
     }
 
     @keyframes loadBarFast {
-        0% { width: 0; opacity: 1; }
-        80% { width: 400px; opacity: 1; }
-        100% { width: 100vw; opacity: 0; }
+        0% {
+            width: 0;
+            opacity: 1;
+        }
+
+        80% {
+            width: 400px;
+            opacity: 1;
+        }
+
+        100% {
+            width: 100vw;
+            opacity: 0;
+        }
     }
 
     @keyframes fadeOutScreen {
-        to { opacity: 0; visibility: hidden; }
+        to {
+            opacity: 0;
+            visibility: hidden;
+        }
     }
 
     .teams-container {
@@ -255,12 +312,17 @@ include('partial/header.php');
         animation: fadeInContent 1s ease-out 2.8s forwards;
     }
 
-    @keyframes fadeInContent { to { opacity: 1; } }
+    @keyframes fadeInContent {
+        to {
+            opacity: 1;
+        }
+    }
 
     .header-flex {
         display: flex;
         justify-content: space-between;
-        align-items: flex-end; /* Changed to flex-end for better alignment with filter */
+        align-items: flex-end;
+        /* Changed to flex-end for better alignment with filter */
         margin-bottom: 30px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         padding-bottom: 20px;
@@ -306,22 +368,75 @@ include('partial/header.php');
         color: white;
     }
 
-    .search-wrapper { position: relative; display: flex; align-items: center; }
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    /* Custom Dropdown Styling */
+.game-filter-nav select.filter-btn {
+    background: #0f1923; /* Matching team card background */
+    color: var(--riot-gray);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 40px 10px 20px;
+    font-family: 'Teko', sans-serif;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 200px;
+    transition: border-color 0.3s;
+}
+
+.game-filter-nav select.filter-btn:focus {
+    border-color: var(--riot-red);
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 77, 90, 0.2);
+}
+
+/* This fixes the "invisible" text in the dropdown list */
+.game-filter-nav select.filter-btn option {
+    background-color: #0f1923; 
+    color: white;
+    padding: 10px;
+}
 
     .search-input {
-        width: 0; padding: 10px 0; border: none; border-bottom: 2px solid var(--riot-red);
-        background: transparent; color: white; transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        outline: none; font-family: 'Teko', sans-serif; font-size: 1.5rem; opacity: 0;
+        width: 0;
+        padding: 10px 0;
+        border: none;
+        border-bottom: 2px solid var(--riot-red);
+        background: transparent;
+        color: white;
+        transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        outline: none;
+        font-family: 'Teko', sans-serif;
+        font-size: 1.5rem;
+        opacity: 0;
     }
 
-    .search-input.active { width: 250px; padding: 10px 15px; background: rgba(255, 255, 255, 0.05); opacity: 1; }
+    .search-input.active {
+        width: 250px;
+        padding: 10px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        opacity: 1;
+    }
 
     .search-btn {
-        font-size: 1.5rem; color: var(--riot-red); cursor: pointer; background: none;
-        border: none; z-index: 2; padding: 10px; transition: transform 0.2s;
+        font-size: 1.5rem;
+        color: var(--riot-red);
+        cursor: pointer;
+        background: none;
+        border: none;
+        z-index: 2;
+        padding: 10px;
+        transition: transform 0.2s;
     }
 
-    .search-btn:hover { transform: scale(1.1); }
+    .search-btn:hover {
+        transform: scale(1.1);
+    }
 
     .team-grid {
         display: grid;
@@ -331,103 +446,326 @@ include('partial/header.php');
     }
 
     .team-card {
-        background: #0f1923; position: relative; border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #0f1923;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
-        transition: all 0.3s ease; cursor: pointer; overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        overflow: hidden;
     }
 
-    .team-card:hover { transform: translateY(-5px); border-color: var(--riot-red); box-shadow: 0 0 20px rgba(255, 77, 90, 0.2); }
+    .team-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--riot-red);
+        box-shadow: 0 0 20px rgba(255, 77, 90, 0.2);
+    }
 
     .card-accent {
-        position: absolute; top: 0; left: 0; width: 100%; height: 3px;
-        background: var(--riot-red); transform: scaleX(0); transform-origin: left;
-        transition: transform 0.4s ease; z-index: 10;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--riot-red);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+        z-index: 10;
     }
 
-    .team-card:hover .card-accent { transform: scaleX(1); }
+    .team-card:hover .card-accent {
+        transform: scaleX(1);
+    }
 
-    .photo-box { height: 180px; position: relative; overflow: hidden; background: #000; }
-    .photo-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: 0.5s; }
-    .team-card:hover .photo-box img { opacity: 1; transform: scale(1.1); }
+    .photo-box {
+        height: 180px;
+        position: relative;
+        overflow: hidden;
+        background: #000;
+    }
+
+    .photo-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+        transition: 0.5s;
+    }
+
+    .team-card:hover .photo-box img {
+        opacity: 1;
+        transform: scale(1.1);
+    }
 
     .info-box {
         padding: 20px 25px;
         background: linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 1) 100%);
     }
 
-    .name-txt { font-family: 'Teko', sans-serif; font-size: 2.2rem; text-transform: uppercase; line-height: 0.9; margin: 5px 0 0; color: white; }
-    .motto-txt { color: var(--riot-red); text-transform: uppercase; font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; margin: 0; }
+    .name-txt {
+        font-family: 'Teko', sans-serif;
+        font-size: 2.2rem;
+        text-transform: uppercase;
+        line-height: 0.9;
+        margin: 5px 0 0;
+        color: white;
+    }
 
-    .pagination { display: flex; justify-content: center; gap: 5px; margin-top: 50px; }
+    .motto-txt {
+        color: var(--riot-red);
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin: 0;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 50px;
+    }
+
     .pg-link {
-        padding: 10px 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white; text-decoration: none; font-family: 'Teko', sans-serif; font-size: 1.2rem; transition: 0.3s;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        text-decoration: none;
+        font-family: 'Teko', sans-serif;
+        font-size: 1.2rem;
+        transition: 0.3s;
         clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     }
-    .pg-link:hover, .pg-link.active { background: var(--riot-red); border-color: var(--riot-red); }
+
+    .pg-link:hover,
+    .pg-link.active {
+        background: var(--riot-red);
+        border-color: var(--riot-red);
+    }
 
     .modal-overlay {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.85); z-index: 11000; align-items: center;
-        justify-content: center; backdrop-filter: blur(8px); padding: 20px;
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 11000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        padding: 20px;
     }
 
     .modal-content {
-        background: #0f1923; width: 100%; max-width: 650px; padding: 40px; border: 1px solid var(--riot-red);
-        position: relative; box-shadow: 0 0 50px rgba(255, 77, 90, 0.2);
+        background: #0f1923;
+        width: 100%;
+        max-width: 650px;
+        padding: 40px;
+        border: 1px solid var(--riot-red);
+        position: relative;
+        box-shadow: 0 0 50px rgba(255, 77, 90, 0.2);
         clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 30px 100%, 0 calc(100% - 30px));
     }
 
-    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 2rem; color: var(--riot-red); cursor: pointer; transition: 0.3s; }
-    .close-btn:hover { color: white; transform: rotate(90deg); }
-    .modal-header h2 { font-size: 4rem; margin: 0; line-height: 0.9; }
-    .modal-short { color: transparent; -webkit-text-stroke: 1px var(--riot-red); font-size: 2.5rem; margin-left: 10px; }
-    .modal-leader { margin-top: 15px; font-size: 1.1rem; border-left: 3px solid var(--riot-red); padding-left: 10px; }
+    .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 2rem;
+        color: var(--riot-red);
+        cursor: pointer;
+        transition: 0.3s;
+    }
 
-    #m-players { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
+    .close-btn:hover {
+        color: white;
+        transform: rotate(90deg);
+    }
+
+    .modal-header h2 {
+        font-size: 4rem;
+        margin: 0;
+        line-height: 0.9;
+    }
+
+    .modal-short {
+        color: transparent;
+        -webkit-text-stroke: 1px var(--riot-red);
+        font-size: 2.5rem;
+        margin-left: 10px;
+    }
+
+    .modal-leader {
+        margin-top: 15px;
+        font-size: 1.1rem;
+        border-left: 3px solid var(--riot-red);
+        padding-left: 10px;
+    }
+
+    #m-players {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
     .player-card {
-        background: rgba(255, 255, 255, 0.05); padding: 12px; border-left: 3px solid var(--riot-red);
-        display: flex; align-items: center; gap: 10px; transition: 0.3s;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 12px;
+        border-left: 3px solid var(--riot-red);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: 0.3s;
         clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
     }
-    .player-card:hover { background: rgba(255, 70, 85, 0.1); transform: translateX(5px); }
-    .player-avatar { width: 35px; height: 35px; background: var(--riot-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: white; }
-    .player-info-name { font-family: 'Teko', sans-serif; font-size: 1.2rem; color: #fff; text-transform: uppercase; }
+
+    .player-card:hover {
+        background: rgba(255, 70, 85, 0.1);
+        transform: translateX(5px);
+    }
+
+    .player-avatar {
+        width: 35px;
+        height: 35px;
+        background: var(--riot-red);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        color: white;
+    }
+
+    .player-info-name {
+        font-family: 'Teko', sans-serif;
+        font-size: 1.2rem;
+        color: #fff;
+        text-transform: uppercase;
+    }
 
     .modal-join-btn {
-        display: block; width: 100%; margin-top: 30px; padding: 15px;
-        background: var(--riot-red); border: none; color: white; font-family: 'Teko', sans-serif;
-        font-size: 1.8rem; cursor: pointer; transition: 0.3s;
+        display: block;
+        width: 100%;
+        margin-top: 30px;
+        padding: 15px;
+        background: var(--riot-red);
+        border: none;
+        color: white;
+        font-family: 'Teko', sans-serif;
+        font-size: 1.8rem;
+        cursor: pointer;
+        transition: 0.3s;
         clip-path: polygon(0 0, 100% 0, 100% 100%, 20px 100%, 0 calc(100% - 20px));
     }
-    .modal-join-btn:hover { background: white; color: #000; }
+
+    .modal-join-btn:hover {
+        background: white;
+        color: #000;
+    }
 
     @keyframes glitch-anim-1 {
-        0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
-        20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
-        40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
-        60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
-        80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
-        100% { clip-path: inset(30% 0 20% 0); transform: translate(1px, -1px); }
+        0% {
+            clip-path: inset(20% 0 80% 0);
+            transform: translate(-2px, 1px);
+        }
+
+        20% {
+            clip-path: inset(60% 0 10% 0);
+            transform: translate(2px, -1px);
+        }
+
+        40% {
+            clip-path: inset(40% 0 50% 0);
+            transform: translate(-2px, 2px);
+        }
+
+        60% {
+            clip-path: inset(80% 0 5% 0);
+            transform: translate(2px, -2px);
+        }
+
+        80% {
+            clip-path: inset(10% 0 70% 0);
+            transform: translate(-1px, 1px);
+        }
+
+        100% {
+            clip-path: inset(30% 0 20% 0);
+            transform: translate(1px, -1px);
+        }
     }
 
     @keyframes glitch-anim-2 {
-        0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
-        20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 1px); }
-        40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 2px); }
-        60% { clip-path: inset(15% 0 80% 0); transform: translate(-2px, -2px); }
-        80% { clip-path: inset(55% 0 10% 0); transform: translate(1px, -1px); }
-        100% { clip-path: inset(40% 0 30% 0); transform: translate(-1px, 1px); }
+        0% {
+            clip-path: inset(10% 0 60% 0);
+            transform: translate(2px, -1px);
+        }
+
+        20% {
+            clip-path: inset(80% 0 5% 0);
+            transform: translate(-2px, 1px);
+        }
+
+        40% {
+            clip-path: inset(30% 0 20% 0);
+            transform: translate(2px, 2px);
+        }
+
+        60% {
+            clip-path: inset(15% 0 80% 0);
+            transform: translate(-2px, -2px);
+        }
+
+        80% {
+            clip-path: inset(55% 0 10% 0);
+            transform: translate(1px, -1px);
+        }
+
+        100% {
+            clip-path: inset(40% 0 30% 0);
+            transform: translate(-1px, 1px);
+        }
     }
 
     @media (max-width: 768px) {
-        .teams-container { margin: 40px auto; padding: 0 15px; }
-        .header-flex { flex-direction: column; text-align: center; align-items: center; }
-        .page-title { font-size: 3rem; }
-        .game-filter-nav { flex-wrap: wrap; justify-content: center; }
-        .search-input.active { width: 100%; }
-        .team-grid { grid-template-columns: 1fr; }
-        .modal-header h2 { font-size: 3rem; }
+        .teams-container {
+            margin: 40px auto;
+            padding: 0 15px;
+        }
+
+        .header-flex {
+            flex-direction: column;
+            text-align: center;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 3rem;
+        }
+
+        .game-filter-nav {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .search-input.active {
+            width: 100%;
+        }
+
+        .team-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-header h2 {
+            font-size: 3rem;
+        }
     }
 </style>
 
@@ -448,10 +786,23 @@ include('partial/header.php');
     </div>
 
     <div class="game-filter-nav">
-        <button class="filter-btn <?= $game_type == '' ? 'active' : '' ?>" onclick="filterGame('')">All Games</button>
-        <button class="filter-btn <?= $game_type == 'Valorant' ? 'active' : '' ?>" onclick="filterGame('Valorant')">Valorant</button>
-        <button class="filter-btn <?= $game_type == 'MLBB' ? 'active' : '' ?>" onclick="filterGame('MLBB')">MLBB</button>
-        <button class="filter-btn <?= $game_type == 'PUBG' ? 'active' : '' ?>" onclick="filterGame('PUBG')">PUBG</button>
+        <div class="filter-wrapper" style="position: relative; display: inline-block;">
+            <select class="filter-btn"
+                onchange="filterGame(this.value)"
+                style="appearance: none; padding-right: 40px; background-color: rgba(255, 255, 255, 0.05); color: var(--riot-gray); border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;">
+
+                <option value="" <?= $game_type == '' ? 'selected' : '' ?>>ALL GAMES</option>
+
+                <?php if ($games_list && $games_list->num_rows > 0): ?>
+                    <?php while ($game = $games_list->fetch_assoc()): ?>
+                        <option value="<?= htmlspecialchars($game['name']) ?>" <?= $game_type == $game['name'] ? 'selected' : '' ?>>
+                            <?= strtoupper(htmlspecialchars($game['name'])) ?>
+                        </option>
+                    <?php endwhile; ?>
+                <?php endif; ?>
+            </select>
+            <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--riot-red);"></i>
+        </div>
     </div>
 
     <div id="dynamic-content">
@@ -507,11 +858,11 @@ include('partial/header.php');
     // NEW FILTER FUNCTION
     function filterGame(type) {
         currentGameType = type;
-        
+
         // Update Active States
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
-            if(btn.innerText.toLowerCase() === type.toLowerCase() || (type === '' && btn.innerText === 'All Games')) {
+            if (btn.innerText.toLowerCase() === type.toLowerCase() || (type === '' && btn.innerText === 'All Games')) {
                 btn.classList.add('active');
             }
         });
@@ -523,17 +874,19 @@ include('partial/header.php');
         const search = document.getElementById('teamSearch').value;
         const dynamicContent = document.getElementById('dynamic-content');
         dynamicContent.style.opacity = '0.5';
-        
+
         const url = `?ajax=1&page=${page}&search=${encodeURIComponent(search)}&game_type=${encodeURIComponent(currentGameType)}`;
-        
+
         fetch(url)
             .then(response => response.text())
             .then(html => {
                 dynamicContent.innerHTML = html;
                 dynamicContent.style.opacity = '1';
-                
+
                 const pushUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?page=${page}&search=${encodeURIComponent(search)}&game_type=${encodeURIComponent(currentGameType)}`;
-                window.history.pushState({ path: pushUrl }, '', pushUrl);
+                window.history.pushState({
+                    path: pushUrl
+                }, '', pushUrl);
             })
             .catch(err => {
                 console.warn('Something went wrong.', err);
@@ -584,7 +937,9 @@ include('partial/header.php');
             formData.append('team_id', teamId);
             fetch('player/request_join.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: formData.toString()
                 })
                 .then(async response => {
