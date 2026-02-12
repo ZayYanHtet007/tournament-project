@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
     } else {
         $status = calculateStatus($reg_start, $start);
         $stmt = $conn->prepare("INSERT INTO tournaments (organizer_id, game_id, title, description, max_participants, team_size, fee, registration_start_date, registration_deadline, start_date, status, admin_status, prize_pool) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)");
-        $stmt->bind_param("iissiiissssi", $organizer_id, $game_id, $title, $description, $max_participants, $team_size, $fee, $reg_start, $reg_end, $start, $status, $prize_pool);
+        $stmt->bind_param("iissiidssssd", $organizer_id, $game_id, $title, $description, $max_participants, $team_size, $fee, $reg_start, $reg_end, $start, $status, $prize_pool);
 
         if ($stmt->execute()) {
             $tournamentId = $stmt->insert_id;
@@ -123,6 +123,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
 
             $stmtAnn = $pdo->prepare("INSERT INTO tournament_announcements (tournament_id, title, rules, system_info, created_at) VALUES (?,?,?,?, NOW())");
             $stmtAnn->execute([$tournamentId, $title, $defaultRules, $defaultSystem]);
+
+            // Notify admins about new tournament submission
+            $notiTitle = "Tournament Pending Approval";
+            $notiMessage = "New tournament submitted: \"{$title}\" (tournament ID #{$tournamentId}).";
+            $notiStmt = $conn->prepare("
+                INSERT INTO admin_notifications (admin_id, title, message, type, created_at)
+                SELECT admin_id, ?, ?, 'tournament_pending', NOW() FROM admins
+            ");
+            if ($notiStmt) {
+                $notiStmt->bind_param("ss", $notiTitle, $notiMessage);
+                $notiStmt->execute();
+                $notiStmt->close();
+            }
 
             header("Location: stripe-payment.php?tournament_id=" . $tournamentId);
             exit;
