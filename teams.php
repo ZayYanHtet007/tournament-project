@@ -373,36 +373,34 @@ include('partial/header.php');
         display: flex;
         align-items: center;
     }
-
     /* Custom Dropdown Styling */
-    .game-filter-nav select.filter-btn {
-        background: #0f1923;
-        /* Matching team card background */
-        color: var(--riot-gray);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 10px 40px 10px 20px;
-        font-family: 'Teko', sans-serif;
-        font-size: 1.2rem;
-        text-transform: uppercase;
-        cursor: pointer;
-        appearance: none;
-        -webkit-appearance: none;
-        width: 200px;
-        transition: border-color 0.3s;
-    }
+.game-filter-nav select.filter-btn {
+    background: #0f1923; /* Matching team card background */
+    color: var(--riot-gray);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 40px 10px 20px;
+    font-family: 'Teko', sans-serif;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 200px;
+    transition: border-color 0.3s;
+}
 
-    .game-filter-nav select.filter-btn:focus {
-        border-color: var(--riot-red);
-        outline: none;
-        box-shadow: 0 0 10px rgba(255, 77, 90, 0.2);
-    }
+.game-filter-nav select.filter-btn:focus {
+    border-color: var(--riot-red);
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 77, 90, 0.2);
+}
 
-    /* This fixes the "invisible" text in the dropdown list */
-    .game-filter-nav select.filter-btn option {
-        background-color: #0f1923;
-        color: white;
-        padding: 10px;
-    }
+/* This fixes the "invisible" text in the dropdown list */
+.game-filter-nav select.filter-btn option {
+    background-color: #0f1923; 
+    color: white;
+    padding: 10px;
+}
 
     .search-input {
         width: 0;
