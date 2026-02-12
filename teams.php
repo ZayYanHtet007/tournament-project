@@ -35,7 +35,7 @@ function getTeamsData($conn, $limit, $page, $search, $game_type = '')
     $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, 
             g.name AS game_name, -- Fetch the actual game name
             l.username AS leader_name,
-            GROUP_CONCAT(u.username SEPARATOR ', ') as player_list
+            GROUP_CONCAT(CONCAT(u.username, ':', IFNULL(u.image, 'default_user.png')) SEPARATOR '|') as player_list
             FROM teams t
             LEFT JOIN games g ON t.aim_for = g.game_id 
             LEFT JOIN users l ON t.leader_id = l.user_id 
@@ -97,13 +97,13 @@ function include_grid_content($data)
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
                 <div class="team-card" onclick="openTeam(
-                    '<?= addslashes($row['team_name']) ?>', 
-                    '<?= addslashes($row['short_name'] ?? '') ?>', 
-                    '<?= addslashes($row['motto'] ?? '') ?>', 
-                    '<?= addslashes($row['leader_name'] ?? 'N/A') ?>', 
-                    '<?= addslashes($row['player_list'] ?? '') ?>',
-                    '<?= $row['team_id'] ?>'
-                )">
+    '<?= addslashes($row['team_name']) ?>', 
+    '<?= addslashes($row['short_name'] ?? '') ?>', 
+    '<?= addslashes($row['motto'] ?? '') ?>', 
+    '<?= addslashes($row['leader_name'] ?? 'N/A') ?>', 
+    '<?= addslashes($row['player_list'] ?? '') ?>', // This now contains names and images
+    '<?= $row['team_id'] ?>'
+)">
                     <div class="card-accent"></div>
                     <div class="photo-box">
                         <img src="images/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
@@ -373,34 +373,36 @@ include('partial/header.php');
         display: flex;
         align-items: center;
     }
+
     /* Custom Dropdown Styling */
-.game-filter-nav select.filter-btn {
-    background: #0f1923; /* Matching team card background */
-    color: var(--riot-gray);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px 40px 10px 20px;
-    font-family: 'Teko', sans-serif;
-    font-size: 1.2rem;
-    text-transform: uppercase;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    width: 200px;
-    transition: border-color 0.3s;
-}
+    .game-filter-nav select.filter-btn {
+        background: #0f1923;
+        /* Matching team card background */
+        color: var(--riot-gray);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px 40px 10px 20px;
+        font-family: 'Teko', sans-serif;
+        font-size: 1.2rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        width: 200px;
+        transition: border-color 0.3s;
+    }
 
-.game-filter-nav select.filter-btn:focus {
-    border-color: var(--riot-red);
-    outline: none;
-    box-shadow: 0 0 10px rgba(255, 77, 90, 0.2);
-}
+    .game-filter-nav select.filter-btn:focus {
+        border-color: var(--riot-red);
+        outline: none;
+        box-shadow: 0 0 10px rgba(255, 77, 90, 0.2);
+    }
 
-/* This fixes the "invisible" text in the dropdown list */
-.game-filter-nav select.filter-btn option {
-    background-color: #0f1923; 
-    color: white;
-    padding: 10px;
-}
+    /* This fixes the "invisible" text in the dropdown list */
+    .game-filter-nav select.filter-btn option {
+        background-color: #0f1923;
+        color: white;
+        padding: 10px;
+    }
 
     .search-input {
         width: 0;
@@ -631,17 +633,18 @@ include('partial/header.php');
     }
 
     .player-avatar {
-        width: 35px;
-        height: 35px;
+        width: 40px;
+        /* Slightly larger for images */
+        height: 40px;
         background: var(--riot-red);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 0.8rem;
-        color: white;
+        border: 1px solid var(--riot-red);
+        /* Adds a thin red ring around the photo */
     }
+
 
     .player-info-name {
         font-family: 'Teko', sans-serif;
@@ -823,7 +826,7 @@ include('partial/header.php');
             </div>
             <p id="m-motto" style="color: var(--riot-red); font-size: 1rem; margin-top: 15px; text-transform: uppercase; font-style: italic; opacity: 0.8;"></p>
         </div>
-        <h4 style="color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; margin: 25px 0 10px; font-size:0.9rem;">Active Agents</h4>
+        <h4 style="color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; margin: 25px 0 10px; font-size:0.9rem;">Active Players</h4>
         <div id="m-players"></div>
         <button id="m-join-btn" class="modal-join-btn">Request to Join</button>
     </div>
@@ -902,14 +905,19 @@ include('partial/header.php');
 
         let html = '';
         if (players && players.trim() !== '') {
-            players.split(',').forEach(p => {
-                const nameTrimmed = p.trim();
-                const initial = nameTrimmed.charAt(0).toUpperCase();
+            // Split by the pipe | to get each player:image pair
+            players.split('|').forEach(playerData => {
+                // Split by : to separate name and image
+                const [playerName, playerImg] = playerData.split(':');
+
                 html += `
-                    <div class="player-card">
-                        <div class="player-avatar">${initial}</div>
-                        <div class="player-info-name">${nameTrimmed}</div>
-                    </div>`;
+                <div class="player-card">
+                    <div class="player-avatar" style="overflow:hidden; background: #222;">
+                        <img src="images/${playerImg}" alt="${playerName}" 
+                             style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    <div class="player-info-name">${playerName}</div>
+                </div>`;
             });
         } else {
             html = '<p style="opacity:0.5; font-style:italic;">No registered agents found.</p>';
