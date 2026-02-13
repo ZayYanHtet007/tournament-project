@@ -1,10 +1,10 @@
 <?php
-session_start();
-include('partial/header.php');
+include("partial/header.php");
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-// <require=include>
+
 require 'phpmailer/PHPMailer.php';
 require 'phpmailer/SMTP.php';
 require 'phpmailer/Exception.php';
@@ -18,7 +18,7 @@ if (isset($_POST['submit'])) {
 
     // Save OTP in session
     $_SESSION['reset_email'] = $email;
-    $_SESSION['resetcode'] = $code;
+    $_SESSION['reset_code'] = $code;
 
     // Send Email
     $mail = new PHPMailer(true);
@@ -28,12 +28,12 @@ if (isset($_POST['submit'])) {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'theintnandarsoe16@gmail.com';
-        $mail->Password = 'cqmx tiwi oqoe rpyr';
+        $mail->Username = 'zayyan1817@gmail.com';
+        $mail->Password = 'itkdisfchwviutuo';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
-        // give a code
-        $mail->setFrom('myattheingikyaw200234@gmail.com', 'Theint');
+
+        $mail->setFrom('zayyan1817@gmail.com', 'ZayYanHtet');
         $mail->addAddress($email);
 
         $mail->isHTML(true);
@@ -47,9 +47,8 @@ if (isset($_POST['submit'])) {
 
         $mail->send();
         echo "Reset code sent to email.";
-        header("Location: verifyCode.php");
+        header("Location: verify_code.php");
         exit;
-
     } catch (Exception $e) {
         echo "Error sending email: {$mail->ErrorInfo}";
     }
