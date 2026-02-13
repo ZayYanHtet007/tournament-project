@@ -393,7 +393,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span>TEAMS</span>
             </a>
 
-            <a href="leaderboard.php" class="nav-item <?= ($current_page == 'leaderboard.php') ? 'active' : '' ?>">
+            <a href="organizerStatistic.php" class="nav-item <?= ($current_page == 'organizerStatistics.php') ? 'active' : '' ?>">
                 <i class="fa-solid fa-ranking-star" style="color: #fff;"></i>
                 <span>LEADERBOARD</span>
             </a>

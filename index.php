@@ -1,7 +1,6 @@
 <?php
 include('partial/header.php');
-?>
-<?php
+
 $isLoggedIn = isset($_SESSION['user_id']);
 $user_id = $isLoggedIn ? $_SESSION['user_id'] : null;
 
@@ -20,19 +19,16 @@ if ($isLoggedIn && isset($conn) && $conn) {
     }
 }
 
-
 $errors = [];
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
-    echo '$isLoggedIn=' . ($isLoggedIn ? 'true' : 'false');
 
     if (!$isLoggedIn) {
         $errors[] = "You must be logged in to create a team.";
     } else {
 
         $teamName = trim($_POST['teamName'] ?? '');
-        $shortName = trim($_POST['shortName'] ?? '');
+        $shortName = strtoupper(trim($_POST['shortName'] ?? '')); // Force Uppercase
         $motto = trim($_POST['motto'] ?? '');
         $players = (int)($_POST['players'] ?? 0);
 
@@ -49,18 +45,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         }
 
         if (empty($errors)) {
-            $image = time() . "_" . basename($_FILES['image']['name']); // max file size 2 MB
-            $tmp = $_FILES['image']['tmp_name'];
+            // Validate Image Upload
+            if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+                $errors[] = "File upload error code: " . $_FILES['image']['error'];
+            } else {
+                $image = time() . "_" . basename($_FILES['image']['name']); // max file size 2 MB
+                $tmp = $_FILES['image']['tmp_name'];
 
-            $uploadDir = __DIR__ . "/images/";
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-            }
+                $uploadDir = __DIR__ . "/images/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
 
-            $path = $uploadDir . $image;
+                $path = $uploadDir . $image;
 
-            if (!move_uploaded_file($tmp, $path)) {
-                $errors[] = "Image upload failed.";
+                if (!move_uploaded_file($tmp, $path)) {
+                    $errors[] = "Image upload failed.";
+                }
             }
         }
 
@@ -75,10 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $stmt->close();
         }
 
-        print_r($errors);
-
         if (empty($errors)) {
-
             $conn->begin_transaction();
             try {
                 $stmt = $conn->prepare("
@@ -318,9 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         .game-container {
             width: 100%;
             max-width: 1400px;
-            /* ✅ ADDED — WIDER CAROUSEL */
             margin: 0 auto;
-            /* ✅ CENTERED */
             height: 450px;
             display: flex;
             justify-content: center;
@@ -571,6 +567,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             text-align: left;
         }
 
+        /* ADDED: Error Box Styling */
+        .error-box {
+            background: rgba(255, 70, 85, 0.1);
+            border-left: 4px solid var(--riot);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--riot);
+            text-align: left;
+        }
+
         .form-row-top {
             display: flex;
             gap: 20px;
@@ -699,8 +706,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 transform: scale(1);
             }
         }
-
-
     </style>
 </head>
 
@@ -717,7 +722,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
     <div class="noise"></div>
     <main>
 
-        <!-- HERO -->
         <div class="tx-hero">
             <div class="tx-hero-inner">
                 <div class="tx-kicker">TOURNAMENTS PLATFORM</div>
@@ -734,9 +738,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                     <?php endif; ?>
                 </div>
             </div>
-                    </div>
+        </div>
 
-        <!-- TEAM MODAL -->
         <div id="teamCard">
             <div>
                 <h2 id="teamName"></h2>
@@ -744,53 +747,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 <button id="closeTeam" style="margin-top:20px;padding:10px 20px;border:none;border-radius:6px;background:var(--riot);color:#000;font-weight:800;cursor:pointer;">Close</button>
             </div>
         </div>
+        
         <?php
-        $stats =[
-            'players' =>0,
-            'teams' =>0,
-            'matches'=>0,
-            'prize'=>0
+        $status = [
+            'players' => 0,
+            'teams' => 0,
+            'matches' => 0,
+            'prize' => 0
         ];
-        if(isset($conn) && $conn){
-            $res =$conn->query("select count(*) as total from users");
-            if($res) $status['players']= $res->fetch_assoc()['total'];
+        if (isset($conn) && $conn) {
+            $res = $conn->query("select count(*) as total from users");
+            if ($res) $status['players'] = $res->fetch_assoc()['total'];
 
             $res = $conn->query("select count(*) as total from teams");
-            if($res)  $status['teams']= $res->fetch_assoc()['total'];
+            if ($res)  $status['teams'] = $res->fetch_assoc()['total'];
 
             $res = $conn->query("select count(*) as total from matches ");
-            if($res)  $status['matches']=$res->fetch_assoc()['total'];
+            if ($res)  $status['matches'] = $res->fetch_assoc()['total'];
 
-            $res =$conn->query('select sum(prize_pool) as total from tournaments');
-            if($res) $status['prize']=$res->fetch_assoc()['total'];
+            $res = $conn->query('select sum(prize_pool) as total from tournaments');
+            if ($res) {
+                $row = $res->fetch_assoc();
+                $status['prize'] = $row['total'] ?? 0; // Fix: Handle NULL prize pool
+            }
         }
-       
-
-        
-        
         ?>
 
-        <!-- STATS -->
         <section class="stats-grid">
             <div class="stat-box reveal">
-                <h4 data-target="<?php echo $status['players']?>">0</h4>
+                <h4 data-target="<?php echo htmlspecialchars($status['players']); ?>">0</h4>
                 <p>PLAYERS</p>
             </div>
             <div class="stat-box reveal">
-                <h4 data-target="<?php echo $status['teams']?>">0</h4>
+                <h4 data-target="<?php echo htmlspecialchars($status['teams']); ?>">0</h4>
                 <p>TEAMS</p>
             </div>
             <div class="stat-box reveal">
-                <h4 data-target="<?php echo $status['matches']?>">0</h4>
+                <h4 data-target="<?php echo htmlspecialchars($status['matches']); ?>">0</h4>
                 <p>MATCHES TODAY</p>
             </div>
             <div class="stat-box reveal">
-                <h4 data-target="<?php echo $status['prize'] ?>">0</h4>
+                <h4 data-target="<?php echo htmlspecialchars($status['prize']); ?>">0</h4>
                 <p>PRIZE POOL ($)</p>
             </div>
         </section>
 
-        <!-- GAME CARDS -->
         <section class="game-container">
             <div class="game-grid">
                 <?php
@@ -816,7 +817,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         </section>
 
 
-        <!-- LIVE MATCHES -->
         <section class="match-section">
             <div class="match-list">
                 <div class="match-item reveal">
@@ -837,20 +837,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             </div>
         </section>
     </main>
-    <!-- CREATE TEAM CARD (HIDDEN) -->
-    <div id="teamOverlay">
+    
+    <div id="teamOverlay" class="<?php echo !empty($errors) ? 'active' : ''; ?>">
         <div class="teamCard">
             <span class="closeBtn">&times;</span>
             <h2>CREATE SQUAD</h2>
+            
+            <?php if (!empty($errors)): ?>
+                <div class="error-box">
+                    <?php foreach ($errors as $error) echo "<div>• $error</div>"; ?>
+                </div>
+            <?php endif; ?>
+
             <form method="POST" enctype="multipart/form-data">
                 <div class="form-row-top">
                     <label for="uploadInput" style="cursor:pointer;">
-                        <img src="images/gif9.gif" class="upload_photo" id="img">
+                        <img src="images/TX.png" class="upload_photo" id="img">
                     </label>
                     <input type="file" name="image" id="uploadInput" hidden required onchange="previewImage(event)">
                     <div style="flex:1">
-                        <input type="text" name="teamName" placeholder="TEAM NAME (6-16 CHARS)" required>
-                        <input type="text" name="shortName" placeholder="TAG (2-4 CHARS)" required>
+                        <input type="text" name="teamName" placeholder="TEAM NAME (6-16 CHARS)" required maxlength="16">
+                        <input type="text" name="shortName" placeholder="TAG (2-4 CHARS)" required maxlength="4" style="text-transform: uppercase;">
                     </div>
                 </div>
                 <textarea name="motto" placeholder="TEAM MOTTO" rows="2"></textarea>
@@ -979,7 +986,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 end: "bottom bottom",
                 scrub: 1.5,
                 onUpdate: (self) => {
-                    document.getElementById('bar').style.height = (self.progress * 100) + "%";
+                    if(document.getElementById('bar')) {
+                        document.getElementById('bar').style.height = (self.progress * 100) + "%";
+                    }
                 }
             }
         });
@@ -1158,6 +1167,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 loader.classList.add("hide");
             }, remaining);
         });
+
+        // ================= AUTO UPPERCASE TAG =================
+        const shortNameInput = document.querySelector('input[name="shortName"]');
+        if(shortNameInput) {
+            shortNameInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        }
     </script>
 
 

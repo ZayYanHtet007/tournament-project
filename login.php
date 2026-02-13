@@ -106,10 +106,61 @@ include('partial/header.php');
 
 <style>
     :root {
-        --primary-red: #ff3344;
+        --primary-red: #ff4d5a;
         --dark-red: #4a0a0a;
         --deep-black: #050505;
+        --riot-dark: #080a0c;
         --panel-bg: #0f0f0f;
+    }
+
+    body {
+        background-color: var(--riot-dark) !important;
+        margin: 0;
+        overflow-x: hidden;
+        position: relative;
+        /* CYBER GRID BACKGROUND */
+        background-image: 
+            linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px);
+        background-size: 50px 50px;
+        background-attachment: fixed;
+    }
+
+    /* INTENSIFIED RED ATMOSPHERIC LIGHTING */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: 
+            radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(255, 51, 68, 0.25) 0%, 
+                    transparent 60%),
+            radial-gradient(circle at 10% 10%, rgba(255, 0, 0, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 90%, rgba(255, 0, 0, 0.15) 0%, transparent 40%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    /* GLOBAL ANIMATED SCANLINE */
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: linear-gradient(
+            to bottom,
+            transparent 0%,
+            rgba(255, 51, 68, 0.03) 50%,
+            transparent 100%
+        );
+        background-size: 100% 4px;
+        animation: globalScanline 10s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    @keyframes globalScanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
     }
 
     .login-container-wrapper {
@@ -117,41 +168,35 @@ include('partial/header.php');
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #000;
-        background-image: 
-            linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px),
-            radial-gradient(circle at center, rgba(100, 0, 0, 0.6) 0%, #000000 80%);
-        background-size: 30px 30px, 30px 30px, 100% 100%;
         position: relative;
+        z-index: 1;
     }
 
-    /* THE FIX: Absolute Stack Container */
     .card-stack {
         position: relative;
         width: 100%;
         max-width: 420px;
-        min-height: 550px; /* Ensure space for the absolute children */
+        min-height: 550px;
         perspective: 1000px;
     }
 
     .login-panel {
-        position: absolute; /* Stacked on top of each other */
+        position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        background: rgba(15, 15, 15, 0.95);
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(10px);
         padding: 50px 40px;
-        border: 1px solid #333;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-top: 4px solid var(--primary-red);
         border-bottom: 4px solid var(--primary-red);
-        box-shadow: 0 0 50px rgba(255, 51, 68, 0.15);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
         transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         backface-visibility: hidden;
         box-sizing: border-box;
     }
 
-    /* Initial state: Login visible, Forgot rotated away */
     #login-panel {
         z-index: 2;
         transform: rotateY(0deg);
@@ -162,10 +207,9 @@ include('partial/header.php');
         z-index: 1;
         transform: rotateY(180deg);
         opacity: 0;
-        pointer-events: none; /* Can't click through when hidden */
+        pointer-events: none;
     }
 
-    /* Flip States */
     .card-stack.show-forgot #login-panel {
         transform: rotateY(-180deg);
         opacity: 0;
@@ -179,7 +223,6 @@ include('partial/header.php');
         pointer-events: auto;
     }
 
-    /* Internal Styling */
     .login-panel h2 {
         font-family: 'Bebas Neue', sans-serif;
         font-size: 42px;
@@ -224,6 +267,8 @@ include('partial/header.php');
     .form-group-custom input:focus {
         border-color: var(--primary-red);
         outline: none;
+        background: #110505;
+        box-shadow: 0 0 10px rgba(255, 51, 68, 0.1);
     }
 
     .btn-red-action {
@@ -240,7 +285,10 @@ include('partial/header.php');
         letter-spacing: 2px;
     }
 
-    .btn-red-action:hover { background: #ff5566; transform: translateY(-2px); }
+    .btn-red-action:hover { 
+        filter: brightness(1.2); 
+        box-shadow: 0 0 20px rgba(255, 51, 68, 0.4);
+    }
 
     .login-helper-links {
         margin-top: 25px;
@@ -262,7 +310,7 @@ include('partial/header.php');
         background: rgba(255, 51, 68, 0.1);
         color: var(--primary-red);
         padding: 15px;
-        border: 1px solid var(--primary-red);
+        border-left: 3px solid var(--primary-red);
         margin-bottom: 25px;
         font-size: 12px;
         text-transform: uppercase;
@@ -326,6 +374,14 @@ include('partial/header.php');
 </main>
 
 <script>
+    // MOUSE GLOW TRACKING
+    window.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.setProperty('--mouse-x', x + '%');
+        document.body.style.setProperty('--mouse-y', y + '%');
+    });
+
     function toggleCard(showForgot) {
         const stack = document.getElementById('cardStack');
         if (showForgot) {

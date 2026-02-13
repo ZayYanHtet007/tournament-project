@@ -14,14 +14,21 @@ $errors = [];
 
 if (!$team_id) die("Missing team_id");
 
-/* ---------- FETCH TEAM ---------- */
-$stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = ? LIMIT 1");
-$stmt->bind_param("i", $team_id);
-$stmt->execute();
-$team = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+    /* ---------- FETCH TEAM ---------- */
+    $stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = ? LIMIT 1");
+    $stmt->bind_param("i", $team_id);
+    $stmt->execute();
+    $team = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-if (!$team) die("Team not found.");
+    if (!$team) die("Team not found.");
+
+    // Check if team is disbanded
+    if ($team['status'] === 'disbanded') {
+      echo "<div class='p-10 text-center'><h1 class='neon-red'>This team has been disbanded.</h1>";
+      echo "<a href='../index.php' class='btn-riot'>Back to Home</a></div>";
+      exit;
+    }
 
 /* ---------- ENSURE LEADER EXISTS IN team_members ---------- */
 $chkLeader = $conn->prepare("
@@ -119,8 +126,7 @@ $jr->close();
 ====================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $action = $_POST['action'] ?? '';
-
-  if ($action === 'send_invite' && $is_leader) {
+if ($action === 'send_invite' && $is_leader) {
     $by = trim($_POST['by'] ?? '');
     if ($by === '') {
       $errors[] = "Provide username or email.";
@@ -211,8 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $del->bind_param("ii", $team_id, $req['user_id']);
         $del->execute();
         $del->close();
-
-        $conn->commit();
+$conn->commit();
         $message = "Request approved.";
       } catch (Exception $e) {
         $conn->rollback();
@@ -272,7 +277,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: #ece8e1;
       font-family: 'Rajdhani', sans-serif;
       background-image: linear-gradient(rgba(255, 70, 85, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 70, 85, 0.05) 1px, transparent 1px);
-      background-size: 30px 30px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
 
     h1,
@@ -329,6 +336,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       cursor: pointer;
     }
 
+    .back-btn {
+      display: flex;
+      justify-content: flex-end;
+    }
+
     .status-pill {
       background: rgba(255, 70, 85, 0.1);
       border: 1px solid var(--riot-red);
@@ -336,6 +348,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       padding: 2px 10px;
       font-size: 0.75rem;
       font-weight: bold;
+    }
+
+    /* MEMBER LIST SCROLLBAR */
+    .member-scroll-area {
+      max-height: 250px; /* Approximately height for 3 members */
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .member-scroll-area::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .member-scroll-area::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .member-scroll-area::-webkit-scrollbar-thumb {
+      background: var(--riot-red);
     }
   </style>
 </head>
@@ -349,6 +380,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Leader: <span class="text-white"><?= htmlspecialchars($team['leader_id'] == $user_id ? 'You' : 'Leader #' . $team['leader_id']) ?></span> —
         <span class="status-pill">MEMBERS: <?= count($members) ?> / <?= (int)($team['players'] ?? 0) ?></span>
       </p>
+
+      <a href="../index.php" class="text-red-500 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors back-btn">
+        &larr; Back to home
+      </a>
     </header>
 
     <?php if ($message): ?>
@@ -366,8 +401,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2 class="text-xl font-bold mb-4 flex items-center">
           <span class="w-2 h-6 bg-red-600 mr-3"></span>Members (<?= count($members) ?>)
         </h2>
-
-        <div class="space-y-2">
+        
+        <div class="member-scroll-area space-y-2 mb-4">
           <?php foreach ($members as $m): ?>
             <div class="flex justify-between items-center bg-black/40 p-4 border border-gray-800 hover:border-red-900 transition-all">
               <span class="text-lg <?= $m['role'] === 'leader' ? 'text-red-500 font-bold' : 'text-gray-200' ?>">
@@ -381,18 +416,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
               <?php endif; ?>
             </div>
-          <?php endforeach; ?><br>
-          <?php if ($is_member): ?>
-            <div class="mb-4 text-right">
-              <form action="team-leave.php?team_id=<?= $team_id ?>" method="POST"
-                onsubmit="return confirm('Are you sure you want to leave? <?= $is_leader ? 'Leadership will pass to the next member.' : '' ?>');">
-                <button type="submit" class="text-gray-400 hover:text-red-500 font-bold uppercase text-xs tracking-widest border border-gray-700 px-3 py-1 hover:border-red-500 transition-all">
-                  Leave Team
-                </button>
-              </form>
-            </div>
-          <?php endif; ?>
+          <?php endforeach; ?>
         </div>
+        <?php if ($is_member): ?>
+          <div class="text-right">
+            <form action="team-leave.php?team_id=<?= $team_id ?>" method="POST"
+              onsubmit="return confirm('Are you sure you want to leave? <?= $is_leader ? 'Leadership will pass to the next member.' : '' ?>');">
+              <button type="submit" class="text-gray-400 hover:text-red-500 font-bold uppercase text-xs tracking-widest border border-gray-700 px-3 py-1 hover:border-red-500 transition-all">
+                Leave Team
+              </button>
+            </form>
+          </div>
+        <?php endif; ?>
       </div>
 
       <div class="space-y-6">
@@ -478,10 +513,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
       </div>
     <?php endif; ?>
-
-    <div class="mt-12 mb-10 border-t border-gray-800 pt-6">
-      <a href="../index.php" class="text-red-500 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors">
-        &larr; Back to tournaments
-      </a>
-    </div>
   </div>
+</body>
+</html>

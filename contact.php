@@ -67,6 +67,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         color: #ece8e1;
         font-family: 'Segoe UI', sans-serif;
         margin: 0;
+        overflow-x: hidden;
+        position: relative;
+        color: #ffffff; 
+        font-family: 'Segoe UI', Helvetica, Arial, sans-serif; 
+        
+        /* INTENSE RED GRADIENT BACKGROUND */
+        background-image: 
+            radial-gradient(circle at 10% 20%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 80%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
+            linear-gradient(rgba(255, 77, 90, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 77, 90, 0.05) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+        background-attachment: fixed;
+    }
+
+    /* ENHANCED DYNAMIC RED GLOW */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                    rgba(255, 77, 90, 0.25) 0%, 
+                    transparent 45%);
+        z-index: -1;
+        pointer-events: none;
     }
 
     .page {
@@ -74,6 +99,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
+        margin-left: var(--sidebar-w);
     }
 
     /* Fix: Success Alert Box - Matching the image design */
@@ -111,8 +138,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     .contact-container {
         background: var(--card-bg);
-        padding: 40px;
-        border-left: 4px solid var(--primary-red);
+        backdrop-filter: blur(15px);
+        padding: 50px 40px;
+        border: 1px solid rgba(255, 77, 90, 0.3);
         width: 100%;
         max-width: 550px;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -136,7 +164,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
 
     label {
@@ -187,11 +215,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     .submit-btn:hover { 
         background: #fff;
         color: var(--primary-red);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
         transform: translateY(-2px);
     }
 
-    button:active {
-        transform: translateY(0);
+    @media (max-width: 850px) {
+        .page { margin-left: 0; }
+        h1 { font-size: 2.2rem; }
     }
 
     @keyframes fadeIn {
@@ -208,8 +238,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </style>
 
 <section class="page">
-    <h1>Contact Us</h1>
-    <p class="subtitle">Secure Transmission // Global Operations</p>
+    <div style="text-align: center;">
+        <h1>CONTACT US</h1>
+        <p class="subtitle">Direct Support Line</p>
+    </div>
 
     <?php if ($statusMsg): ?>
         <div class="alert-success">
@@ -242,4 +274,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </section>
 
-<?php include('partial/footer.php'); ?>
+<script>
+    window.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.setProperty('--mouse-x', x + '%');
+        document.body.style.setProperty('--mouse-y', y + '%');
+    });
+</script>

@@ -148,7 +148,7 @@
     </div>
 
     <div class="footer-bottom">
-        <p>&copy; <?php echo date("Y"); ?> TOURNAX INTERACTIVE. ALL RIGHTS RESERVED.</p>
+        <p>&copy; <?php echo date("Y"); ?> TOURNAX. ALL RIGHTS RESERVED.</p>
         <p style="color: #7e7e7e;">MADE BY AGENTS FOR AGENTS</p>
     </div>
 </footer>
