@@ -354,59 +354,28 @@ function advanceKnockoutRound($conn, $tournament_id, $currentRound) {
     }
 }
 
-/* ---------- BULK SCORE SUBMISSION ---------- */
-$flashMessage = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['match_ids'])) {
-    // match_ids is an array of match IDs that were submitted (we can use the keys from score1)
-    $matchIds = array_keys($_POST['score1'] ?? []);
-    $savedCount = 0;
+/* ---------- SAVE SCORE ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['match_id'])) {
 
-    $conn->begin_transaction();
-    try {
-        // Prepare statements once
-        $deleteScores = $conn->prepare("DELETE FROM match_scores WHERE match_id = ?");
-        $insertScore = $conn->prepare("
-            INSERT INTO match_scores (match_id, team1_score, team2_score, set_number)
-            VALUES (?, ?, ?, ?)
-        ");
-        $updateMatch = $conn->prepare("
-            UPDATE matches
-            SET score1 = ?, score2 = ?, winner_team_id = ?,
-                status = 'completed', duration_seconds = ?
-            WHERE match_id = ? AND tournament_id = ? AND status = 'pending'
-        ");
+  $match_id = (int)$_POST['match_id'];
+  $score1   = (int)$_POST['score1'];
+  $score2   = (int)$_POST['score2'];
 
-        foreach ($matchIds as $match_id) {
-            $match_id = (int)$match_id;
+  if ($score1 === $score2) {
+    die("Draws not allowed");
+  }
 
-            // Only process if match is pending (already enforced in SQL, but double-check)
-            $score1 = (int)($_POST['score1'][$match_id] ?? 0);
-            $score2 = (int)($_POST['score2'][$match_id] ?? 0);
-            $duration = (int)($_POST['duration'][$match_id] ?? 0);
+  $q = $conn->prepare("
+        SELECT * FROM matches 
+        WHERE match_id=? AND tournament_id=? AND status='pending'
+    ");
+  $q->bind_param("ii", $match_id, $tournament_id);
+  $q->execute();
+  $match = $q->get_result()->fetch_assoc();
 
-            // Fetch match details to validate and get round info
-            $q = $conn->prepare("
-                SELECT * FROM matches
-                WHERE match_id = ? AND tournament_id = ? AND status = 'pending'
-            ");
-            $q->bind_param("ii", $match_id, $tournament_id);
-            $q->execute();
-            $match = $q->get_result()->fetch_assoc();
-            if (!$match) continue; // not pending or wrong tournament
+  if (!$match) die("Invalid match");
 
-            // --- VALIDATION ---
-            // 1. Scheduled time must be set
-            if (empty($match['scheduled_time'])) {
-                throw new Exception("Match #$match_id: Schedule not set, cannot enter score.");
-            }
-            // 2. No draws
-            if ($score1 === $score2) {
-                throw new Exception("Match #$match_id: Draws are not allowed.");
-            }
-            // 3. For group stage, duration should be > 0? Optional; we just store it.
-
-            // Determine winner
-            $winner = $score1 > $score2 ? $match['team1_id'] : $match['team2_id'];
+  $winner = $score1 > $score2 ? $match['team1_id'] : $match['team2_id'];
 
             // Delete old set scores (if any)
             $deleteScores->bind_param("i", $match_id);

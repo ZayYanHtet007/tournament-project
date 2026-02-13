@@ -15,6 +15,14 @@ if ($isLoggedIn) {
     $user = mysqli_fetch_assoc($result);
 }
 
+$notifications = [];
+if ($isLoggedIn) {
+    $notiStmt = $conn->prepare("SELECT * FROM organizer_notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20");
+    $notiStmt->bind_param("i", $uid);
+    $notiStmt->execute();
+    $notifications = $notiStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -223,6 +231,101 @@ $current_page = basename($_SERVER['PHP_SELF']);
             color: #fff;
         }
 
+        /*=============== Noti =====================*/
+        .notification-dropdown {
+            position: relative;
+            margin-right: 15px;
+        }
+
+        .noti-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            position: relative;
+            padding: 10px;
+        }
+
+        .noti-badge {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            background: var(--accent);
+            color: #000;
+            font-size: 10px;
+            font-weight: 900;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            border: 2px solid var(--bg);
+        }
+
+        .noti-content {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: 320px;
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
+
+        .noti-content.show {
+            display: flex;
+        }
+
+        .noti-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .noti-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .noti-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .noti-item.unread {
+            background: rgba(0, 212, 255, 0.03);
+            border-left: 2px solid var(--accent);
+        }
+
+        .noti-icon {
+            color: var(--accent);
+            font-size: 14px;
+            margin-top: 3px;
+        }
+
+        .noti-text p {
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .noti-text small {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 5px;
+            display: block;
+        }
+
+
         @media (max-width: 768px) {
             :root {
                 --sidebar-w: 0px;
@@ -290,7 +393,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span>TEAMS</span>
             </a>
 
-            <a href="leaderboard.php" class="nav-item <?= ($current_page == 'leaderboard.php') ? 'active' : '' ?>">
+            <a href="organizerStatistic.php" class="nav-item <?= ($current_page == 'organizerStatistics.php') ? 'active' : '' ?>">
                 <i class="fa-solid fa-ranking-star" style="color: #fff;"></i>
                 <span>LEADERBOARD</span>
             </a>
@@ -307,6 +410,59 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </aside>
 
     <header class="tx-header">
+        <div class="notification-dropdown">
+            <?php
+            $unread_count = 0;
+            if (!empty($notifications)) {
+                foreach ($notifications as $n) {
+                    if (!$n['is_read']) $unread_count++;
+                }
+            }
+            ?>
+            <button class="noti-btn" id="notiBtn">
+                <i class="fa-regular fa-bell"></i>
+                <?php if ($unread_count > 0): ?>
+                    <span class="noti-badge"><?php echo $unread_count; ?></span>
+                <?php endif; ?>
+            </button>
+
+            <div class="noti-content" id="notiContent">
+                <div class="noti-header">
+                    NOTIFICATIONS
+                    <?php if ($unread_count > 0): ?>
+                        <span style="font-size: 11px; color: #64748b; font-weight: normal; margin-left: 5px;">(<?php echo $unread_count; ?> unread)</span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="noti-body" style="max-height: 350px; overflow-y: auto;">
+                    <?php if (empty($notifications)): ?>
+                        <div class="noti-item" style="cursor: default; justify-content: center;">
+                            <p style="color: #94a3b8; font-size: 12px; padding: 20px;">No new notifications</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($notifications as $n):
+                            $tournament_id = 0;
+                            if (preg_match('/tournament ID #(\d+)/i', $n['message'], $matches)) {
+                                $tournament_id = $matches[1];
+                            }
+                        ?>
+                            <div class="noti-item <?php echo $n['is_read'] ? '' : 'unread'; ?>"
+                                data-id="<?php echo $n['notification_id']; ?>"
+                                data-tournament-id="<?php echo $tournament_id; ?>"
+                                data-type="<?php echo htmlspecialchars($n['type'] ?? ''); ?>">
+                                <div class="noti-icon"><i class="fa-solid fa-info-circle"></i></div>
+                                <div class="noti-text">
+                                    <p><strong><?php echo htmlspecialchars($n['title']); ?></strong><br>
+                                        <?php echo htmlspecialchars($n['message']); ?></p>
+                                    <small><i class="fa-regular fa-clock"></i> <?php echo date('M d, h:i A', strtotime($n['created_at'])); ?></small>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
         <div class="auth-wrapper" style="position: relative;">
             <div class="auth-trigger" onclick="toggleUserMenu()">
                 <?php if ($isLoggedIn): ?>
@@ -347,6 +503,168 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 if (dropdown) dropdown.classList.remove('show');
             }
         }
+
+        
+        // --- Notification Dropdown Toggle ---
+        const notiBtn = document.getElementById('notiBtn');
+        const notiContent = document.getElementById('notiContent');
+
+        if (notiBtn) {
+            notiBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notiContent.classList.toggle('show');
+                document.getElementById('userDropdown').classList.remove('show');
+            });
+        }
+
+        // Close dropdowns on outside click
+        window.onclick = function(e) {
+            
+            if (!e.target.closest('.notification-dropdown')) {
+                const notiDrop = document.getElementById('notiContent');
+                if (notiDrop) notiDrop.classList.remove('show');
+            }
+        }
+
+        // --- Handle Clicking Notification Items ---
+        document.addEventListener('click', function(e) {
+            const item = e.target.closest('.noti-item');
+            if (!item || !item.dataset.id) return;
+
+            const notiId = item.dataset.id;
+            const tournamentId = item.dataset.tournamentId;
+            const notiType = item.dataset.type;
+
+            // Mark as read via AJAX
+            fetch('mark-read.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `id=${notiId}`
+            }).then(() => {
+                item.classList.remove('unread');
+                // Redirect based on notification context
+                const notiText = item.querySelector('.noti-text')?.innerText || '';
+                const isRejectedText = /rejected/i.test(notiText);
+                const isTournamentRejection = (notiType === 'tournament_rejected') || (isRejectedText && /tournament/i.test(notiText));
+
+                if (tournamentId && tournamentId != 0) {
+                    window.location.href = `editTournament.php?id=${tournamentId}`;
+                    return;
+                }
+
+                if (isTournamentRejection) {
+                    window.location.href = 'organizerDashboard.php';
+                    return;
+                }
+            });
+        });
+
+        const notiBody = document.querySelector('.noti-body');
+        let lastNotiId = (() => {
+            const first = notiBody?.querySelector('.noti-item[data-id]');
+            return first ? parseInt(first.dataset.id) : 0;
+        })();
+
+        const updateUnreadBadge = async () => {
+            try {
+                const res = await fetch(`get-unread-count.php?_=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                if (!res.ok) return;
+                const countText = await res.text();
+                const count = parseInt(countText, 10) || 0;
+
+                const badge = document.querySelector('.noti-badge');
+                if (count > 0) {
+                    if (badge) {
+                        badge.textContent = count;
+                    } else {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'noti-badge';
+                        newBadge.textContent = String(count);
+                        document.getElementById('notiBtn').appendChild(newBadge);
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+            } catch (_) {
+                // ignore polling errors
+            }
+        };
+
+        const renderNotification = (n) => {
+            const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[ch]));
+
+            let tournamentId = 0;
+            const rawMessage = String(n.message || '');
+            const match = rawMessage.match(/tournament ID #(\d+)/i);
+            if (match) tournamentId = match[1];
+
+            const div = document.createElement("div");
+            div.className = `noti-item ${n.is_read == 1 ? '' : 'unread'}`;
+            div.dataset.id = n.notification_id;
+            div.dataset.tournamentId = tournamentId;
+            div.dataset.type = n.type || '';
+            div.innerHTML = `
+                <div class="noti-icon"><i class="fa-solid fa-info-circle"></i></div>
+                <div class="noti-text">
+                    <p><strong>${esc(n.title)}</strong><br>${esc(rawMessage)}</p>
+                    <small><i class="fa-regular fa-clock"></i> ${new Date(n.created_at).toLocaleString()}</small>
+                </div>`;
+            return div;
+        };
+
+        let isPollingNoti = false;
+        const pollNotifications = async () => {
+            if (isPollingNoti) return;
+            isPollingNoti = true;
+            try {
+                const res = await fetch(`fetch-notifications.php?since=${lastNotiId}&_=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.success || !Array.isArray(data.notifications) || data.notifications.length === 0) {
+                    await updateUnreadBadge();
+                    return;
+                }
+
+                if (notiBody) {
+                    data.notifications.slice().reverse().forEach((n) => {
+                        const node = renderNotification(n);
+                        notiBody.prepend(node);
+                        lastNotiId = Math.max(lastNotiId, parseInt(n.notification_id));
+                    });
+
+                    const emptyMsg = notiBody.querySelector('.noti-item[style*="justify-content: center"]');
+                    if (emptyMsg) emptyMsg.remove();
+                } else {
+                    data.notifications.forEach((n) => {
+                        lastNotiId = Math.max(lastNotiId, parseInt(n.notification_id));
+                    });
+                }
+
+                await updateUnreadBadge();
+            } catch (_) {
+                // ignore polling errors
+            } finally {
+                isPollingNoti = false;
+            }
+        };
+
+        // Poll every 2s for new notifications (no full page refresh needed)
+        setInterval(pollNotifications, 2000);
+        setInterval(updateUnreadBadge, 2000);
+        pollNotifications();
+        updateUnreadBadge();
     </script>
 
 </body>

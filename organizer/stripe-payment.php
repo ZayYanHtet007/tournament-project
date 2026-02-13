@@ -7,7 +7,9 @@ require_once "../database/dbConfig.php";
 loadEnv("../.env");
 \Stripe\Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
 
-$tournament_id = (int)$_GET['tournament_id'];
+if (!isset($_SESSION['pending_tournament'])) {
+  die("No tournament data found in session. Please go back and fill the form.");
+}
 
 // Get the fee from your creation_fee table
 $stmt = $conn->prepare("SELECT tournament_create_value FROM creation_fee WHERE tournament_create_fee_id = 'tournament_creation_fee'");
@@ -20,16 +22,23 @@ $session = \Stripe\Checkout\Session::create([
   'line_items' => [[
     'price_data' => [
       'currency' => 'usd',
-      'product_data' => ['name' => 'Tournament Creation Fee', 'description' => "ID: #$tournament_id"],
+      'product_data' => [
+        'name' => 'Tournament Creation Fee',
+        'description' => $_SESSION['pending_tournament']['title']
+      ],
       'unit_amount' => $amount * 100,
     ],
     'quantity' => 1,
   ]],
   'mode' => 'payment',
-  'success_url' => "http://localhost/tournament-project/organizer/stripe-success.php?tournament_id=$tournament_id&session_id={CHECKOUT_SESSION_ID}",
-  'cancel_url'  => "http://localhost/tournament-project/organizer/stripe-cancel.php?tournament_id=$tournament_id",
+  // Note: we removed tournament_id from success_url because it's not created yet
+  'success_url' => "http://localhost/tournament-project/organizer/stripe-success.php?session_id={CHECKOUT_SESSION_ID}",
+  'cancel_url'  => "http://localhost/tournament-project/organizer/createTournament.php",
 ]);
 ?>
+<script>
+  window.location.href = "<?php echo $session->url; ?>";
+</script>
 <!DOCTYPE html>
 <html lang="en">
 

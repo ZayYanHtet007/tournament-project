@@ -426,7 +426,7 @@ canvas#bg {
     <div class="auth-wrapper">
         <div class="auth-trigger" onclick="toggleUserMenu()">
             <?php if ($isLoggedIn): ?>
-                <img src="images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" class="user-img">
+                <img src="../images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" class="user-img">
             <?php else: ?>
                 <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" colors="primary:#ffffff" style="width:35px;height:35px"></lord-icon>
             <?php endif; ?>
