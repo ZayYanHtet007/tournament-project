@@ -107,30 +107,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
         $message = "❌ Tournament start must be after registration deadline.";
         $currentStep = 3;
     } else {
-        $status = calculateStatus($reg_start, $start);
-        $stmt = $conn->prepare("INSERT INTO tournaments (organizer_id, game_id, title, description, max_participants, team_size, fee, registration_start_date, registration_deadline, start_date, status, admin_status, prize_pool) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)");
-        $stmt->bind_param("iissiiissssi", $organizer_id, $game_id, $title, $description, $max_participants, $team_size, $fee, $reg_start, $reg_end, $start, $status, $prize_pool);
+        $_SESSION['pending_tournament']=[
+            'organizer_id' => $organizer_id,
+            'game_id' => $game_id,
+            'title' => $title,
+            'description' => $description,
+            'max_participants' => $max_participants,
+            'team_size' => $team_size,
+            'fee' => $fee,
+            'prize_pool' => $prize_pool,
+            'registration_start_date' => $reg_start,
+            'registration_deadline' => $reg_end,
+            'start_date' => $start
 
-        if ($stmt->execute()) {
-            $tournamentId = $stmt->insert_id;
-            $stmt1 = $pdo->prepare("SELECT genre FROM games WHERE game_id = ?");
-            $stmt1->execute([$game_id]);
-            $game = $stmt1->fetch(PDO::FETCH_ASSOC);
-            $genre = $game['genre'];
-
-            $defaultRules  = generateDefaultRules($genre, $description);
-            $defaultSystem = generateDefaultSystem($genre, $max_participants);
-
-            $stmtAnn = $pdo->prepare("INSERT INTO tournament_announcements (tournament_id, title, rules, system_info, created_at) VALUES (?,?,?,?, NOW())");
-            $stmtAnn->execute([$tournamentId, $title, $defaultRules, $defaultSystem]);
-
+        ];
+       
             header("Location: stripe-payment.php?tournament_id=" . $tournamentId);
             exit;
-        } else {
-            $message = "❌ DB Error: " . $stmt->error;
-        }
+        } 
     }
-}
+
 ?>
 
 <!DOCTYPE html>

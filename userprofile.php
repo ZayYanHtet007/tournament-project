@@ -27,7 +27,7 @@ if (isset($_POST['save_all'])) {
 
         if (in_array($ext, $allowed)) {
             // FOLDER FIX: Define and check path
-            $target_dir = "images/";
+            $target_dir = "/images/";
             if (!is_dir($target_dir)) {
                 mkdir($target_dir, 0777, true); // Creates folder if missing
             }
@@ -64,7 +64,7 @@ if (isset($_POST['save_all'])) {
 
     <style>
         :root {
-            --riot-red: #ff4655;
+            --riot-red: #ff4d5a;
             --riot-bg: #0f1923;
             --riot-white: #ece8e1;
             --riot-border: rgba(255, 255, 255, 0.15);
@@ -75,8 +75,6 @@ if (isset($_POST['save_all'])) {
 
         /* CYBER-GRID ANIMATED BACKGROUND */
         .profile-wrapper {
-            margin-left: 85px;
-            margin-top: 75px;
             min-height: calc(100vh - 75px);
             display: flex;
             justify-content: center;
@@ -93,14 +91,18 @@ if (isset($_POST['save_all'])) {
             background-position: center center;
         }
 
-        /* Moving Gradient Glow */
+        /* INTENSIFIED RED ATMOSPHERIC LIGHTING */
         .profile-wrapper::before {
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                        rgba(255, 70, 85, 0.12) 0%, 
-                        transparent 50%);
+            background: 
+                radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                            rgba(255, 70, 85, 0.25) 0%, 
+                            transparent 60%),
+                radial-gradient(circle at 0% 0%, rgba(255, 0, 0, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.1) 0%, transparent 80%);
             z-index: 0;
             pointer-events: none;
         }
@@ -130,7 +132,7 @@ if (isset($_POST['save_all'])) {
         .profile-container {
             width: 100%;
             max-width: 450px;
-            background: #0f1923; /* Solid Riot Dark */
+            background: black; /* Solid Riot Dark */
             border: 1px solid var(--riot-border);
             padding: 50px 40px;
             position: relative;

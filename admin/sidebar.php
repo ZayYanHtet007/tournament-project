@@ -47,8 +47,12 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
     <title>Tournament Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 </head>
 
 
@@ -70,25 +74,12 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                 <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
                 <a href="#post.php"><i class="fa fa-pen-to-square"></i> Post</a>
                 <a href="organizers.php"><i class="fa fa-user-check"></i> Organizers</a>
-                <a href="#message.php"><i class="fa fa-envelope"></i> Message</a>
+                <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
+                <a href="games.php"><i class="fa-solid fa-gamepad"></i> Games</a>
             </div>
 
             <div class="profile-popup" id="profilePopup">
-                <div class="popup-header">
-                    <div class="popup-avatar-large">
-                        <?php if ($imageSource): ?>
-                            <img src="<?php echo htmlspecialchars($imageSource); ?>"
-                                alt="<?php echo htmlspecialchars($adminName); ?>"
-                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                        <?php else: ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="popup-info">
-                        <h4>Hi, <?= htmlspecialchars($adminName) ?>!</h4>
-                        <p style="font-size: 13px; color: #a1a1b5; margin: 0;"><?= htmlspecialchars($adminEmail) ?></p>
-                        <a href="customizeProfile.php" class="manage-btn" style="text-decoration: none; margin-top: 10px; display: inline-block;">Customize Profile</a>
-                    </div>
-                </div>
+
                 <div class="popup-body">
                     <div class="popup-item">
                         <a href="changePassword.php" style="text-decoration: none; color: #d1d1e6;">
@@ -120,7 +111,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
 
             <div class="admin_profile" onclick="togglePopup(event)">
                 <div class="profile_content">
-                    </i> Account
+                    <i class="ph ph-gear-six"></i> SETTINGS
                 </div>
             </div>
         </nav>
@@ -179,7 +170,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                                             data-id="<?php echo $n['notification_id']; ?>"
                                             data-tournament-id="<?php echo $tournament_id; ?>">
                                             <div class="noti-icon">
-                                                <i class="fa-solid fa-info"></i>
+                                                <i class="fa-solid fa-circle-info"></i>
                                             </div>
                                             <div class="noti-text">
                                                 <p>
@@ -195,6 +186,31 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                                         </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="header-profile-container" onclick="toggleHeaderPopup(event)">
+                        <div class="profile-trigger">
+                            <?php if ($imageSource): ?>
+                                <img src="<?php echo htmlspecialchars($imageSource); ?>"
+                                    alt="<?php echo htmlspecialchars($adminName); ?>">
+                            <?php else: ?>
+                                <img src="../images/default_profile.png" alt="Default">
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="header-dropdown" id="headerDropdown">
+                            <div class="popup-header-content">
+                                <h4>Hi, <?= htmlspecialchars($adminName) ?>!</h4>
+                                <p style="font-size: 11px; color: #a1a1b5; margin: 0;"><?= htmlspecialchars($adminEmail) ?></p>
+                            </div>
+
+                            <hr style="border-color: #45455e; margin: 10px 0;">
+
+                            <div class="popup-item">
+                                <a href="customizeProfile.php" style="text-decoration: none; color: #d1d1e6; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fa fa-user-pen"></i><span>Customize Profile</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -228,7 +244,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                     div.dataset.tournamentId = tournamentId;
                     div.innerHTML = `
                 <div class="noti-icon">
-                    <i class="fa-solid fa-info"></i>
+                    <i class="fa-solid fa-circle-info"></i>
                 </div>
                 <div class="noti-text">
                     <p>
@@ -381,7 +397,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                             const tournamentMatch = notificationText.match(/tournament ID #(\d+)/i);
 
                             if (tournamentMatch && tournamentMatch[1]) {
-                                window.location.href = `tournamentDetail.php?id=${tournamentMatch[1]}`;
+                                window.location.href = `tournamentsDetail.php?id=${tournamentMatch[1]}`;
                             } else {
                                 // If still no tournament ID, show alert or stay on page
                                 console.log('No tournament ID found in notification');
@@ -447,5 +463,43 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                             link.classList.add('active');
                         }
                     });
+                });
+
+                // --- Header Top Right Profile Popup ---
+                function toggleHeaderPopup(event) {
+                    event.stopPropagation(); // Stop the click from bubbling to window
+                    const dropdown = document.getElementById('headerDropdown');
+                    dropdown.classList.toggle('show');
+                }
+
+                // --- Window Click (Closes popups when clicking outside) ---
+                window.addEventListener('click', function(event) {
+                    // 1. Close Sidebar Bottom Popup
+                    if (!event.target.closest('.admin_profile') && !event.target.closest('#profilePopup')) {
+                        const sidebarPopup = document.getElementById('profilePopup');
+                        if (sidebarPopup) sidebarPopup.classList.remove('show');
+                    }
+
+                    // 2. Close Header Top Right Popup
+                    if (!event.target.closest('.header-profile-container')) {
+                        const headerDropdown = document.getElementById('headerDropdown');
+                        if (headerDropdown && headerDropdown.classList.contains('show')) {
+                            headerDropdown.classList.remove('show');
+                        }
+                    }
+
+                    // 3. Close Mobile Sidebar (if clicking outside sidebar)
+                    if (window.innerWidth <= 768 &&
+                        !document.getElementById('sidebar').contains(event.target) &&
+                        !event.target.closest('.mobile-toggle')) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+
+                    // 4. Close Notification Dropdown
+                    const notiContent = document.getElementById('notiContent');
+                    const notiBtn = document.getElementById('notiBtn');
+                    if (notiContent && notiBtn && !notiContent.contains(event.target) && !notiBtn.contains(event.target)) {
+                        notiContent.classList.remove('show');
+                    }
                 });
             </script>

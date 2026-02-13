@@ -1,4 +1,3 @@
-
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -99,32 +98,75 @@ if (isset($_POST['btnRegister'])) {
     } elseif (strtolower($userTeam['status']) === 'disban' || strtolower($userTeam['status']) === 'disbanded') {
       echo "<script>alert('Registration Failed: This team is inactive.');</script>";
     } else {
-      // 2. NEW: Check the current number of members in that team
-      $countSql = "SELECT COUNT(*) FROM team_members WHERE team_id = ?";
-      $countStmt = $pdo->prepare($countSql);
-      $countStmt->execute([$userTeam['team_id']]);
-      $currentMemberCount = (int)$countStmt->fetchColumn();
+      // 2. NEW: Check if team is already registered in any ongoing/upcoming tournament
+      $checkActiveTournamentsSql = "
+        SELECT COUNT(*) as active_count, 
+               GROUP_CONCAT(DISTINCT t.title SEPARATOR ', ') as tournament_names
+        FROM tournament_teams tt
+        JOIN tournaments t ON tt.tournament_id = t.tournament_id
+        WHERE tt.team_id = ? 
+        AND t.status IN ('upcoming', 'ongoing')
+        AND t.tournament_id != ?"; // Exclude current tournament
 
-      $requiredSize = (int)$userTeam['required_size'];
+      $checkStmt = $pdo->prepare($checkActiveTournamentsSql);
+      $checkStmt->execute([$userTeam['team_id'], $t_id]);
+      $activeTournaments = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-      if ($currentMemberCount < $requiredSize) {
-        echo "<script>alert('Registration Failed: Your team only has $currentMemberCount members. This tournament requires $requiredSize members.');</script>";
+      if ($activeTournaments['active_count'] > 0) {
+        $tournamentNames = $activeTournaments['tournament_names'];
+        echo "<script>alert('Registration Failed: Your team is already registered in active tournament(s): $tournamentNames. A team can only participate in one tournament at a time.');</script>";
       } else {
-        // 3. Check if already registered
-        $checkReg = $pdo->prepare("SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?");
-        $checkReg->execute([$t_id, $userTeam['team_id']]);
+        // 3. Check current number of members in that team
+        $countSql = "SELECT COUNT(*) FROM team_members WHERE team_id = ?";
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute([$userTeam['team_id']]);
+        $currentMemberCount = (int)$countStmt->fetchColumn();
 
-        if ($checkReg->rowCount() > 0) {
-          echo "<script>alert('Your team is already registered.');</script>";
+        $requiredSize = (int)$userTeam['required_size'];
+
+        if ($currentMemberCount < $requiredSize) {
+          echo "<script>alert('Registration Failed: Your team only has $currentMemberCount members. This tournament requires $requiredSize members.');</script>";
         } else {
-          header("Location: ./player/player-stripe-payment.php?tournament_id=" . $tournament_id);
-          exit;
+          // 4. Check if already registered in this tournament
+          $checkReg = $pdo->prepare("SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?");
+          $checkReg->execute([$t_id, $userTeam['team_id']]);
+
+          if ($checkReg->rowCount() > 0) {
+            echo "<script>alert('Your team is already registered.');</script>";
+          } else {
+            header("Location: ./player/player-stripe-payment.php?tournament_id=" . $tournament_id);
+            exit;
+          }
         }
       }
     }
   } catch (Exception $e) {
     echo "<script>alert('An error occurred: " . $e->getMessage() . "');</script>";
   }
+}
+
+// Add this function to check if team can register for tournaments
+function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = null)
+{
+  $sql = "
+        SELECT COUNT(*) as active_count
+        FROM tournament_teams tt
+        JOIN tournaments t ON tt.tournament_id = t.tournament_id
+        WHERE tt.team_id = ? 
+        AND t.status IN ('upcoming', 'ongoing')
+    ";
+
+  if ($current_tournament_id) {
+    $sql .= " AND t.tournament_id != ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$team_id, $current_tournament_id]);
+  } else {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$team_id]);
+  }
+
+  $result = $stmt->fetch(PDO::FETCH_ASSOC);
+  return $result['active_count'] == 0;
 }
 ?>
 

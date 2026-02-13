@@ -11,7 +11,7 @@ include('partial/header.php');
 <?php
 if(isset($_POST['submit'])){
     $code = $_POST['resetcode'];
-    $resetcode = $_SESSION['resetcode'];
+    $resetcode = $_SESSION['reset_code'];
 
     if($code == $resetcode){
         header("Location: changePassword.php");

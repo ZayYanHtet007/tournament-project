@@ -41,13 +41,19 @@ $annStmt = $conn->prepare("
 $annStmt->bind_param("i", $tournament_id);
 $annStmt->execute();
 $announcement = $annStmt->get_result()->fetch_assoc();
-
-if (!$announcement) die("Announcement not found");
+$hasAnnouncement = is_array($announcement);
+if (!$hasAnnouncement) {
+  $announcement = [
+    'rules' => '',
+    'system_info' => ''
+  ];
+}
 
 /* ---------- PERMISSIONS ---------- */
 $status       = $tournament['status'];
-$canEditAll   = ($status === 'upcoming');
-$canEditDates = in_array($status, ['upcoming', 'approved', 'ongoing']);
+$wasRejected  = ($tournament['admin_status'] ?? '') === 'rejected';
+$canEditAll   = ($status === 'upcoming' || $wasRejected);
+$canEditDates = in_array($status, ['upcoming', 'approved', 'ongoing']) || $wasRejected;
 $isLocked     = ($status === 'completed');
 
 $readOnly = $isLocked ? 'readonly' : '';
@@ -114,13 +120,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     $rules = trim($_POST['rules']);
     $system_info = trim($_POST['system_info']);
 
-    $annUpdate = $conn->prepare("
-      UPDATE tournament_announcements
-      SET rules=?, system_info=?, last_update=NOW()
-      WHERE tournament_id=?
-    ");
-    $annUpdate->bind_param("ssi", $rules, $system_info, $tournament_id);
-    $annUpdate->execute();
+    if ($hasAnnouncement) {
+      $annUpdate = $conn->prepare("
+        UPDATE tournament_announcements
+        SET rules=?, system_info=?, last_update=NOW()
+        WHERE tournament_id=?
+      ");
+      $annUpdate->bind_param("ssi", $rules, $system_info, $tournament_id);
+      $annUpdate->execute();
+      $annUpdate->close();
+    } else {
+      $annInsert = $conn->prepare("
+        INSERT INTO tournament_announcements (tournament_id, title, rules, system_info, created_at, last_update)
+        VALUES (?, ?, ?, ?, NOW(), NOW())
+      ");
+      $annTitle = $tournament['title'] ?? 'Tournament';
+      $annInsert->bind_param("isss", $tournament_id, $annTitle, $rules, $system_info);
+      $annInsert->execute();
+      $annInsert->close();
+      $hasAnnouncement = true;
+    }
+
+    if ($wasRejected) {
+      $pending = 'pending';
+      $adminUpdate = $conn->prepare("
+        UPDATE tournaments
+        SET admin_status=?, last_update=NOW()
+        WHERE tournament_id=? AND organizer_id=?
+      ");
+      $adminUpdate->bind_param("sii", $pending, $tournament_id, $organizer_id);
+      $adminUpdate->execute();
+      $adminUpdate->close();
+
+      $updatedTitle = $canEditAll ? $title : $tournament['title'];
+      $notiTitle = "Tournament Resubmitted";
+      $notiMessage = "Tournament resubmitted for approval: \"{$updatedTitle}\" (tournament ID #{$tournament_id}).";
+      $notiStmt = $conn->prepare("
+        INSERT INTO admin_notifications (admin_id, title, message, type, created_at)
+        SELECT admin_id, ?, ?, 'tournament_resubmitted', NOW() FROM admins
+      ");
+      if ($notiStmt) {
+        $notiStmt->bind_param("ss", $notiTitle, $notiMessage);
+        $notiStmt->execute();
+        $notiStmt->close();
+      }
+    }
 
     $conn->commit();
     $message = "✅ Tournament updated successfully.";
@@ -129,6 +173,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     $tournament = $stmt->get_result()->fetch_assoc();
     $annStmt->execute();
     $announcement = $annStmt->get_result()->fetch_assoc();
+    if (!is_array($announcement)) {
+      $announcement = [
+        'rules' => '',
+        'system_info' => ''
+      ];
+      $hasAnnouncement = false;
+    } else {
+      $hasAnnouncement = true;
+    }
 
   } catch (Exception $e) {
     $conn->rollback();

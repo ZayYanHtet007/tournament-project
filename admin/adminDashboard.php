@@ -107,7 +107,7 @@ $stat_month_income = getDashboardStats('tournaments', 'fee', "1=1", $conn, true,
         <div class="stats-grid">
             <?php
             $cards = [
-                ['title' => 'Active Tournaments', 'val' => $stat_active, 'icon' => 'fa-trophy', 'class' => 'icon1', 'prefix' => ''],
+                ['title' => 'Ongoing Tournaments', 'val' => $stat_active, 'icon' => 'fa-trophy', 'class' => 'icon1', 'prefix' => ''],
                 ['title' => 'Total Players', 'val' => $stat_players, 'icon' => 'fa-users', 'class' => 'icon2', 'prefix' => ''],
                 ['title' => 'Upcoming Events', 'val' => $stat_upcoming, 'icon' => 'fa-calendar-alt', 'class' => 'icon3', 'prefix' => ''],
                 ['title' => 'Total Prize Pool', 'val' => $stat_prize, 'icon' => 'fa-dollar-sign', 'class' => 'icon4', 'prefix' => '$'],

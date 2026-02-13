@@ -20,7 +20,7 @@ $username = $_SESSION['username'] ?? 'Organizer';
 
 /* FILTER LOGIC */
 $category = $_GET['category'] ?? 'all';
-$valid_categories = ['pending', 'upcoming', 'ongoing', 'completed'];
+$valid_categories = [ 'upcoming', 'ongoing', 'completed'];
 
 $query = "
     SELECT 
@@ -165,7 +165,7 @@ $result = $stmt->get_result();
 
     /* Technical details top right */
     .riot-card::before {
-        content: "OP-REF // " attr(data-id);
+        content: "Tour ID : " attr(data-id);
         position: absolute;
         top: 10px;
         right: 15px;
@@ -270,7 +270,6 @@ $result = $stmt->get_result();
           <label>Filter Status</label>
           <select onchange="window.location.href='?category=' + this.value">
               <option value="all" <?= $category == 'all' ? 'selected' : '' ?>>All</option>
-              <option value="pending" <?= $category == 'pending' ? 'selected' : '' ?>>Pending</option>
               <option value="upcoming" <?= $category == 'upcoming' ? 'selected' : '' ?>>Upcoming</option>
               <option value="ongoing" <?= $category == 'ongoing' ? 'selected' : '' ?>>Ongoing</option>
               <option value="completed" <?= $category == 'completed' ? 'selected' : '' ?>>Completed</option>
