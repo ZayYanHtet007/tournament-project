@@ -1,7 +1,6 @@
 <?php
 session_start();
 require_once "../database/dbConfig.php";
-include("header.php");
 
 /* ---------- ACCESS CONTROL ---------- */
 if (
@@ -13,432 +12,280 @@ if (
     exit;
 }
 
-/* ---------- TOURNAMENT ---------- */
 $tournament_id = (int)($_GET['tournament_id'] ?? 0);
 if (!$tournament_id) {
     die("Invalid tournament");
 }
 
-/* ---------- CHECK TOURNAMENT ---------- */
+/* ---------- FETCH TOURNAMENT INFO ---------- */
 $stmt = $conn->prepare("
-    SELECT tournament_id, max_participants 
-    FROM tournaments 
-    WHERE tournament_id = ?
+    SELECT tournament_id, organizer_id, title, max_participants, type, status
+    FROM tournaments
+    WHERE tournament_id = ? AND organizer_id = ?
 ");
-$stmt->bind_param("i", $tournament_id);
+$stmt->bind_param("ii", $tournament_id, $_SESSION['user_id']);
 $stmt->execute();
 $tournament = $stmt->get_result()->fetch_assoc();
-if (!$tournament) die("Tournament not found");
-
-/* ---------- FETCH TEAMS ---------- */
-$teams = [];
-$q = $conn->prepare("
-    SELECT t.team_id, t.team_name
-    FROM tournament_teams tt
-    JOIN teams t ON tt.team_id = t.team_id
-    WHERE tt.tournament_id = ?
-");
-$q->bind_param("i", $tournament_id);
-$q->execute();
-$res = $q->get_result();
-while ($row = $res->fetch_assoc()) {
-    $teams[] = $row;
+if (!$tournament) {
+    die("Tournament not found or access denied");
 }
 
-/* ---------- GENERATE MATCHES (ONCE) ---------- */
-$check = $conn->prepare("SELECT COUNT(*) c FROM matches WHERE tournament_id = ?");
-$check->bind_param("i", $tournament_id);
-$check->execute();
-$count = (int)$check->get_result()->fetch_assoc()['c'];
+// Only proceed if tournament type is 'standard'
+if ($tournament['type'] !== 'standard') {
+    die("This tournament does not use the standard bracket system.");
+}
 
-$teamCount = count($teams);
-if ($count == 0 && $teamCount >= 2) {
+/* ---------- COUNT REGISTERED TEAMS ---------- */
+$teamCountResult = $conn->query("
+    SELECT COUNT(*) as cnt 
+    FROM tournament_teams 
+    WHERE tournament_id = $tournament_id
+");
+$teamCount = $teamCountResult->fetch_assoc()['cnt'];
 
+/* ---------- CHECK IF MATCHES ALREADY EXIST ---------- */
+$matchCheck = $conn->query("
+    SELECT COUNT(*) as cnt 
+    FROM matches 
+    WHERE tournament_id = $tournament_id
+");
+$matchesExist = $matchCheck->fetch_assoc()['cnt'] > 0;
+
+/* ---------- AUTOMATIC MATCH GENERATION ---------- */
+// Conditions:
+// 1. Tournament status is 'ongoing'
+// 2. Registered teams == max_participants
+// 3. No matches exist yet
+// 4. Team count is one of 12, 16, 24
+if (
+    $tournament['status'] === 'ongoing' &&
+    $teamCount == $tournament['max_participants'] &&
+    !$matchesExist &&
+    in_array($teamCount, [12, 16, 24])
+) {
+    // Fetch all teams (shuffled)
+    $teams = [];
+    $q = $conn->prepare("
+        SELECT t.team_id, t.team_name
+        FROM tournament_teams tt
+        JOIN teams t ON tt.team_id = t.team_id
+        WHERE tt.tournament_id = ?
+    ");
+    $q->bind_param("i", $tournament_id);
+    $q->execute();
+    $res = $q->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $teams[] = $row;
+    }
     shuffle($teams);
 
-    $groupCount = min(4, $teamCount);
-    if ($groupCount <= 0) $groupCount = 1;
-    $groups = array_chunk($teams, ceil($teamCount / $groupCount));
-    $groupNamesAll = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-    $groupNames = array_slice($groupNamesAll, 0, count($groups));
+    // Determine teams per group
+    $perGroup = $teamCount / 4; // 3, 4, or 6
+    $groups = array_chunk($teams, $perGroup);
+    $groupNames = ['A', 'B', 'C', 'D'];
 
-    $order = 1;
-
-    foreach ($groups as $gi => $groupTeams) {
-        $gname = $groupNames[$gi] ?? ('G' . ($gi + 1));
-        $n = count($groupTeams);
-        for ($i = 0; $i < $n; $i++) {
-            for ($j = $i + 1; $j < $n; $j++) {
-                $stmt = $conn->prepare("
-                    INSERT INTO matches
-                    (tournament_id, round, group_name, match_order, team1_id, team2_id)
-                    VALUES (?, 'group', ?, ?, ?, ?)
-                ");
-                $matchOrder = $order++;
-                $stmt->bind_param(
-                    "isiii",
-                    $tournament_id,
-                    $gname,
-                    $matchOrder,
-                    $groupTeams[$i]['team_id'],
-                    $groupTeams[$j]['team_id']
-                );
-                $stmt->execute();
-                $stmt->close();
+    // Begin transaction
+    $conn->begin_transaction();
+    try {
+        // 1. Insert initial group_standings rows for every team
+        $insertStanding = $conn->prepare("
+            INSERT INTO group_standings 
+                (tournament_id, team_id, group_name, played, wins, losses, points, net_game, duration)
+            VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0)
+        ");
+        foreach ($groups as $gi => $groupTeams) {
+            $group = $groupNames[$gi];
+            foreach ($groupTeams as $team) {
+                $insertStanding->bind_param("iis", $tournament_id, $team['team_id'], $group);
+                $insertStanding->execute();
             }
         }
-    }
 
-    $rounds = [
-        'quarterfinal' => 4,
-        'semifinal' => 2,
-        'final' => 1,
-        'third_place' => 1
-    ];
-
-    foreach ($rounds as $round => $matches) {
-        for ($i = 1; $i <= $matches; $i++) {
-            $stmt = $conn->prepare("
-                INSERT INTO matches (tournament_id, round, match_order)
-                VALUES (?, ?, ?)
-            ");
-            $matchOrder = $order++;
-            $stmt->bind_param("isi", $tournament_id, $round, $matchOrder);
-            $stmt->execute();
-            $stmt->close();
+        // 2. Generate group stage matches (round robin)
+        $order = 1;
+        $insertMatch = $conn->prepare("
+            INSERT INTO matches 
+                (tournament_id, round, group_name, match_order, team1_id, team2_id, status)
+            VALUES (?, 'group', ?, ?, ?, ?, 'pending')
+        ");
+        foreach ($groups as $gi => $groupTeams) {
+            $group = $groupNames[$gi];
+            for ($i = 0; $i < count($groupTeams); $i++) {
+                for ($j = $i + 1; $j < count($groupTeams); $j++) {
+                    $insertMatch->bind_param(
+                        "isiii",
+                        $tournament_id,
+                        $group,
+                        $order,
+                        $groupTeams[$i]['team_id'],
+                        $groupTeams[$j]['team_id']
+                    );
+                    $insertMatch->execute();
+                    $order++;
+                }
+            }
         }
+
+        // 3. Generate knockout placeholders (team1_id = team2_id = NULL)
+        $knockoutRounds = [
+            'quarterfinal' => 4,
+            'semifinal'    => 2,
+            'final'        => 1,
+            'third_place'  => 1
+        ];
+        $insertKnockout = $conn->prepare("
+            INSERT INTO matches 
+                (tournament_id, round, match_order, status)
+            VALUES (?, ?, ?, 'pending')
+        ");
+        foreach ($knockoutRounds as $round => $count) {
+            for ($i = 1; $i <= $count; $i++) {
+                $plusOrder = $order++;
+                $insertKnockout->bind_param("isi", $tournament_id, $round, $plusOrder);
+                $insertKnockout->execute();
+            }
+        }
+
+        $conn->commit();
+
+        // Redirect to avoid resubmission
+        header("Location: scheduleManagement.php?tournament_id=$tournament_id&generated=1");
+        exit;
+    } catch (Exception $e) {
+        $conn->rollback();
+        die("Failed to generate matches: " . $e->getMessage());
     }
 }
 
-/* ---------- FETCH MATCHES ---------- */
-$result = $conn->query("
+/* ---------- BULK SCHEDULE UPDATE ---------- */
+$flashMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule'])) {
+    $updatedCount = 0;
+    $conn->begin_transaction();
+    try {
+        $updateStmt = $conn->prepare("
+            UPDATE matches 
+            SET scheduled_time = ? 
+            WHERE match_id = ? AND tournament_id = ?
+        ");
+        foreach ($_POST['schedule'] as $match_id => $datetime) {
+            $match_id = (int)$match_id;
+            // Skip empty datetime strings
+            if ($datetime === '') continue;
+
+            $updateStmt->bind_param("sii", $datetime, $match_id, $tournament_id);
+            $updateStmt->execute();
+            if ($updateStmt->affected_rows > 0) {
+                $updatedCount++;
+            }
+        }
+        $conn->commit();
+        $_SESSION['flash'] = "✅ $updatedCount match schedule(s) saved successfully.";
+    } catch (Exception $e) {
+        $conn->rollback();
+        $_SESSION['flash'] = "❌ Error saving schedules: " . $e->getMessage();
+    }
+    header("Location: scheduleManagement.php?tournament_id=$tournament_id");
+    exit;
+}
+
+/* ---------- FETCH ALL MATCHES FOR DISPLAY ---------- */
+$matches = $conn->query("
     SELECT m.*, 
-            t1.team_name AS team1, 
-            t2.team_name AS team2
+           t1.team_name AS team1, 
+           t2.team_name AS team2
     FROM matches m
     LEFT JOIN teams t1 ON m.team1_id = t1.team_id
     LEFT JOIN teams t2 ON m.team2_id = t2.team_id
     WHERE m.tournament_id = $tournament_id
     ORDER BY 
-      FIELD(m.round,'group','quarterfinal','semifinal','final','third_place'),
-      m.group_name,
-      m.match_order
+        FIELD(m.round, 'group', 'quarterfinal', 'semifinal', 'final', 'third_place'),
+        m.group_name,
+        m.match_order
 ");
 
-$matches = [];
-while ($row = $result->fetch_assoc()) {
-    $matches[$row['round']][] = $row;
-}
-
-/* ---------- UI HELPER ---------- */
-function matchCard($m)
-{
-    $time = $m['scheduled_time']
-        ? date('Y-m-d\TH:i', strtotime($m['scheduled_time']))
-        : '';
-
-    return "
-<div class='tx-match'>
-    <div class='tx-match-row'>
-        <div class='tx-vs-container'>
-            <span class='tx-team'>" . ($m['team1'] ?? 'TBD') . "</span>
-            <span class='tx-vs-badge'>VS</span>
-            <span class='tx-team'>" . ($m['team2'] ?? 'TBD') . "</span>
-        </div>
-        <div class='tx-date-wrap'>
-            <div class='date-input-container'>
-                <input type='datetime-local'
-                       class='match-date'
-                       name='schedule[{$m['match_id']}]'
-                       value='{$time}'>
-            </div>
-        </div>
-    </div>
-</div>";
-}
+// Capture flash message and clear it
+$flash = $_SESSION['flash'] ?? '';
+unset($_SESSION['flash']);
 ?>
-
+<!DOCTYPE html>
+<html>
 <head>
-    <style>
-        :root {
-            --riot-blue: #0bc6e3;
-            --riot-dark: #010a13;
-            --riot-surface: #051923;
-            --riot-border: rgba(11, 198, 227, 0.2);
-            --riot-gold: #c8aa6e;
-        }
-
-        .tx-body {
-            background-color: var(--riot-dark);
-            color: #fff;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-image: radial-gradient(circle at 50% 50%, #051923 0%, #010a13 100%);
-            min-height: 100vh;
-        }
-
-        .tx-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .tx-header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        .tx-header h1 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 3.5rem;
-            color: var(--riot-blue);
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 0 0 20px rgba(11, 198, 227, 0.4);
-        }
-
-        .tx-section {
-            margin-bottom: 60px;
-        }
-
-        .tx-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-left: 4px solid var(--riot-blue);
-            padding-left: 15px;
-            margin-bottom: 30px;
-        }
-
-        .tx-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .tx-card {
-            background: var(--riot-surface);
-            border: 1px solid var(--riot-border);
-            padding: 15px;
-            position: relative;
-            clip-path: polygon(0 0, 100% 0, 100% 92%, 92% 100%, 0 100%);
-            transition: 0.3s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tx-card:hover {
-            border-color: var(--riot-blue);
-            box-shadow: 0 0 15px rgba(11, 198, 227, 0.1);
-        }
-
-        .tx-card h3 {
-            color: var(--riot-gold);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(200, 170, 110, 0.2);
-            padding-bottom: 5px;
-        }
-
-        .tx-vs-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-        .tx-team {
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #fff;
-            flex: 1;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .tx-vs-badge {
-            background: var(--riot-blue);
-            color: #000;
-            font-size: 0.6rem;
-            font-weight: 900;
-            padding: 2px 6px;
-            border-radius: 2px;
-            margin: 0 5px;
-        }
-
-        .tx-date-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .tx-date-wrap label {
-            font-size: 0.65rem;
-            color: var(--riot-blue);
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        /* CALENDAR STYLING */
-        .date-input-container {
-            position: relative;
-            width: 100%;
-        }
-
-        .match-date {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--riot-border);
-            color: #fff;
-            padding: 8px 12px;
-            font-size: 0.85rem;
-            outline: none;
-            width: 100%;
-            font-family: inherit;
-            cursor: text;
-            margin-bottom: 30px;
-        }
-
-        /* Customizing the native calendar icon */
-        .match-date::-webkit-calendar-picker-indicator {
-            filter: invert(75%) sepia(80%) saturate(2500%) hue-rotate(160deg) brightness(100%) contrast(100%);
-            cursor: pointer;
-            margin-left: 10px;
-        }
-
-        .match-date:focus {
-            border-color: var(--riot-blue);
-            background: #000;
-        }
-
-        .save-btn {
-            background: transparent;
-            color: var(--riot-blue);
-            border: 1px solid var(--riot-blue);
-            padding: 15px 40px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .save-btn:hover {
-            background: var(--riot-blue);
-            color: #000;
-            box-shadow: 0 0 20px var(--riot-blue);
-        }
-
-        @media (max-width: 1024px) {
-            .tx-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 600px) {
-            .tx-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>Manage Schedule</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<body class="tx-body">
-    <div class="tx-container">
-
-        <div class="tx-header">
-            <h1>🏆 Tournament Schedule</h1>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">📅 Match Schedule – <?= htmlspecialchars($tournament['title']) ?></h1>
+            <a href="resultManagement.php?tournament_id=<?= $tournament_id ?>" 
+               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                🏆 Go to Bracket
+            </a>
         </div>
 
-        <form method="post" action="save-schedule.php">
-            <div id="txContent">
-
-                <?php if (!empty($matches['group'])): ?>
-                    <div class="tx-section">
-                        <div class="tx-title">Group Stage Deployment</div>
-                        <div class="tx-grid">
-                            <?php
-                            $groups = [];
-                            foreach ($matches['group'] as $m) {
-                                $groups[$m['group_name']][] = $m;
-                            }
-                            foreach ($groups as $name => $games):
-                            ?>
-                                <div class="tx-card">
-                                    <h3>Sector Group <?= htmlspecialchars($name) ?></h3>
-                                    <?php foreach ($games as $m) echo matchCard($m); ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($matches['quarterfinal'])): ?>
-                    <div class="tx-section">
-                        <div class="tx-title">Quarterfinal Rounds</div>
-                        <div class="tx-grid">
-                            <?php $i = 1;
-                            foreach ($matches['quarterfinal'] as $m): ?>
-                                <div class="tx-card">
-                                    <h3>Match Protocol <?= $i++ ?></h3>
-                                    <?= matchCard($m) ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($matches['semifinal'])): ?>
-                    <div class="tx-section">
-                        <div class="tx-title">Semifinal Elimination</div>
-                        <div class="tx-grid">
-                            <?php $i = 1;
-                            foreach ($matches['semifinal'] as $m): ?>
-                                <div class="tx-card">
-                                    <h3>Strategic Semi <?= $i++ ?></h3>
-                                    <?= matchCard($m) ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($matches['final']) || !empty($matches['third_place'])): ?>
-                    <div class="tx-section">
-                        <div class="tx-title">Championship Deciders</div>
-                        <div class="tx-grid">
-                            <?php if (!empty($matches['final'])): ?>
-                                <div class="tx-card" style="border-color: var(--riot-gold);">
-                                    <h3 style="color: #fff; background: var(--riot-gold); color: #000; padding: 2px 5px;">🏆 Grand Final</h3>
-                                    <?= matchCard($matches['final'][0]) ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (!empty($matches['third_place'])): ?>
-                                <div class="tx-card">
-                                    <h3>Consolation Final</h3>
-                                    <?= matchCard($matches['third_place'][0]) ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
+        <?php if (isset($_GET['generated'])): ?>
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                ✅ Tournament matches have been generated successfully.
             </div>
+        <?php endif; ?>
 
-            <div style="text-align:center;margin-top:50px; padding-bottom: 50px;">
-                <button class="save-btn" type="submit">
-                    💾 Save Tournament
-                </button>
+        <?php if ($flash): ?>
+            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+                <?= $flash ?>
             </div>
+        <?php endif; ?>
 
-        </form>
+        <?php if ($matches->num_rows === 0): ?>
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                ⏳ No matches yet. 
+                <?php if ($tournament['status'] !== 'ongoing'): ?>
+                    Tournament status is <strong><?= $tournament['status'] ?></strong>. 
+                    Matches will be generated when status becomes 'ongoing' and all teams have registered.
+                <?php elseif ($teamCount < $tournament['max_participants']): ?>
+                    Waiting for more teams to register (<?= $teamCount ?> / <?= $tournament['max_participants'] ?>).
+                <?php elseif (!in_array($teamCount, [12,16,24])): ?>
+                    This tournament has <?= $teamCount ?> teams, but only 12, 16, or 24 are supported for standard bracket.
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+            <form method="post" class="space-y-4">
+                <?php
+                $currentRound = '';
+                while ($m = $matches->fetch_assoc()):
+                    if ($currentRound !== $m['round']):
+                        $currentRound = $m['round'];
+                        echo "<h2 class='text-xl font-semibold mt-6 mb-2 capitalize'>" . str_replace('_', ' ', $currentRound) . "</h2>";
+                    endif;
+                ?>
+                    <div class="bg-white p-4 rounded shadow flex flex-wrap items-center gap-4">
+                        <div class="w-64">
+                            <?= $m['group_name'] ? "<span class='text-sm font-medium bg-gray-200 px-2 py-1 rounded'>Group {$m['group_name']}</span>" : '' ?>
+                            <span class="font-medium">
+                                <?= htmlspecialchars($m['team1'] ?? 'TBD') ?> vs <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <input type="datetime-local" 
+                                   name="schedule[<?= $m['match_id'] ?>]" 
+                                   value="<?= $m['scheduled_time'] ? date('Y-m-d\TH:i', strtotime($m['scheduled_time'])) : '' ?>"
+                                   class="border rounded px-3 py-2 w-full max-w-xs">
+                        </div>
+                        <?php if ($m['status'] === 'completed'): ?>
+                            <span class="text-green-600 font-semibold text-sm bg-green-50 px-3 py-1 rounded">✓ Completed</span>
+                        <?php endif; ?>
+                    </div>
+                <?php endwhile; ?>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" 
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded shadow">
+                        💾 Save All Schedules
+                    </button>
+                </div>
+            </form>
+        <?php endif; ?>
     </div>
-
-    <?php include("footer.php"); ?>
 </body>
+</html>

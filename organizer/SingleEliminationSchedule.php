@@ -61,7 +61,7 @@ $roundOrder = [
 ];
 
 /* =============================
-   CREATE FIRST ROUND IF NONE
+   CREATE ALL MATCHES IF NONE EXIST
 ============================= */
 $stmt = $conn->prepare("
     SELECT COUNT(*) AS total
@@ -73,7 +73,7 @@ $stmt->execute();
 $existingMatches = (int)$stmt->get_result()->fetch_assoc()['total'];
 
 if ($existingMatches === 0) {
-
+    // Map participant count to first round name
     $firstRoundMap = [
         256 => 'R256',
         128 => 'R128',
@@ -88,7 +88,12 @@ if ($existingMatches === 0) {
     }
 
     $firstRound = $firstRoundMap[$maxParticipants];
+    $firstRoundIndex = array_search($firstRound, $roundOrder);
+    if ($firstRoundIndex === false) {
+        die("Invalid round mapping");
+    }
 
+    // Get all teams and shuffle
     $stmt = $conn->prepare("
         SELECT team_id
         FROM tournament_teams
@@ -97,39 +102,64 @@ if ($existingMatches === 0) {
     $stmt->bind_param("i", $tournament_id);
     $stmt->execute();
     $teams = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
     if (count($teams) !== $maxParticipants || count($teams) % 2 !== 0) {
         die("Invalid team count for match generation");
     }
-
     shuffle($teams);
+
+    // Build list of rounds with number of matches
+    $rounds = [];
+    $matchCount = $maxParticipants / 2;
+    for ($i = $firstRoundIndex; $i < count($roundOrder); $i++) {
+        $rounds[] = [
+            'name' => $roundOrder[$i],
+            'matches' => $matchCount
+        ];
+        $matchCount = (int)($matchCount / 2);
+        if ($matchCount < 1) break;
+    }
 
     mysqli_begin_transaction($conn);
     try {
-        for ($i = 0; $i < count($teams); $i += 2) {
-            $stmt = $conn->prepare("
-                INSERT INTO matches
-                (tournament_id, round, team1_id, team2_id, status)
-                VALUES (?, ?, ?, ?, 'pending')
-            ");
-            $stmt->bind_param(
-                "isii",
-                $tournament_id,
-                $firstRound,
-                $teams[$i]['team_id'],
-                $teams[$i + 1]['team_id']
-            );
-            $stmt->execute();
+        $teamPointer = 0;
+        foreach ($rounds as $roundInfo) {
+            $roundName = $roundInfo['name'];
+            $numMatches = $roundInfo['matches'];
+
+            for ($m = 0; $m < $numMatches; $m++) {
+                if ($roundName === $firstRound) {
+                    // First round: assign actual teams
+                    $team1 = $teams[$teamPointer]['team_id'];
+                    $team2 = $teams[$teamPointer + 1]['team_id'];
+                    $teamPointer += 2;
+                    $stmt = $conn->prepare("
+                        INSERT INTO matches
+                        (tournament_id, round, team1_id, team2_id, status)
+                        VALUES (?, ?, ?, ?, 'pending')
+                    ");
+                    $stmt->bind_param("isii", $tournament_id, $roundName, $team1, $team2);
+                } else {
+                    // Later rounds: placeholders
+                    $stmt = $conn->prepare("
+                        INSERT INTO matches
+                        (tournament_id, round, team1_id, team2_id, status)
+                        VALUES (?, ?, NULL, NULL, 'pending')
+                    ");
+                    $stmt->bind_param("is", $tournament_id, $roundName);
+                }
+                $stmt->execute();
+            }
         }
         mysqli_commit($conn);
     } catch (Exception $e) {
         mysqli_rollback($conn);
-        die("Match generation failed");
+        die("Match generation failed: " . $e->getMessage());
     }
 }
 
 /* =============================
    FIND CURRENT SCHEDULABLE ROUND
+   (only rounds where teams are assigned)
 ============================= */
 $currentRound = null;
 
@@ -139,6 +169,8 @@ foreach ($roundOrder as $round) {
         FROM matches
         WHERE tournament_id = ?
           AND round = ?
+          AND team1_id IS NOT NULL
+          AND team2_id IS NOT NULL
           AND scheduled_time IS NULL
           AND status = 'pending'
     ");
@@ -155,7 +187,7 @@ if (!$currentRound) {
 }
 
 /* =============================
-   FETCH MATCHES
+   FETCH MATCHES OF CURRENT ROUND
 ============================= */
 $stmt = $conn->prepare("
     SELECT m.match_id, m.scheduled_time,
@@ -166,6 +198,8 @@ $stmt = $conn->prepare("
     JOIN teams t2 ON t2.team_id = m.team2_id
     WHERE m.tournament_id = ?
       AND m.round = ?
+      AND m.team1_id IS NOT NULL
+      AND m.team2_id IS NOT NULL
     ORDER BY m.match_id ASC
 ");
 $stmt->bind_param("is", $tournament_id, $currentRound);
@@ -173,10 +207,9 @@ $stmt->execute();
 $matches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 /* =============================
-   SAVE SCHEDULES
+   SAVE SCHEDULES (POST)
 ============================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     $saved = 0;
     $remaining = 0;
     $nowTs = time();
@@ -184,7 +217,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     mysqli_begin_transaction($conn);
     try {
         foreach ($_POST['schedule'] as $match_id => $datetime) {
-
             if (!$datetime) {
                 $remaining++;
                 continue;
@@ -203,6 +235,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   AND tournament_id = ?
                   AND round = ?
                   AND status = 'pending'
+                  AND team1_id IS NOT NULL
+                  AND team2_id IS NOT NULL
             ");
             $stmt->bind_param(
                 "siis",
@@ -230,7 +264,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 ?>
-
+<!DOCTYPE html>
+... (HTML remains the same as before) ...
 <!DOCTYPE html>
 <html lang="en">
 <head>
