@@ -99,7 +99,7 @@ $genreColumn = $conn->query("SHOW COLUMNS FROM games LIKE 'genre'");
 if ($genreColumn && $genreColumn->num_rows > 0) {
     $col = $genreColumn->fetch_assoc();
     if (preg_match("/^enum\\((.*)\\)$/", $col['Type'], $matches)) {
-        $parts = str_getcsv($matches[1], ',', "'");
+        $parts = str_getcsv($matches[1], ',', "'", "\\");
         foreach ($parts as $p) {
             $genreOptions[] = $p;
         }

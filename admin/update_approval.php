@@ -45,9 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $notiType = "tournament_rejected";
             }
 
-            $nStmt = $conn->prepare("INSERT INTO organizer_notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
+            $nStmt = $conn->prepare("INSERT INTO organizer_notifications (user_id, title, message, is_read, created_at) VALUES (?, ?, ?, 0, NOW())");
             if ($nStmt) {
-                $nStmt->bind_param("isss", $organizer_id, $notiTitle, $notiMessage, $notiType);
+                $nStmt->bind_param("iss", $organizer_id, $notiTitle, $notiMessage);
                 $nStmt->execute();
                 $nStmt->close();
             } else {
