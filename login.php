@@ -68,27 +68,39 @@ if (isset($_POST['btnlogin'])) {
 /* -------------------------------------------------------------------------- */
 if (isset($_POST['btnForgot'])) {
     $email = $_POST['email'];
-    $code = rand(100000, 999999);
-    $_SESSION['reset_email'] = $email;
-    $_SESSION['resetcode'] = $code;
 
+    // Generate 6-digit random OTP code
+    $code = rand(100000, 999999);
+
+    // Save OTP in session
+    $_SESSION['reset_email'] = $email;
+    $_SESSION['reset_code'] = $code;
+
+    // Send Email
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'theintnandarsoe16@gmail.com';
-        $mail->Password = 'cqmx tiwi oqoe rpyr';
+        $mail->Username = 'zayyan1817@gmail.com';
+        $mail->Password = 'itkdisfchwviutuo';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
-        $mail->setFrom('myattheingikyaw200234@gmail.com', 'Theint');
+
+        $mail->setFrom('zayyan1817@gmail.com', 'ZayYanHtet');
         $mail->addAddress($email);
 
         $mail->isHTML(true);
         $mail->Subject = "Your Password Reset Code";
-        $mail->Body = "<h2>Password Reset Request</h2><p>Your verification code is:</p><h1>$code</h1><p>Enter this code in the reset page.</p>";
+        $mail->Body = "
+            <h2>Password Reset Request</h2>
+            <p>Your verification code is:</p>
+            <h1>$code</h1>
+            <p>Enter this code in the reset page.</p>
+        ";
 
         $mail->send();
+        echo "Reset code sent to email.";
         header("Location: verifyCode.php");
         exit;
     } catch (Exception $e) {

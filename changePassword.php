@@ -1,6 +1,4 @@
 <?php
-session_start();
-require_once "partial/init.php"; // Ensure $conn or $pdo is defined here
 include('partial/header.php');
 
 // Handle Logic before any HTML output to allow header redirection
