@@ -144,16 +144,72 @@ while ($row = mysqli_fetch_assoc($result)) {
     </div>
 </div>
 
+<style>
+    .organizer-reject-backdrop.swal2-backdrop-show {
+        background: radial-gradient(circle at 25% 20%, rgba(99, 102, 241, 0.2), transparent 45%), rgba(2, 6, 23, 0.55);
+        backdrop-filter: blur(7px);
+    }
+
+    .organizer-reject-popup {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.82), rgba(15, 23, 42, 0.78)) !important;
+        border: 1px solid rgba(148, 163, 184, 0.26) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 24px 55px rgba(2, 6, 23, 0.6) !important;
+        color: #e2e8f0 !important;
+    }
+
+    .organizer-reject-title {
+        color: #f8fafc !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    .organizer-reject-cancel,
+    .organizer-action-confirm {
+        border-radius: 10px !important;
+        padding: 10px 18px !important;
+        font-weight: 700 !important;
+        border: 1px solid transparent !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .organizer-action-confirm {
+        background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+        border-color: rgba(129, 140, 248, 0.5) !important;
+        color: #fff !important;
+    }
+
+    .organizer-reject-cancel {
+        background: rgba(148, 163, 184, 0.18) !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+        color: #f8fafc !important;
+    }
+
+    .organizer-reject-actions {
+        gap: 16px !important;
+        margin-top: 22px !important;
+    }
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     async function handleApproval(userId, action) {
         const result = await Swal.fire({
-            title: `${action} organizer?`,
-            text: `Are you sure you want to ${action} this organizer?`,
-            icon: 'warning',
+            title: `Confirm ${action}?`,
+            icon: 'question',
+            background: 'transparent',
+            color: '#f8fafc',
             showCancelButton: true,
-            confirmButtonColor: action === 'approve' ? '#198754' : '#dc3545',
-            confirmButtonText: 'Yes, Change it!'
+            confirmButtonText: 'Yes, proceed',
+            customClass: {
+                container: 'organizer-reject-backdrop',
+                popup: 'organizer-reject-popup',
+                title: 'organizer-reject-title',
+                actions: 'organizer-reject-actions',
+                confirmButton: 'organizer-action-confirm',
+                cancelButton: 'organizer-reject-cancel'
+            },
+            buttonsStyling: false
         });
 
         if (result.isConfirmed) {
@@ -163,21 +219,59 @@ while ($row = mysqli_fetch_assoc($result)) {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-
-                    body: `user_id=${userId}&action=${action}`
+                    body: `user_id=${userId}&action=${action}&reason=`
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    Swal.fire('Success!', data.message, 'success')
+                    Swal.fire({
+                        title: 'Success!',
+                        text: data.message || 'Organizer approval updated.',
+                        icon: 'success',
+                        background: 'transparent',
+                        color: '#f8fafc',
+                        customClass: {
+                            container: 'organizer-reject-backdrop',
+                            popup: 'organizer-reject-popup',
+                            title: 'organizer-reject-title',
+                            confirmButton: 'organizer-action-confirm'
+                        },
+                        buttonsStyling: false
+                    })
                         .then(() => location.reload());
                 } else {
-                    Swal.fire('Error!', data.message, 'error');
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message || 'Unable to update approval.',
+                        icon: 'error',
+                        background: 'transparent',
+                        color: '#f8fafc',
+                        customClass: {
+                            container: 'organizer-reject-backdrop',
+                            popup: 'organizer-reject-popup',
+                            title: 'organizer-reject-title',
+                            confirmButton: 'organizer-action-confirm'
+                        },
+                        buttonsStyling: false
+                    });
                 }
             } catch (e) {
                 console.error(e);
-                Swal.fire('Error!', 'Something went wrong.', 'error');
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Something went wrong.',
+                    icon: 'error',
+                    background: 'transparent',
+                    color: '#f8fafc',
+                    customClass: {
+                        container: 'organizer-reject-backdrop',
+                        popup: 'organizer-reject-popup',
+                        title: 'organizer-reject-title',
+                        confirmButton: 'organizer-action-confirm'
+                    },
+                    buttonsStyling: false
+                });
             }
         }
     }
