@@ -1,10 +1,43 @@
 <?php
+session_start(); // Add session for admin ID
 require '../database/dbConfig.php';
 
+// Check if admin is logged in
+$organizer_id = $_SESSION['user_id'] ?? 0; // Assuming admin_id is stored in session
+if (!$organizer_id) {
+    die("Organizer not logged in");
+}
 
 $tournamentId = $_GET['tournament_id'] ?? 0;
 if (!$tournamentId) {
     die("Tournament ID missing");
+}
+
+/* ================= HANDLE BAN REQUEST ================= */
+$successMessage = '';
+$errorMessage = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ban_team'])) {
+    $team_id = $_POST['team_id'] ?? 0;
+    $reason = $_POST['reason'] ?? '';
+    
+    if ($team_id && $reason) {
+        // Get team name for notification title
+        $stmt = $pdo->prepare("SELECT team_name FROM teams WHERE team_id = ?");
+        $stmt->execute([$team_id]);
+        $team = $stmt->fetch(PDO::FETCH_ASSOC);
+        $title = "Ban Request: " . ($team['team_name'] ?? "Team #" . $team_id);
+        
+        // Insert into admin_notifications
+        $stmt = $pdo->prepare("
+        INSERT INTO admin_notifications (admin_id, title, message, created_at)
+        SELECT admin_id, ?, ?, NOW() FROM admins
+    ");
+        $stmt->execute([ $title, $reason]);
+        $successMessage = "Ban request submitted successfully!";
+    } else {
+        $errorMessage = "Something missing! Please provide all required information.";
+    }
 }
 
 /* ================= TOURNAMENT ================= */
@@ -59,7 +92,6 @@ foreach ($membersRaw as $m) {
 <meta charset="UTF-8">
 <title>Teams & Players</title>
 <link rel="stylesheet" href="../css/organizer/brscore.css">
-
 <style>
 /* ================= PARTICIPANTS ================= */
 .br-search { 
@@ -226,6 +258,32 @@ max-width: 360px;
     background: #00cfff; 
 }
 
+/* Notification Messages */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.success {
+    background-color: #10b981;
+    color: white;
+}
+
+.error {
+    background-color: #ef4444;
+    color: white;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
 /* responsive */
 @media(max-width:900px){
     .br-participants { flex-direction: column; }
@@ -236,6 +294,14 @@ max-width: 360px;
 
 <body class="br-body">
 <div class="br-container">
+
+<!-- Notification Messages -->
+<?php if ($successMessage): ?>
+<div class="notification success"><?= htmlspecialchars($successMessage) ?></div>
+<?php endif; ?>
+<?php if ($errorMessage): ?>
+<div class="notification error"><?= htmlspecialchars($errorMessage) ?></div>
+<?php endif; ?>
 
 <div class="br-title">
     <h1>👥 Teams & Players</h1>
@@ -252,6 +318,7 @@ max-width: 360px;
 <?php foreach ($teams as $t): ?>
 <div class="br-team-card"
      data-name="<?= strtolower($t['team_name']) ?>"
+     data-team-id="<?= $t['team_id'] ?>"
      data-team='<?= json_encode($membersByTeam[$t["team_id"]] ?? []) ?>'>
     <img src="<?= $t['logo'] ?: '../images/games/project-icon.jpg' ?>">
     <h3><?= htmlspecialchars($t['team_name']) ?></h3>
@@ -287,9 +354,13 @@ max-width: 360px;
 
         <div class="br-panel-back">
             <div class="br-back-header">Write your reason why should admin ban this team and players from this website</div>
-            <textarea class="br-back-textarea" id="banReason"></textarea>
-            <button class="br-commit-btn" id="commitBanBtn">Submit</button>
-            <button class="br-back-btn" id="backBtn">Back</button>
+            <form id="banForm" method="POST">
+                <input type="hidden" name="team_id" id="formTeamId">
+                <input type="hidden" name="ban_team" value="1">
+                <textarea class="br-back-textarea" id="banReason" name="reason" required placeholder="Enter ban reason..."></textarea>
+                <button type="submit" class="br-commit-btn" id="commitBanBtn">Submit</button>
+                <button type="button" class="br-back-btn" id="backBtn">Back</button>
+            </form>
         </div>
 
     </div>
@@ -311,9 +382,12 @@ const search = document.getElementById('teamSearch');
 
 const panelInner = document.getElementById('panelInner');
 const banBtn = document.getElementById('banBtn');
-const commitBanBtn = document.getElementById('commitBanBtn');
 const backBtn = document.getElementById('backBtn');
 const banReason = document.getElementById('banReason');
+const formTeamId = document.getElementById('formTeamId');
+const banForm = document.getElementById('banForm');
+
+let currentTeamId = null;
 
 cards.forEach(card => {
     card.addEventListener('click', () => {
@@ -323,6 +397,10 @@ cards.forEach(card => {
         panel.classList.add('active');
         panelInner.classList.remove('flip');
 
+        // Store current team ID
+        currentTeamId = card.dataset.teamId;
+        formTeamId.value = currentTeamId;
+        
         title.textContent = card.querySelector('h3').textContent;
 
         coachBlock.innerHTML = '';
@@ -338,10 +416,10 @@ cards.forEach(card => {
 
         members.forEach(m => {
             switch(m.role) {
-                case 'coach': hasCoach = true; coachBlock.innerHTML += `🧑‍🏫 ${m.username}<br>`; break;
-                case 'leader': hasLeader = true; leaderBlock.innerHTML += `👑 ${m.username}<br>`; break;
-                case 'member': hasMember = true; memberBlock.innerHTML += `🎮 ${m.username}<br>`; break;
-                case 'sub': hasSub = true; subBlock.innerHTML += `🔄 ${m.username}<br>`; break;
+                case 'coach': hasCoach = true; coachBlock.innerHTML += `<div class="br-member">🧑‍🏫 ${m.username}</div>`; break;
+                case 'leader': hasLeader = true; leaderBlock.innerHTML += `<div class="br-member">👑 ${m.username}</div>`; break;
+                case 'member': hasMember = true; memberBlock.innerHTML += `<div class="br-member">🎮 ${m.username}</div>`; break;
+                case 'sub': hasSub = true; subBlock.innerHTML += `<div class="br-member">🔄 ${m.username}</div>`; break;
             }
         });
 
@@ -359,16 +437,40 @@ search.addEventListener('keyup', () => {
     });
 });
 
-banBtn.addEventListener('click', () => panelInner.classList.add('flip'));
-backBtn.addEventListener('click', () => panelInner.classList.remove('flip'));
-
-commitBanBtn.addEventListener('click', () => {
-    const reason = banReason.value.trim();
-    if (!reason) { alert("Please write a reason for banning."); return; }
-    alert(`Team "${title.textContent}" banned for reason: ${reason}`);
-    panelInner.classList.remove('flip');
+banBtn.addEventListener('click', () => {
+    if (!currentTeamId) {
+        alert("Please select a team first.");
+        return;
+    }
+    panelInner.classList.add('flip');
     banReason.value = '';
 });
+
+backBtn.addEventListener('click', () => panelInner.classList.remove('flip'));
+
+// Handle form submission
+banForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const reason = banReason.value.trim();
+    if (!reason) { 
+        alert("Please write a reason for banning."); 
+        return; 
+    }
+    
+    // Submit the form
+    this.submit();
+});
+
+// Auto-hide notifications after 5 seconds
+setTimeout(() => {
+    const notifications = document.querySelectorAll('.notification');
+    notifications.forEach(notification => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => notification.remove(), 500);
+    });
+}, 5000);
 </script>
 </body>
 </html>
