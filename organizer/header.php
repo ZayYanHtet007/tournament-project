@@ -17,7 +17,7 @@ if ($isLoggedIn) {
 
 $notifications = [];
 if ($isLoggedIn) {
-    $notiStmt = $conn->prepare("SELECT * FROM organizer_notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20");
+    $notiStmt = $conn->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20");
     $notiStmt->bind_param("i", $uid);
     $notiStmt->execute();
     $notifications = $notiStmt->get_result()->fetch_all(MYSQLI_ASSOC);
