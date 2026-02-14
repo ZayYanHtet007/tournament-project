@@ -2,11 +2,23 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+if (isset($_SESSION['user_id'])) {
+    if (isset($_SESSION['is_organizer']) && $_SESSION['is_organizer'] == 1) {
+        header("Location: organizer/organizerDashboard.php");
+        exit;
+    } else {
+        header("Location: index.php");
+        exit;
+    }
+}
+
 require_once "database/dbConfig.php";
 
 // PHPMailer requirements
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
 require 'phpmailer/PHPMailer.php';
 require 'phpmailer/SMTP.php';
 require 'phpmailer/Exception.php';
@@ -15,9 +27,6 @@ $error = $_SESSION['error'] ?? '';
 $success = $_SESSION['success'] ?? '';
 unset($_SESSION['error'], $_SESSION['success']);
 
-/* -------------------------------------------------------------------------- */
-/* LOGIC 1: LOGIN HANDLER                                                     */
-/* -------------------------------------------------------------------------- */
 if (isset($_POST['btnlogin'])) {
     $email = trim($_POST['txtemail']);
     $password = $_POST['txtpwd'];
@@ -63,27 +72,20 @@ if (isset($_POST['btnlogin'])) {
     exit;
 }
 
-/* -------------------------------------------------------------------------- */
-/* LOGIC 2: FORGOT PASSWORD HANDLER                                           */
-/* -------------------------------------------------------------------------- */
 if (isset($_POST['btnForgot'])) {
     $email = $_POST['email'];
-
-    // Generate 6-digit random OTP code
     $code = rand(100000, 999999);
 
-    // Save OTP in session
     $_SESSION['reset_email'] = $email;
     $_SESSION['reset_code'] = $code;
 
-    // Send Email
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
         $mail->Username = 'zayyan1817@gmail.com';
-        $mail->Password = 'itkdisfchwviutuo';
+        $mail->Password = 'itkdisfchwviutuo'; 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
@@ -92,15 +94,9 @@ if (isset($_POST['btnForgot'])) {
 
         $mail->isHTML(true);
         $mail->Subject = "Your Password Reset Code";
-        $mail->Body = "
-            <h2>Password Reset Request</h2>
-            <p>Your verification code is:</p>
-            <h1>$code</h1>
-            <p>Enter this code in the reset page.</p>
-        ";
+        $mail->Body = "<h2>Password Reset Request</h2><p>Your verification code is: <h1>$code</h1></p>";
 
         $mail->send();
-        echo "Reset code sent to email.";
         header("Location: verifyCode.php");
         exit;
     } catch (Exception $e) {
@@ -110,7 +106,7 @@ if (isset($_POST['btnForgot'])) {
     }
 }
 
-include('partial/header.php'); 
+include('partial/header.php');
 ?>
 
 <script src="https://cdn.lordicon.com/lordicon.js"></script>
@@ -131,7 +127,7 @@ include('partial/header.php');
         overflow-x: hidden;
         position: relative;
         /* CYBER GRID BACKGROUND */
-        background-image: 
+        background-image:
             linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px);
         background-size: 50px 50px;
@@ -142,11 +138,14 @@ include('partial/header.php');
     body::before {
         content: "";
         position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: 
-            radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                    rgba(255, 51, 68, 0.25) 0%, 
-                    transparent 60%),
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 51, 68, 0.25) 0%,
+                transparent 60%),
             radial-gradient(circle at 10% 10%, rgba(255, 0, 0, 0.15) 0%, transparent 40%),
             radial-gradient(circle at 90% 90%, rgba(255, 0, 0, 0.15) 0%, transparent 40%);
         z-index: -1;
@@ -157,13 +156,14 @@ include('partial/header.php');
     body::after {
         content: "";
         position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        background: linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(255, 51, 68, 0.03) 50%,
-            transparent 100%
-        );
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(255, 51, 68, 0.03) 50%,
+                transparent 100%);
         background-size: 100% 4px;
         animation: globalScanline 10s linear infinite;
         pointer-events: none;
@@ -171,8 +171,13 @@ include('partial/header.php');
     }
 
     @keyframes globalScanline {
-        0% { transform: translateY(-100%); }
-        100% { transform: translateY(100%); }
+        0% {
+            transform: translateY(-100%);
+        }
+
+        100% {
+            transform: translateY(100%);
+        }
     }
 
     .login-container-wrapper {
@@ -256,7 +261,10 @@ include('partial/header.php');
         padding-bottom: 15px;
     }
 
-    .form-group-custom { margin-bottom: 25px; }
+    .form-group-custom {
+        margin-bottom: 25px;
+    }
+
     .form-group-custom label {
         display: block;
         color: var(--primary-red);
@@ -297,8 +305,8 @@ include('partial/header.php');
         letter-spacing: 2px;
     }
 
-    .btn-red-action:hover { 
-        filter: brightness(1.2); 
+    .btn-red-action:hover {
+        filter: brightness(1.2);
         box-shadow: 0 0 20px rgba(255, 51, 68, 0.4);
     }
 
@@ -310,13 +318,18 @@ include('partial/header.php');
         text-transform: uppercase;
     }
 
-    .login-helper-links a, .back-to-login { 
-        color: #666; 
-        text-decoration: none; 
+    .login-helper-links a,
+    .back-to-login {
+        color: #666;
+        text-decoration: none;
         cursor: pointer;
-        transition: 0.2s; 
+        transition: 0.2s;
     }
-    .login-helper-links a:hover, .back-to-login:hover { color: var(--primary-red); }
+
+    .login-helper-links a:hover,
+    .back-to-login:hover {
+        color: var(--primary-red);
+    }
 
     .error-notice {
         background: rgba(255, 51, 68, 0.1);
@@ -340,7 +353,7 @@ include('partial/header.php');
 
 <main class="login-container-wrapper">
     <div class="card-stack" id="cardStack">
-        
+
         <div class="login-panel" id="login-panel">
             <h2>LOGIN TO <span style="color: var(--primary-red);">TX</span></h2>
             <p class="subtitle">Global Esports Network</p>
