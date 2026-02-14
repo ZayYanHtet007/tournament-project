@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
-$stmt = $conn->prepare("SELECT COUNT(*) AS unread FROM organizer_notifications WHERE user_id=? AND is_read=0");
+$stmt = $conn->prepare("SELECT COUNT(*) AS unread FROM notifications WHERE user_id=? AND is_read=0");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result()->fetch_assoc();

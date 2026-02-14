@@ -124,23 +124,25 @@ while ($row = mysqli_fetch_assoc($result)) {
             </div>
         </div>
 
-        <div class="pagination">
-            <?php if ($page > 1): ?>
-                <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($searchTerm) ?>" class="pg-link"><i class="fas fa-chevron-left"></i> PREV</a>
-            <?php endif; ?>
+        <?php if ($total_pages > 1): ?>
+            <nav class="pb-pagination" aria-label="Organizers pagination">
+                <?php if ($page > 1): ?>
+                    <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($searchTerm) ?>" class="pb-page-btn">Prev</a>
+                <?php endif; ?>
 
-            <?php
-            $start_loop = max(1, $page - 2);
-            $end_loop = min($total_pages, $page + 2);
+                <?php
+                $start_loop = max(1, $page - 2);
+                $end_loop = min($total_pages, $page + 2);
+                for ($i = $start_loop; $i <= $end_loop; $i++):
+                ?>
+                    <a href="?page=<?= $i ?>&search=<?= urlencode($searchTerm) ?>" class="pb-page-btn <?= ($i == $page) ? 'is-active' : '' ?>"><?= $i ?></a>
+                <?php endfor; ?>
 
-            for ($i = $start_loop; $i <= $end_loop; $i++): ?>
-                <a href="?page=<?= $i ?>&search=<?= urlencode($searchTerm) ?>" class="pg-link <?= ($i == $page) ? 'active' : '' ?>"><?= $i ?></a>
-            <?php endfor; ?>
-
-            <?php if ($page < $total_pages): ?>
-                <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($searchTerm) ?>" class="pg-link">NEXT <i class="fas fa-chevron-right"></i></a>
-            <?php endif; ?>
-        </div>
+                <?php if ($page < $total_pages): ?>
+                    <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($searchTerm) ?>" class="pb-page-btn">Next</a>
+                <?php endif; ?>
+            </nav>
+        <?php endif; ?>
     </div>
 </div>
 

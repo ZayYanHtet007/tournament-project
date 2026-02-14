@@ -74,9 +74,9 @@ $result = $conn->query($sql);
         </div>
 
         <?php if ($totalPages > 1): ?>
-            <div class="pagination">
+            <nav class="pb-pagination" aria-label="Messages pagination">
                 <?php if ($page > 1): ?>
-                    <a href="?page=<?= $page - 1 ?>" class="pg-link">PREV</a>
+                    <a href="?page=<?= $page - 1 ?>" class="pb-page-btn">Prev</a>
                 <?php endif; ?>
 
                 <?php
@@ -84,13 +84,13 @@ $result = $conn->query($sql);
                 $endLoop = min($totalPages, $page + 2);
                 for ($i = $startLoop; $i <= $endLoop; $i++):
                 ?>
-                    <a href="?page=<?= $i ?>" class="pg-link <?= ($i === $page) ? 'active' : '' ?>"><?= $i ?></a>
+                    <a href="?page=<?= $i ?>" class="pb-page-btn <?= ($i === $page) ? 'is-active' : '' ?>"><?= $i ?></a>
                 <?php endfor; ?>
 
                 <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?= $page + 1 ?>" class="pg-link">NEXT</a>
+                    <a href="?page=<?= $page + 1 ?>" class="pb-page-btn">Next</a>
                 <?php endif; ?>
-            </div>
+            </nav>
         <?php endif; ?>
 
 

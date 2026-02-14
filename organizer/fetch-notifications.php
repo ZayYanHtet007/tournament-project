@@ -16,10 +16,10 @@ $uid = (int)$_SESSION['user_id'];
 $since = isset($_GET['since']) ? (int)$_GET['since'] : 0;
 
 if ($since > 0) {
-  $stmt = $conn->prepare("SELECT notification_id, title, message,  is_read, created_at FROM organizer_notifications WHERE user_id = ? AND notification_id > ? ORDER BY notification_id DESC LIMIT 20");
+  $stmt = $conn->prepare("SELECT notification_id, title, message,  is_read, created_at FROM notifications WHERE user_id = ? AND notification_id > ? ORDER BY notification_id DESC LIMIT 20");
   $stmt->bind_param("ii", $uid, $since);
 } else {
-  $stmt = $conn->prepare("SELECT notification_id, title, message,  is_read, created_at FROM organizer_notifications WHERE user_id = ? ORDER BY notification_id DESC LIMIT 20");
+  $stmt = $conn->prepare("SELECT notification_id, title, message,  is_read, created_at FROM notifications WHERE user_id = ? ORDER BY notification_id DESC LIMIT 20");
   $stmt->bind_param("i", $uid);
 }
 

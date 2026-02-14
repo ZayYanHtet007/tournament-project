@@ -27,23 +27,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
     if (!$email) {
         $message = "Please enter a valid email address.";
     } else {
-        $stmt = $conn->prepare("SELECT admin_id, username, password, img, role FROM admins WHERE email = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT admin_id, username, password, img, role, COALESCE(status, 'active') AS status FROM admins WHERE email = ? LIMIT 1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($user = $result->fetch_assoc()) {
             if (password_verify($password, $user['password'])) {
-                session_regenerate_id(true);
-                $_SESSION['admin_id'] = $user['admin_id'];
-                $_SESSION['admin_role'] = $user['role'];
-                $_SESSION['admin_name'] = $user['username'];
-                $_SESSION['admin_email'] = $email;
-                $_SESSION['admin_img'] = $user['img'];
-                $_SESSION['login_attempts'] = 0;
+                if (strtolower((string)$user['status']) !== 'active') {
+                    $message = "Your admin account is inactive. Please contact the main admin.";
+                } else {
+                    session_regenerate_id(true);
+                    $_SESSION['admin_id'] = $user['admin_id'];
+                    $_SESSION['admin_role'] = $user['role'];
+                    $_SESSION['admin_name'] = $user['username'];
+                    $_SESSION['admin_email'] = $email;
+                    $_SESSION['admin_img'] = $user['img'];
+                    $_SESSION['login_attempts'] = 0;
 
-                header("Location: adminDashboard.php");
-                exit;
+                    header("Location: adminDashboard.php");
+                    exit;
+                }
             } else {
                 $_SESSION['login_attempts']++;
                 $_SESSION['last_attempt_time'] = time();
