@@ -3,6 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require 'database/dbConfig.php'; // PDO connection
+include 'partial/header.php'; // Include header for consistent styling and session management
 
 $today = date('Y-m-d');
 
@@ -43,111 +44,167 @@ $tournaments = $stmt->fetchAll();
 <title>Gaming Tournaments</title>
 
 <style>
+/* Gaming Style Theme: Red & Black */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Rajdhani', 'Segoe UI', Roboto, sans-serif; /* Using a more 'gamer' font feel */
 }
+
 body {
-  background-color: #121212;
-  padding: 20px;
-  color: #fff;
+  background-color: #0a0a0a; /* Deep Black */
+  background-image: radial-gradient(circle at center, #1a0505 0%, #0a0a0a 100%);
+  padding: 40px 20px;
+  color: #eeeeee;
 }
+
 .cards-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
+
 .card {
   width: 48%;
-  background-color: #1e1e1e;
-  border-radius: 14px;
+  background-color: #151515;
+  border: 1px solid #333;
+  border-left: 4px solid #ff0000; /* Red Accent Stripe */
+  border-radius: 4px; /* Sharper corners for gaming look */
   overflow: hidden;
   display: flex;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-  transition: all 0.25s ease;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
 .card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+  transform: translateY(-5px);
+  border-color: #ff0000;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
 }
+
 .card-img {
   width: 40%;
   background-size: cover;
   background-position: center;
-  
+  filter: grayscale(30%);
+  transition: 0.3s;
+  border-right: 1px solid #222;
 }
+
+.card:hover .card-img {
+  filter: grayscale(0%);
+}
+
 .card-content {
-  padding: 16px 20px;
+  padding: 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  background: linear-gradient(135deg, #151515 0%, #0f0f0f 100%);
 }
+
 .tournament-name {
-  font-size: 20px;
-  font-weight: bold;
-  color: #ffcc00;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
 }
+
 .game-name {
-  font-size: 14px;
-  color: #ccc;
-  margin-bottom: 10px;
+  font-size: 13px;
+  color: #ff0000; /* Red accent for game name */
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  letter-spacing: 2px;
 }
+
 .dates {
   display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
+
 .date-item {
   flex: 1;
-  background: #333;
-  border-radius: 8px;
-  padding: 6px;
-  font-size: 11px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px 4px;
+  font-size: 10px;
   text-align: center;
+  color: #bbb;
 }
-.reg-start { background: #00c6ff; color:#000; }
-.reg-end { background: #ff416c; }
-.tour-start { background: #ffcc00; color:#000; }
 
 .date-label {
   font-weight: bold;
+  display: block;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 2px;
 }
+
+/* Specific item accents */
+.reg-start { border-bottom: 2px solid #555; }
+.reg-end { border-bottom: 2px solid #ff0000; color: #fff; } /* Highlight deadline */
+.tour-start { border-bottom: 2px solid #fff; color: #fff; }
+
 .teams-joined, .prize-pool {
-  font-size: 13px;
+  font-size: 14px;
   color: #ddd;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #222;
+  padding-bottom: 4px;
 }
+
+.prize-pool {
+  color: #ff0000;
+  font-weight: bold;
+  border: none;
+}
+
 .buttons {
-  margin-top: 10px;
+  margin-top: 15px;
 }
+
 .btn {
   display: block;
   width: 100%;
-  padding: 10px 0;
+  padding: 12px 0;
   text-align: center;
-  border-radius: 8px;
   text-decoration: none;
-  font-weight: bold;
-  background: linear-gradient(45deg, #00c6ff, #0072ff);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: #ff0000;
   color: #fff;
+  clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%); /* Angled Gaming Button */
   transition: 0.3s;
 }
+
 .btn:hover {
-  background: linear-gradient(45deg, #0072ff, #00c6ff);
+  background: #cc0000;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+  letter-spacing: 2px;
+}
+
+@media (max-width: 992px) {
+  .card { width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .card {
-    width: 100%;
-    flex-direction: column;
-  }
-  .card-img {
-    width: 100%;
-    height: 180px;
-  }
+  .card { flex-direction: column; }
+  .card-img { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid #333; }
+  .btn { clip-path: none; border-radius: 4px; }
 }
 </style>
 </head>
@@ -157,12 +214,12 @@ body {
 <div class="cards-container">
 
 <?php if (empty($tournaments)): ?>
-  <p>No tournaments available right now.</p>
+  <p style="text-align:center; width:100%; font-size: 1.2rem; color: #666;">No tournaments available right now.</p>
 <?php endif; ?>
 
 <?php foreach ($tournaments as $t): ?>
   <?php
-    $image = $t['game_image'] ?: 'images\games\defaultTournament.jpg';
+    $image = $t['game_image'] ?: 'images/games/defaultTournament.jpg';
   ?>
   <div class="card">
     <div class="card-img" style="background-image:url('images/games/<?= htmlspecialchars($image) ?>')"></div>
@@ -174,25 +231,27 @@ body {
 
         <div class="dates">
           <div class="date-item reg-start">
-            <div class="date-label">Reg Start</div>
+            <span class="date-label">Reg Start</span>
             <div><?= date('M d, Y', strtotime($t['created_at'] ?? $today)) ?></div>
           </div>
           <div class="date-item reg-end">
-            <div class="date-label">Reg End</div>
+            <span class="date-label">Reg End</span>
             <div><?= date('M d, Y', strtotime($t['registration_deadline'])) ?></div>
           </div>
           <div class="date-item tour-start">
-            <div class="date-label">Start</div>
+            <span class="date-label">Start</span>
             <div><?= date('M d, Y', strtotime($t['start_date'])) ?></div>
           </div>
         </div>
 
         <div class="teams-joined">
-          Teams Joined: <?= (int)$t['joined_teams'] ?> / <?= (int)$t['max_participants'] ?>
+          <span>Teams Joined:</span>
+          <span><?= (int)$t['joined_teams'] ?> / <?= (int)$t['max_participants'] ?></span>
         </div>
 
         <div class="prize-pool">
-          Prize Pool: $<?= number_format($t['prize_pool'], 2) ?>
+          <span>PRIZE POOL:</span>
+          <span>$<?= number_format($t['prize_pool'], 2) ?></span>
         </div>
       </div>
 

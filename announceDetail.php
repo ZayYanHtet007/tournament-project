@@ -101,7 +101,7 @@ if (isset($_POST['btnRegister'])) {
       // 2. NEW: Check if team is already registered in any ongoing/upcoming tournament
       $checkActiveTournamentsSql = "
         SELECT COUNT(*) as active_count, 
-               GROUP_CONCAT(DISTINCT t.title SEPARATOR ', ') as tournament_names
+                GROUP_CONCAT(DISTINCT t.title SEPARATOR ', ') as tournament_names
         FROM tournament_teams tt
         JOIN tournaments t ON tt.tournament_id = t.tournament_id
         WHERE tt.team_id = ? 
@@ -179,197 +179,271 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    /* Match Previous Gaming Theme */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Rajdhani', 'Segoe UI', Roboto, sans-serif;
+    }
+
     body {
-      background: #121212;
+      background-color: #0a0a0a;
+      background-image: radial-gradient(circle at center, #1a0505 0%, #0a0a0a 100%);
       color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
+      padding: 40px 20px;
     }
 
     .container {
       max-width: 1000px;
       margin: auto;
-      background: #1e1e1e;
-      border-radius: 14px;
+      background: #151515;
+      border: 1px solid #333;
+      border-left: 4px solid #ff0000;
+      border-radius: 4px;
       overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
     }
 
+    /* Header with Back Button on Right */
     .header {
-      padding: 20px;
+      padding: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-text {
+      flex: 1;
+    }
+
+    .btn-back {
+      display: inline-block;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 12px;
+      padding: 8px 16px;
+      border: 1px solid #ff0000;
+      background: rgba(255, 0, 0, 0.1);
+      transition: 0.3s;
+      white-space: nowrap;
+      margin-left: 20px;
+    }
+
+    .btn-back:hover {
+      background: #ff0000;
+      box-shadow: 0 0 15px rgba(255,0,0,0.5);
     }
 
     .title {
-      font-size: 26px;
-      color: #ffcc00;
-      font-weight: bold;
+      font-size: 32px;
+      color: #ffffff;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .game {
-      color: #ccc;
+      color: #ff0000;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-size: 14px;
+      margin-top: 5px;
     }
 
     .image {
-      height: 260px;
+      height: 350px;
       background-size: cover;
       background-position: center;
+      border-top: 1px solid #222;
+      border-bottom: 1px solid #222;
+      position: relative;
+    }
+
+    .image::after {
+        content: "";
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 100px;
+        background: linear-gradient(transparent, #151515);
     }
 
     /* ===== DATE CARDS ===== */
     .dates {
       display: flex;
-      gap: 12px;
-      padding: 20px;
+      gap: 15px;
+      padding: 25px;
     }
 
     .date-card {
       flex: 1;
-      background: #2a2a2a;
-      border-radius: 10px;
-      padding: 12px;
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 15px;
       text-align: center;
+      transition: 0.3s;
     }
 
-    .date-card.reg-start {
-      background: #00c6ff;
-      color: #000;
-    }
+    .date-card:hover { border-color: #ff0000; }
 
-    .date-card.reg-end {
-      background: #ff416c;
-    }
-
-    .date-card.tour-start {
-      background: #ffcc00;
-      color: #000;
-    }
+    .date-card.reg-end { border-bottom: 3px solid #ff0000; }
 
     .date-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
+      text-transform: uppercase;
+      color: #888;
+      display: block;
+      margin-bottom: 5px;
     }
 
     .date-value {
-      margin-top: 4px;
-      font-size: 13px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #fff;
     }
 
     /* ===== PRIZE ===== */
     .prize {
-      padding: 0 20px 20px;
-      font-size: 18px;
-      color: #00ffcc;
-      font-weight: bold;
+      padding: 0 30px 20px;
+      font-size: 24px;
+      color: #ff0000;
+      font-weight: 900;
+      text-transform: uppercase;
     }
 
     /* ===== CONTENT ===== */
     .content {
-      padding: 20px;
+      padding: 30px;
+      background: rgba(0,0,0,0.2);
     }
 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 30px;
     }
 
     .section-title {
-      font-size: 17px;
-      margin-bottom: 8px;
-      color: #00c6ff;
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #fff;
+      text-transform: uppercase;
+      border-left: 3px solid #ff0000;
+      padding-left: 10px;
+      font-weight: bold;
     }
 
     /* ===== SCROLL BOX ===== */
     .scroll-box {
       max-height: 260px;
       overflow-y: auto;
-      background: #151515;
-      border-radius: 10px;
-      padding: 15px;
-      line-height: 1.6;
+      background: #0d0d0d;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 20px;
+      line-height: 1.7;
+      color: #ccc;
+      font-size: 14px;
       white-space: pre-line;
     }
 
-    .scroll-box::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .scroll-box::-webkit-scrollbar-thumb {
-      background: #00c6ff;
-      border-radius: 10px;
-    }
-
-    .scroll-box::-webkit-scrollbar-track {
-      background: #111;
-    }
+    .scroll-box::-webkit-scrollbar { width: 5px; }
+    .scroll-box::-webkit-scrollbar-thumb { background: #ff0000; }
+    .scroll-box::-webkit-scrollbar-track { background: #111; }
 
     /* ===== ACTIONS ===== */
-    .fee {
-      margin-top: 20px;
-      font-size: 15px;
-      color: #ffcc00;
+    .fee-joined-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #222;
     }
 
-    .joined {
-      margin-top: 5px;
-      color: #ccc;
-    }
+    .fee { font-size: 18px; color: #fff; font-weight: bold; }
+    .fee span { color: #ff0000; }
+    .joined { color: #aaa; font-weight: bold; }
 
-    .actions {
-      margin-top: 20px;
-    }
+    .actions { margin-top: 25px; }
 
     .checkbox {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
+      margin-bottom: 15px;
+      color: #bbb;
+      font-size: 14px;
     }
 
     .checkbox input {
+      accent-color: #ff0000;
       width: 18px;
       height: 18px;
+      cursor: pointer;
     }
 
     .warning {
       display: none;
-      margin-top: 10px;
-      background: #ff416c;
-      padding: 8px;
-      border-radius: 6px;
-    }
-
-    button {
-      margin-top: 15px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      margin-bottom: 15px;
+      background: rgba(255, 0, 0, 0.2);
+      border: 1px solid #ff0000;
       color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
     }
 
-    button:disabled {
-      background: #555;
+    button#registerBtn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      font-weight: 800;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      background: #ff0000;
+      color: #fff;
+      clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+      transition: 0.3s;
+    }
+
+    button#registerBtn:hover:not(:disabled) {
+      background: #cc0000;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+    }
+
+    button#registerBtn:disabled {
+      background: #333;
+      color: #666;
       cursor: not-allowed;
+      clip-path: none;
     }
 
     .readonly {
-      margin-top: 15px;
-      background: #333;
-      padding: 12px;
+      margin-top: 20px;
+      background: #222;
+      color: #ff0000;
+      padding: 15px;
       text-align: center;
-      border-radius: 8px;
+      font-weight: bold;
+      text-transform: uppercase;
+      border: 1px dashed #444;
     }
 
     @media(max-width:768px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .dates {
-        flex-direction: column;
-      }
+      .header { flex-direction: column-reverse; gap: 15px; }
+      .btn-back { margin-left: 0; align-self: flex-start; }
+      .grid { grid-template-columns: 1fr; }
+      .dates { flex-direction: column; }
+      .image { height: 200px; }
+      button#registerBtn { clip-path: none; }
     }
   </style>
 </head>
@@ -379,49 +453,53 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
   <div class="container">
 
     <div class="header">
-      <div class="title"><?= htmlspecialchars($tournament['tournament_title']) ?></div>
-      <div class="game"><?= htmlspecialchars($tournament['game_name']) ?></div>
+      <div class="header-text">
+        <div class="title"><?= htmlspecialchars($tournament['tournament_title']) ?></div>
+        <div class="game"><?= htmlspecialchars($tournament['game_name']) ?></div>
+      </div>
+      <a href="javascript:history.back()" class="btn-back">← Back to List</a>
     </div>
 
-    <div class="image" style="background-image:url('<?= htmlspecialchars($tournament['game_image'] ?: 'images/games/defaultTournament.jpg') ?>')"></div>
+    <div class="image" style="background-image:url('images/games/<?= htmlspecialchars($tournament['game_image'] ?: 'defaultTournament.jpg') ?>')"></div>
 
-    <!-- DATE CARDS -->
     <div class="dates">
-      <div class="date-card reg-start">
-        <div class="date-label">Reg Start</div>
+      <div class="date-card">
+        <span class="date-label">Registration Start</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['created_at'])) ?></div>
       </div>
-      <div class="date-card reg-end">
-        <div class="date-label">Reg End</div>
+      <div class="date-card">
+        <span class="date-label">Registration Deadline</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_deadline'])) ?></div>
       </div>
-      <div class="date-card tour-start">
-        <div class="date-label">Tournament Start</div>
+      <div class="date-card reg-end">
+        <span class="date-label">Tournament Start</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_start_date'])) ?></div>
       </div>
     </div>
 
-    <div class="prize">💰 Prize Pool: $<?= number_format($tournament['prize_pool'], 2) ?></div>
+    <div class="prize">Prize Pool: $<?= number_format($tournament['prize_pool'], 2) ?></div>
 
     <div class="content">
 
       <div class="grid">
         <div>
-          <div class="section-title">📜 Rules & Regulations</div>
+          <div class="section-title">Rules & Regulations</div>
           <div class="scroll-box"><?= nl2br(htmlspecialchars($rulesText)) ?></div>
         </div>
 
         <div>
-          <div class="section-title">⚙ Tournament System</div>
+          <div class="section-title">Tournament System</div>
           <div class="scroll-box"><?= nl2br(htmlspecialchars($systemText)) ?></div>
         </div>
       </div>
 
-      <div class="fee">
-        Registration Fee: $<?= number_format($tournament['fee'], 2) ?>
-      </div>
-      <div class="joined">
-        Joined Teams: <?= $joinedTeams ?> / <?= $tournament['max_participants'] ?>
+      <div class="fee-joined-row">
+          <div class="fee">
+            Entry Fee: <span>$<?= number_format($tournament['fee'], 2) ?></span>
+          </div>
+          <div class="joined">
+            SLOTS: <?= $joinedTeams ?> / <?= $tournament['max_participants'] ?>
+          </div>
       </div>
 
       <?php if ($isCompleted): ?>
@@ -431,10 +509,10 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
           <form method="POST">
             <div class="checkbox">
               <input type="checkbox" id="agree">
-              <label for="agree">I agree to the rules & regulations</label>
+              <label for="agree">I have read and agree to the rules & regulations</label>
             </div>
-            <div id="warn" class="warning">Must agree rules and regulations to register</div>
-            <button type="submit" id="registerBtn" disabled name="btnRegister">Register Now</button>
+            <div id="warn" class="warning">You must agree to the rules to proceed.</div>
+            <button type="submit" id="registerBtn" disabled name="btnRegister">Register Team</button>
           </form>
         </div>
       <?php endif; ?>
