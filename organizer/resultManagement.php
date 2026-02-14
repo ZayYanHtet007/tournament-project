@@ -516,6 +516,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_save'])) {
             $updStatus = $conn->prepare("UPDATE tournaments SET status = 'completed' WHERE tournament_id = ?");
             $updStatus->bind_param("i", $tournament_id);
             $updStatus->execute();
+            
+            
+            // Insert winner into tournament_results
+            $winnerData = fetchTournamentResults($conn, $tournament_id);
+            if ($winnerData['winner']) {
+                $insResult = $conn->prepare("INSERT INTO tournament_results (tournament_id, winner_team_id) VALUES (?, ?)");
+                $insResult->bind_param("ii", $tournament_id, $winnerData['winner']);
+                $insResult->execute();
+            }
         }
 
         $conn->commit();
@@ -525,7 +534,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_save'])) {
         $_SESSION['flash'] = "❌ Error: " . $e->getMessage();
     }
     // Redirect back to the same page
-    header("Location: manage-bracket.php?tournament_id=$tournament_id");
+    header("Location: resultManagement.php?tournament_id=$tournament_id");
     exit;
 }
 
