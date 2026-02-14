@@ -1,10 +1,20 @@
 <?php
-session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_organizer']) || $_SESSION['is_organizer'] != 1) {
+        header("Location: ../index.php");
+        exit;
+    }
+
+    if (isset($_SESSION['organizer_status']) && $_SESSION['organizer_status'] !== 'approved') {
+        header("Location: ../login.php");
+        exit;
+    }
+
 require_once "../database/dbConfig.php";
 
-/* ======================
-     ACCESS CONTROL
-====================== */
 if (
     !isset($_SESSION['user_id']) ||
     !isset($_SESSION['is_organizer']) ||
@@ -14,14 +24,7 @@ if (
     exit;
 }
 
-/* ======================
-     USER INFO
-====================== */
 $username = $_SESSION['username'] ?? 'Organizer';
-
-/* ======================
-     FETCH LATEST TOURNAMENT
-====================== */
 $tournament_id = null;
 
 $stmt = $conn->prepare("SELECT tournament_id FROM tournaments WHERE organizer_id = ? ORDER BY created_at DESC LIMIT 1");
