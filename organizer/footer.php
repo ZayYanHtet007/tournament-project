@@ -184,7 +184,7 @@
             <ul>
                 <li><a href="faq.php">Help Center</a></li>
                 <li><a href="contact.php">Contact Us</a></li>
-                <li><a href="privacy.php">Privacy Policy</a></li>
+                <li><a href="privacy_policy.php">Privacy Policy</a></li>
                 <li><a href="terms.php">Terms of Service</a></li>
             </ul>
         </div>
