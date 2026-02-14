@@ -24,7 +24,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 1. DATA FETCHING LOGIC (UPDATED TO INCLUDE GAME TYPE AND ORGANIZER FILTER)
+// 1. DATA FETCHING LOGIC (UNCHANGED)
 function getTeamsData($conn, $limit, $page, $search, $game_type, $organizer_id)
 {
     $offset = ($page - 1) * $limit;
@@ -36,16 +36,13 @@ function getTeamsData($conn, $limit, $page, $search, $game_type, $organizer_id)
     if ($search) {
         $conditions[] = "(t.team_name LIKE '%$search%' OR t.short_name LIKE '%$search%')";
     }
-    // Filter by the actual game name in the games table
     if ($game_type) {
         $conditions[] = "g.name = '$game_type'";
     }
-    // Filter by tournaments created by this organizer
     $conditions[] = "tr.organizer_id = $organizer_id";
 
     $whereClause = !empty($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
 
-    // Updated Count Query with Joins to tournaments
     $total_sql = "SELECT COUNT(DISTINCT t.team_id) as count 
                   FROM teams t 
                   LEFT JOIN games g ON t.aim_for = g.game_id 
@@ -56,7 +53,6 @@ function getTeamsData($conn, $limit, $page, $search, $game_type, $organizer_id)
     $total_results = $total_res['count'];
     $total_pages = ceil($total_results / $limit);
 
-    // Main Query: JOIN games, users (leader), team_members, and tournament tables
     $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, 
             g.name AS game_name, 
             l.username AS leader_name,
@@ -86,16 +82,13 @@ $games_list = $conn->query($games_sql);
 
 // 2. AJAX HANDLER
 if (isset($_GET['ajax'])) {
-    // Re-check organizer for AJAX requests
     if (!isset($_SESSION['user_id'])) {
         echo '<div class="no-results" style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--riot-red);"></i>
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--org-blue);"></i>
                 <p style="margin-top: 15px;">ACCESS DENIED. PLEASE LOGIN.</p>
               </div>';
         exit;
     }
-    // Verify again (simple check – we trust session, but we can also re-query if needed)
-    // For brevity, we assume the user is still an organizer; a full re-check would be similar to above.
 
     $limit = 9;
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -116,7 +109,6 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
 $game_type = isset($_GET['game_type']) ? $_GET['game_type'] : '';
 $data = getTeamsData($conn, $limit, $page, $search, $game_type, $current_user_id);
 
-// Helper function to render the grid (unchanged)
 function include_grid_content($data)
 {
     $result = $data['result'];
@@ -136,13 +128,13 @@ function include_grid_content($data)
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
                 <div class="team-card" onclick="openTeam(
-    '<?= addslashes($row['team_name']) ?>', 
-    '<?= addslashes($row['short_name'] ?? '') ?>', 
-    '<?= addslashes($row['motto'] ?? '') ?>', 
-    '<?= addslashes($row['leader_name'] ?? 'N/A') ?>', 
-    '<?= addslashes($row['player_list'] ?? '') ?>',
-    '<?= $row['team_id'] ?>'
-)">
+                    '<?= addslashes($row['team_name']) ?>', 
+                    '<?= addslashes($row['short_name'] ?? '') ?>', 
+                    '<?= addslashes($row['motto'] ?? '') ?>', 
+                    '<?= addslashes($row['leader_name'] ?? 'N/A') ?>', 
+                    '<?= addslashes($row['player_list'] ?? '') ?>',
+                    '<?= $row['team_id'] ?>'
+                )">
                     <div class="card-accent"></div>
                     <div class="photo-box">
                         <img src="images/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
@@ -159,7 +151,7 @@ function include_grid_content($data)
             <?php endwhile; ?>
         <?php else: ?>
             <div class="no-results" style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--riot-red);"></i>
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--org-blue);"></i>
                 <p style="margin-top: 15px;">NO TEAMS FOUND IN YOUR TOURNAMENTS.</p>
             </div>
         <?php endif; ?>
@@ -181,14 +173,14 @@ function include_grid_content($data)
 <?php
 }
 ?>
-<!-- The rest of the HTML/CSS/JS remains exactly the same -->
+
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Teko:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-    /* all existing styles (unchanged) – keep them as they were */
     :root {
-        --riot-red: #ff4d5a;
+        --org-blue: #00a3ff;
+        --org-blue-dark: #0056b3;
         --riot-dark: #050505;
         --riot-black: #111;
         --riot-gray: #ece8e1;
@@ -204,11 +196,9 @@ function include_grid_content($data)
         min-height: 100vh;
         position: relative;
         background-image:
-            radial-gradient(circle at 15% 15%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
-            radial-gradient(circle at 85% 85%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
-            linear-gradient(rgba(255, 70, 85, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 70, 85, 0.08) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
+            radial-gradient(circle at 15% 15%, rgba(0, 163, 255, 0.1) 0%, transparent 40%),
+            radial-gradient(circle at 85% 85%, rgba(0, 163, 255, 0.1) 0%, transparent 40%);
+        background-size: 100% 100%, 100% 100%;
         background-attachment: fixed;
     }
 
@@ -220,123 +210,10 @@ function include_grid_content($data)
         right: 0;
         bottom: 0;
         background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgba(255, 70, 85, 0.22) 0%,
+                rgba(0, 163, 255, 0.15) 0%,
                 transparent 50%);
         z-index: -1;
         pointer-events: none;
-    }
-
-    body::after {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: linear-gradient(to bottom, transparent 0%, rgba(255, 70, 85, 0.04) 50%, transparent 100%);
-        background-size: 100% 4px;
-        animation: scanline 10s linear infinite;
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    @keyframes scanline {
-        0% {
-            transform: translateY(-100%);
-        }
-
-        100% {
-            transform: translateY(100%);
-        }
-    }
-
-    /* --- ENHANCED PUNCH THROUGH INTRO --- */
-    #intro-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: black;
-        z-index: 10000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        animation: fadeOutScreen 0.6s cubic-bezier(0.4, 0, 0.2, 1) 3.2s forwards;
-    }
-
-    .intro-3d-text {
-        font-family: 'Teko', sans-serif;
-        font-size: 18rem;
-        font-weight: 700;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 15px;
-        line-height: 1;
-        position: relative;
-        animation: portalFlyThrough 3.5s cubic-bezier(0.7, 0, 0.3, 1) forwards;
-    }
-
-    .loading-bar {
-        position: absolute;
-        bottom: 20%;
-        width: 0%;
-        height: 2px;
-        background: var(--riot-red);
-        box-shadow: 0 0 15px var(--riot-red);
-        animation: loadBarFast 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-
-    @keyframes portalFlyThrough {
-        0% {
-            transform: scale(0.5);
-            opacity: 0;
-            letter-spacing: 100px;
-            filter: blur(10px);
-        }
-
-        20% {
-            transform: scale(1);
-            opacity: 1;
-            letter-spacing: 15px;
-            filter: blur(0px);
-        }
-
-        70% {
-            transform: scale(1.1);
-            opacity: 1;
-            letter-spacing: 15px;
-        }
-
-        100% {
-            transform: scale(80);
-            opacity: 0;
-            letter-spacing: -20px;
-        }
-    }
-
-    @keyframes loadBarFast {
-        0% {
-            width: 0;
-            opacity: 1;
-        }
-
-        80% {
-            width: 400px;
-            opacity: 1;
-        }
-
-        100% {
-            width: 100vw;
-            opacity: 0;
-        }
-    }
-
-    @keyframes fadeOutScreen {
-        to {
-            opacity: 0;
-            visibility: hidden;
-        }
     }
 
     .teams-container {
@@ -345,14 +222,7 @@ function include_grid_content($data)
         padding: 0 150px;
         position: relative;
         z-index: 10;
-        opacity: 0;
-        animation: fadeInContent 1s ease-out 2.8s forwards;
-    }
-
-    @keyframes fadeInContent {
-        to {
-            opacity: 1;
-        }
+        opacity: 1;
     }
 
     .header-flex {
@@ -393,13 +263,13 @@ function include_grid_content($data)
     }
 
     .filter-btn:hover {
-        background: rgba(255, 77, 90, 0.1);
-        border-color: var(--riot-red);
+        background: rgba(0, 163, 255, 0.1);
+        border-color: var(--org-blue);
     }
 
     .filter-btn.active {
-        background: var(--riot-red);
-        border-color: var(--riot-red);
+        background: var(--org-blue);
+        border-color: var(--org-blue);
         color: white;
     }
 
@@ -419,28 +289,20 @@ function include_grid_content($data)
         text-transform: uppercase;
         cursor: pointer;
         appearance: none;
-        -webkit-appearance: none;
         width: 200px;
-        transition: border-color 0.3s;
     }
 
     .game-filter-nav select.filter-btn:focus {
-        border-color: var(--riot-red);
+        border-color: var(--org-blue);
         outline: none;
-        box-shadow: 0 0 10px rgba(255, 77, 90, 0.2);
-    }
-
-    .game-filter-nav select.filter-btn option {
-        background-color: #0f1923;
-        color: white;
-        padding: 10px;
+        box-shadow: 0 0 10px rgba(0, 163, 255, 0.2);
     }
 
     .search-input {
         width: 0;
         padding: 10px 0;
         border: none;
-        border-bottom: 2px solid var(--riot-red);
+        border-bottom: 2px solid var(--org-blue);
         background: transparent;
         color: white;
         transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -459,17 +321,13 @@ function include_grid_content($data)
 
     .search-btn {
         font-size: 1.5rem;
-        color: var(--riot-red);
+        color: var(--org-blue);
         cursor: pointer;
         background: none;
         border: none;
         z-index: 2;
         padding: 10px;
         transition: transform 0.2s;
-    }
-
-    .search-btn:hover {
-        transform: scale(1.1);
     }
 
     .team-grid {
@@ -491,8 +349,8 @@ function include_grid_content($data)
 
     .team-card:hover {
         transform: translateY(-5px);
-        border-color: var(--riot-red);
-        box-shadow: 0 0 20px rgba(255, 77, 90, 0.2);
+        border-color: var(--org-blue);
+        box-shadow: 0 0 20px rgba(0, 163, 255, 0.2);
     }
 
     .card-accent {
@@ -501,7 +359,7 @@ function include_grid_content($data)
         left: 0;
         width: 100%;
         height: 3px;
-        background: var(--riot-red);
+        background: var(--org-blue);
         transform: scaleX(0);
         transform-origin: left;
         transition: transform 0.4s ease;
@@ -527,11 +385,6 @@ function include_grid_content($data)
         transition: 0.5s;
     }
 
-    .team-card:hover .photo-box img {
-        opacity: 1;
-        transform: scale(1.1);
-    }
-
     .info-box {
         padding: 20px 25px;
         background: linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, rgba(20, 20, 20, 1) 100%);
@@ -547,7 +400,7 @@ function include_grid_content($data)
     }
 
     .motto-txt {
-        color: var(--riot-red);
+        color: var(--org-blue);
         text-transform: uppercase;
         font-size: 0.9rem;
         font-weight: 700;
@@ -558,8 +411,7 @@ function include_grid_content($data)
     .pagination {
         display: flex;
         justify-content: center;
-        gap: 5px;
-        margin-top: 50px;
+        gap: 15px;
     }
 
     .pg-link {
@@ -576,8 +428,8 @@ function include_grid_content($data)
 
     .pg-link:hover,
     .pg-link.active {
-        background: var(--riot-red);
-        border-color: var(--riot-red);
+        background: var(--org-blue);
+        border-color: var(--org-blue);
     }
 
     .modal-overlay {
@@ -600,9 +452,9 @@ function include_grid_content($data)
         width: 100%;
         max-width: 650px;
         padding: 40px;
-        border: 1px solid var(--riot-red);
+        border: 1px solid var(--org-blue);
         position: relative;
-        box-shadow: 0 0 50px rgba(255, 77, 90, 0.2);
+        box-shadow: 0 0 50px rgba(0, 163, 255, 0.2);
         clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 30px 100%, 0 calc(100% - 30px));
     }
 
@@ -611,14 +463,9 @@ function include_grid_content($data)
         top: 15px;
         right: 20px;
         font-size: 2rem;
-        color: var(--riot-red);
+        color: var(--org-blue);
         cursor: pointer;
         transition: 0.3s;
-    }
-
-    .close-btn:hover {
-        color: white;
-        transform: rotate(90deg);
     }
 
     .modal-header h2 {
@@ -629,7 +476,7 @@ function include_grid_content($data)
 
     .modal-short {
         color: transparent;
-        -webkit-text-stroke: 1px var(--riot-red);
+        -webkit-text-stroke: 1px var(--org-blue);
         font-size: 2.5rem;
         margin-left: 10px;
     }
@@ -637,7 +484,7 @@ function include_grid_content($data)
     .modal-leader {
         margin-top: 15px;
         font-size: 1.1rem;
-        border-left: 3px solid var(--riot-red);
+        border-left: 3px solid var(--org-blue);
         padding-left: 10px;
     }
 
@@ -651,7 +498,7 @@ function include_grid_content($data)
     .player-card {
         background: rgba(255, 255, 255, 0.05);
         padding: 12px;
-        border-left: 3px solid var(--riot-red);
+        border-left: 3px solid var(--org-blue);
         display: flex;
         align-items: center;
         gap: 10px;
@@ -660,19 +507,19 @@ function include_grid_content($data)
     }
 
     .player-card:hover {
-        background: rgba(255, 70, 85, 0.1);
+        background: rgba(0, 163, 255, 0.1);
         transform: translateX(5px);
     }
 
     .player-avatar {
         width: 40px;
         height: 40px;
-        background: var(--riot-red);
+        background: var(--org-blue);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid var(--riot-red);
+        border: 1px solid var(--org-blue);
     }
 
     .player-info-name {
@@ -687,7 +534,7 @@ function include_grid_content($data)
         width: 100%;
         margin-top: 30px;
         padding: 15px;
-        background: var(--riot-red);
+        background: var(--org-blue);
         border: none;
         color: white;
         font-family: 'Teko', sans-serif;
@@ -702,115 +549,16 @@ function include_grid_content($data)
         color: #000;
     }
 
-    @keyframes glitch-anim-1 {
-        0% {
-            clip-path: inset(20% 0 80% 0);
-            transform: translate(-2px, 1px);
-        }
-
-        20% {
-            clip-path: inset(60% 0 10% 0);
-            transform: translate(2px, -1px);
-        }
-
-        40% {
-            clip-path: inset(40% 0 50% 0);
-            transform: translate(-2px, 2px);
-        }
-
-        60% {
-            clip-path: inset(80% 0 5% 0);
-            transform: translate(2px, -2px);
-        }
-
-        80% {
-            clip-path: inset(10% 0 70% 0);
-            transform: translate(-1px, 1px);
-        }
-
-        100% {
-            clip-path: inset(30% 0 20% 0);
-            transform: translate(1px, -1px);
-        }
-    }
-
-    @keyframes glitch-anim-2 {
-        0% {
-            clip-path: inset(10% 0 60% 0);
-            transform: translate(2px, -1px);
-        }
-
-        20% {
-            clip-path: inset(80% 0 5% 0);
-            transform: translate(-2px, 1px);
-        }
-
-        40% {
-            clip-path: inset(30% 0 20% 0);
-            transform: translate(2px, 2px);
-        }
-
-        60% {
-            clip-path: inset(15% 0 80% 0);
-            transform: translate(-2px, -2px);
-        }
-
-        80% {
-            clip-path: inset(55% 0 10% 0);
-            transform: translate(1px, -1px);
-        }
-
-        100% {
-            clip-path: inset(40% 0 30% 0);
-            transform: translate(-1px, 1px);
-        }
-    }
-
     @media (max-width: 768px) {
-        .teams-container {
-            margin: 40px auto;
-            padding: 0 15px;
-        }
-
-        .header-flex {
-            flex-direction: column;
-            text-align: center;
-            align-items: center;
-        }
-
-        .page-title {
-            font-size: 3rem;
-        }
-
-        .game-filter-nav {
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .search-input.active {
-            width: 100%;
-        }
-
-        .team-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .modal-header h2 {
-            font-size: 3rem;
-        }
+        .teams-container { padding: 0 15px; margin: 40px auto; }
+        .page-title { font-size: 3rem; }
+        .team-grid { grid-template-columns: 1fr; }
     }
 </style>
 
-<div id="intro-screen">
-    <div class="intro-wrapper">
-        <div class="intro-3d-text" data-text="ROSTER">ROSTER</div>
-    </div>
-    <div class="loading-bar"></div>
-</div>
-
 <div class="teams-container">
     <div class="header-flex">
-        <h1 class="page-title">Roster <span style="color:var(--riot-red)">//</span></h1>
+        <h1 class="page-title">Roster <span style="color:var(--org-blue)">//</span></h1>
         <div class="search-wrapper">
             <input type="text" id="teamSearch" class="search-input <?= $search ? 'active' : '' ?>" placeholder="SEARCH TEAM..." onkeyup="handleSearch()" value="<?= htmlspecialchars($search) ?>">
             <button class="search-btn" onclick="toggleSearch()"><i class="fas fa-search"></i></button>
@@ -833,7 +581,7 @@ function include_grid_content($data)
                     <?php endwhile; ?>
                 <?php endif; ?>
             </select>
-            <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--riot-red);"></i>
+            <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--org-blue);"></i>
         </div>
     </div>
 
@@ -853,7 +601,7 @@ function include_grid_content($data)
             <div class="modal-leader">
                 <i class="fas fa-crown" style="color:#ffd700; margin-right:5px;"></i> LEADER: <span id="m-leader" style="color:white; font-weight:bold;"></span>
             </div>
-            <p id="m-motto" style="color: var(--riot-red); font-size: 1rem; margin-top: 15px; text-transform: uppercase; font-style: italic; opacity: 0.8;"></p>
+            <p id="m-motto" style="color: var(--org-blue); font-size: 1rem; margin-top: 15px; text-transform: uppercase; font-style: italic; opacity: 0.8;"></p>
         </div>
         <h4 style="color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; margin: 25px 0 10px; font-size:0.9rem;">Active Players</h4>
         <div id="m-players"></div>
@@ -875,28 +623,16 @@ function include_grid_content($data)
     function toggleSearch() {
         const input = document.getElementById('teamSearch');
         input.classList.toggle('active');
-        if (input.classList.contains('active')) {
-            input.focus();
-        }
+        if (input.classList.contains('active')) input.focus();
     }
 
     function handleSearch() {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            fetchTeams(1);
-        }, 300);
+        searchTimer = setTimeout(() => { fetchTeams(1); }, 300);
     }
 
     function filterGame(type) {
         currentGameType = type;
-
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.innerText.toLowerCase() === type.toLowerCase() || (type === '' && btn.innerText === 'All Games')) {
-                btn.classList.add('active');
-            }
-        });
-
         fetchTeams(1);
     }
 
@@ -912,11 +648,8 @@ function include_grid_content($data)
             .then(html => {
                 dynamicContent.innerHTML = html;
                 dynamicContent.style.opacity = '1';
-
                 const pushUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?page=${page}&search=${encodeURIComponent(search)}&game_type=${encodeURIComponent(currentGameType)}`;
-                window.history.pushState({
-                    path: pushUrl
-                }, '', pushUrl);
+                window.history.pushState({ path: pushUrl }, '', pushUrl);
             })
             .catch(err => {
                 console.warn('Something went wrong.', err);
@@ -949,9 +682,7 @@ function include_grid_content($data)
         document.getElementById('m-players').innerHTML = html;
 
         const joinBtn = document.getElementById('m-join-btn');
-        joinBtn.onclick = function() {
-            requestJoin(teamId);
-        };
+        joinBtn.onclick = function() { requestJoin(teamId); };
         document.getElementById('teamModal').style.display = 'flex';
     }
 
@@ -969,9 +700,7 @@ function include_grid_content($data)
             formData.append('team_id', teamId);
             fetch('player/request_join.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData.toString()
                 })
                 .then(async response => {
@@ -979,13 +708,8 @@ function include_grid_content($data)
                     if (!response.ok) throw new Error(text || "Server Error");
                     return text;
                 })
-                .then(message => {
-                    alert(message);
-                    closeTeam();
-                })
-                .catch(error => {
-                    alert("Failed: " + error.message);
-                })
+                .then(message => { alert(message); closeTeam(); })
+                .catch(error => { alert("Failed: " + error.message); })
                 .finally(() => {
                     joinBtn.innerText = originalText;
                     joinBtn.disabled = false;
