@@ -1,10 +1,19 @@
 <?php
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (isset($_SESSION['user_id']) && isset($_SESSION['is_organizer'])) {
+        if ($_SESSION['is_organizer'] == 1) {
+            header("Location: organizer/organizerDashboard.php");
+            exit;
+        }
+    }
 include('partial/header.php');
 
 $isLoggedIn = isset($_SESSION['user_id']);
 $user_id = $isLoggedIn ? $_SESSION['user_id'] : null;
 
-// If logged in, try to fetch the user's team (first membership found)
 $userTeam = null;
 if ($isLoggedIn && isset($conn) && $conn) {
     $stmt = $conn->prepare("SELECT t.team_id, t.team_name FROM team_members tm JOIN teams t ON tm.team_id = t.team_id WHERE tm.user_id = ? LIMIT 1");
@@ -13,7 +22,7 @@ if ($isLoggedIn && isset($conn) && $conn) {
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res && $row = $res->fetch_assoc()) {
-            $userTeam = $row; // ['team_id' => ..., 'team_name' => ...]
+            $userTeam = $row; 
         }
         $stmt->close();
     }
@@ -28,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
     } else {
 
         $teamName = trim($_POST['teamName'] ?? '');
-        $shortName = strtoupper(trim($_POST['shortName'] ?? '')); // Force Uppercase
+        $shortName = strtoupper(trim($_POST['shortName'] ?? '')); 
         $motto = trim($_POST['motto'] ?? '');
         $players = (int)($_POST['players'] ?? 0);
 
@@ -45,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         }
 
         if (empty($errors)) {
-            // Validate Image Upload
+        
             if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
                 $errors[] = "File upload error code: " . $_FILES['image']['error'];
             } else {
