@@ -762,7 +762,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $res = $conn->query("select count(*) as total from teams");
             if ($res)  $status['teams'] = $res->fetch_assoc()['total'];
 
-            $res = $conn->query("select count(*) as total from matches ");
+            $res = $conn->query("select count(*) as total from tournaments ");
             if ($res)  $status['matches'] = $res->fetch_assoc()['total'];
 
             $res = $conn->query('select sum(prize_pool) as total from tournaments');
@@ -784,11 +784,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             </div>
             <div class="stat-box reveal">
                 <h4 data-target="<?php echo htmlspecialchars($status['matches']); ?>">0</h4>
-                <p>MATCHES TODAY</p>
+                <p>TOURNAMENTS</p>
             </div>
             <div class="stat-box reveal">
                 <h4 data-target="<?php echo htmlspecialchars($status['prize']); ?>">0</h4>
-                <p>PRIZE POOL ($)</p>
+                <p>TOTAL PRIZE POOL ($)</p>
             </div>
         </section>
 

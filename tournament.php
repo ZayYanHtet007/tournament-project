@@ -13,7 +13,7 @@ $sql = "
     LEFT JOIN tournaments t 
         ON t.game_id = g.game_id
         AND t.admin_status = 'approved'
-        AND t.status IN ('upcoming','ongoing')
+        AND t.status IN ('upcoming','ongoing','completed')
     LEFT JOIN tournament_teams tt
         ON tt.tournament_id = t.tournament_id
     LEFT JOIN teams te
