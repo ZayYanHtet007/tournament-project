@@ -404,9 +404,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </a>
         </nav>
 
-        <div class="nav-item" style="margin-top: auto; margin-bottom: 20px;">
-            <i class="fa-solid fa-gear" style="color: #fff;"></i>
-        </div>
     </aside>
 
     <header class="tx-header">
@@ -479,7 +476,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <p style="font-size: 10px; opacity: 0.5;"><?= htmlspecialchars($user['email']) ?></p>
                     </div>
                     <div class="drop-links">
-                        <a href="userprofile.php">CUSTOMIZE PROFILE</a>
+                        <a href="organizerProfile.php">CUSTOMIZE PROFILE</a>
                         <a href="changePassword.php">CHANGE PASSWORD</a>
                         <a href="../logout.php" style="color: var(--accent)">LOGOUT</a>
                     </div>
