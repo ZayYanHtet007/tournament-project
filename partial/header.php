@@ -477,7 +477,7 @@ document.addEventListener("click", (e) => {
     });
 
 function notiClick(token){
-    window.location.href="player/accept_invite.php?token=" + token;
+    window.location.href="player/invite_decision.php?token=" + token;
 }    
 
 </script>
