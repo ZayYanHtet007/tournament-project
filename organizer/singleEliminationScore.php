@@ -2,9 +2,7 @@
 session_start();
 require_once "../database/dbConfig.php";
 
-/* =====================================
-   1. AUTH
-===================================== */
+/* ---------- AUTH ---------- */
 if (!isset($_SESSION['user_id'])) {
     die("Login required");
 }
@@ -16,11 +14,9 @@ if (!$tournament_id) {
     die("Invalid tournament");
 }
 
-/* =====================================
-   2. VERIFY TOURNAMENT
-===================================== */
+/* ---------- VERIFY TOURNAMENT ---------- */
 $stmt = $conn->prepare("
-    SELECT tournament_id, type
+    SELECT tournament_id, type, status, title
     FROM tournaments
     WHERE tournament_id = ? AND organizer_id = ?
     LIMIT 1
@@ -33,9 +29,9 @@ if (!$tournament || $tournament['type'] !== 'singleelimination') {
     die("Unauthorized access");
 }
 
-/* =====================================
-   HELPER: ASSIGN WINNERS TO NEXT ROUND PLACEHOLDERS
-===================================== */
+$tournamentStatus = $tournament['status'];
+
+/* ---------- HELPER: ASSIGN WINNERS TO NEXT ROUND ---------- */
 function assignWinnersToNextRound($conn, $tournament_id, $completedRound) {
     $roundOrder = [
         'R256','R128','R64','R32','R16',
@@ -44,7 +40,7 @@ function assignWinnersToNextRound($conn, $tournament_id, $completedRound) {
 
     $currentIndex = array_search($completedRound, $roundOrder);
     if ($currentIndex === false || $roundOrder[$currentIndex] === 'final') {
-        return; // no next round
+        return;
     }
     $nextRound = $roundOrder[$currentIndex + 1];
 
@@ -57,7 +53,7 @@ function assignWinnersToNextRound($conn, $tournament_id, $completedRound) {
     $stmt->bind_param("is", $tournament_id, $completedRound);
     $stmt->execute();
     if ((int)$stmt->get_result()->fetch_assoc()['remaining'] > 0) {
-        return; // round not fully completed yet
+        return;
     }
 
     // Fetch winners in order
@@ -101,230 +97,249 @@ function assignWinnersToNextRound($conn, $tournament_id, $completedRound) {
     }
 }
 
-/* =====================================
-   3. SAVE RESULTS
-===================================== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    mysqli_begin_transaction($conn);
+/* ---------- HANDLE POST (SAVE SCORES) ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['score1'])) {
+    $conn->begin_transaction();
     try {
         $savedMatches = 0;
-        $roundProcessed = null;
+        $roundsCompleted = [];
 
-        foreach ($_POST['score'] as $match_id => $data) {
-            $teamA_score = isset($data['a']) ? (int)$data['a'] : 0;
-            $teamB_score = isset($data['b']) ? (int)$data['b'] : 0;
+        $deleteScores = $conn->prepare("DELETE FROM match_scores WHERE match_id = ?");
+        $insertScore = $conn->prepare("
+            INSERT INTO match_scores (match_id, team1_score, team2_score, set_number)
+            VALUES (?, ?, ?, 1)
+        ");
+        $updateMatch = $conn->prepare("
+            UPDATE matches
+            SET winner_team_id = ?, status = 'completed'
+            WHERE match_id = ? AND tournament_id = ? AND status = 'pending'
+        ");
 
-            // Valid BO3 only
-            if (
-                ($teamA_score === 2 && $teamB_score < 2) ||
-                ($teamB_score === 2 && $teamA_score < 2)
-            ) {
-                $matchStmt = $conn->prepare("
-                    SELECT team1_id, team2_id, round
-                    FROM matches
-                    WHERE match_id = ?
-                      AND tournament_id = ?
-                      AND status = 'pending'
-                      AND team1_id IS NOT NULL
-                      AND team2_id IS NOT NULL
-                ");
-                $matchStmt->bind_param("ii", $match_id, $tournament_id);
-                $matchStmt->execute();
-                $match = $matchStmt->get_result()->fetch_assoc();
+        foreach ($_POST['score1'] as $match_id => $score1) {
+            $match_id = (int)$match_id;
+            $score1 = (int)$score1;
+            $score2 = (int)($_POST['score2'][$match_id] ?? 0);
 
-                if (!$match) continue;
+            $q = $conn->prepare("
+                SELECT round, team1_id, team2_id, status
+                FROM matches
+                WHERE match_id = ? AND tournament_id = ? AND status = 'pending'
+            ");
+            $q->bind_param("ii", $match_id, $tournament_id);
+            $q->execute();
+            $match = $q->get_result()->fetch_assoc();
+            if (!$match) continue;
 
-                $winner_id = ($teamA_score === 2)
-                    ? $match['team1_id']
-                    : $match['team2_id'];
+            if ($score1 === $score2) {
+                throw new Exception("Match #$match_id: Draw not allowed.");
+            }
 
-                $roundProcessed = $match['round'];
+            $maxWins = ($match['round'] === 'final') ? 3 : 2;
+            $winningScore = max($score1, $score2);
+            $losingScore = min($score1, $score2);
 
-                $update = $conn->prepare("
-                    UPDATE matches
-                    SET team1_score = ?,
-                        team2_score = ?,
-                        winner_team_id = ?,
-                        status = 'completed'
-                    WHERE match_id = ?
-                      AND tournament_id = ?
-                      AND status = 'pending'
-                ");
-                $update->bind_param(
-                    "iiiii",
-                    $teamA_score,
-                    $teamB_score,
-                    $winner_id,
-                    $match_id,
-                    $tournament_id
-                );
-                $update->execute();
+            if ($winningScore !== $maxWins || $losingScore >= $maxWins) {
+                throw new Exception("Match #$match_id: Invalid score. Must be BO" . ($maxWins*2-1));
+            }
 
-                if ($update->affected_rows > 0) {
-                    $savedMatches++;
-                }
+            $winner = ($score1 > $score2) ? $match['team1_id'] : $match['team2_id'];
+
+            $deleteScores->bind_param("i", $match_id);
+            $deleteScores->execute();
+
+            $insertScore->bind_param("iii", $match_id, $score1, $score2);
+            $insertScore->execute();
+
+            $updateMatch->bind_param("iii", $winner, $match_id, $tournament_id);
+            $updateMatch->execute();
+
+            if ($updateMatch->affected_rows > 0) {
+                $savedMatches++;
+                $roundsCompleted[$match['round']] = true;
             }
         }
 
-        // After saving, check if the round is now fully completed
-        if ($roundProcessed) {
-            assignWinnersToNextRound($conn, $tournament_id, $roundProcessed);
+        foreach (array_keys($roundsCompleted) as $round) {
+            assignWinnersToNextRound($conn, $tournament_id, $round);
         }
 
-        mysqli_commit($conn);
-        echo json_encode([
-            "status" => "success",
-            "saved" => $savedMatches
-        ]);
-        exit;
+        $finalCheck = $conn->prepare("
+            SELECT COUNT(*) FROM matches
+            WHERE tournament_id = ? AND round = 'final' AND status != 'completed'
+        ");
+        $finalCheck->bind_param("i", $tournament_id);
+        $finalCheck->execute();
+        if ($finalCheck->get_result()->fetch_row()[0] == 0) {
+            $conn->query("UPDATE tournaments SET status = 'completed' WHERE tournament_id = $tournament_id");
+
+            $winnerQuery = $conn->prepare("
+                SELECT winner_team_id FROM matches
+                WHERE tournament_id = ? AND round = 'final' AND status = 'completed'
+                LIMIT 1
+            ");
+            $winnerQuery->bind_param("i", $tournament_id);
+            $winnerQuery->execute();
+            $winner = $winnerQuery->get_result()->fetch_assoc();
+            if ($winner) {
+                $insertResult = $conn->prepare("
+                    INSERT INTO tournament_results (tournament_id, winner_team_id, created_at)
+                    VALUES (?, ?, NOW())
+                ");
+                $insertResult->bind_param("ii", $tournament_id, $winner['winner_team_id']);
+                $insertResult->execute();
+            }
+        }
+
+        $conn->commit();
+        $_SESSION['flash'] = "✅ $savedMatches result(s) saved.";
     } catch (Exception $e) {
-        mysqli_rollback($conn);
-        echo json_encode([
-            "status" => "error",
-            "message" => "Save failed"
-        ]);
-        exit;
+        $conn->rollback();
+        $_SESSION['flash'] = "❌ Error: " . $e->getMessage();
     }
+    header("Location: singleEliminationScore.php?tournament_id=$tournament_id");
+    exit;
 }
 
-/* =====================================
-   4. FETCH SCORABLE MATCHES
-   (only those with both teams assigned and scheduled)
-===================================== */
-$stmt = $conn->prepare("
-    SELECT m.match_id,
-           m.round,
-           m.team1_id,
-           m.team2_id,
-           ta.team_name AS team_a,
-           tb.team_name AS team_b
+/* ---------- FETCH ALL MATCHES (PENDING + COMPLETED) WITH AGGREGATED SCORES ---------- */
+$matches = $conn->prepare("
+    SELECT m.*,
+           t1.team_name AS team1_name,
+           t2.team_name AS team2_name,
+           w.team_name AS winner_name,
+           COALESCE(ms.total1, 0) AS team1_score,
+           COALESCE(ms.total2, 0) AS team2_score
     FROM matches m
-    JOIN teams ta ON ta.team_id = m.team1_id
-    JOIN teams tb ON tb.team_id = m.team2_id
+    JOIN teams t1 ON m.team1_id = t1.team_id
+    JOIN teams t2 ON m.team2_id = t2.team_id
+    LEFT JOIN teams w ON m.winner_team_id = w.team_id
+    LEFT JOIN (
+        SELECT match_id, SUM(team1_score) AS total1, SUM(team2_score) AS total2
+        FROM match_scores
+        GROUP BY match_id
+    ) ms ON m.match_id = ms.match_id
     WHERE m.tournament_id = ?
       AND m.scheduled_time IS NOT NULL
-      AND m.status = 'pending'
       AND m.team1_id IS NOT NULL
       AND m.team2_id IS NOT NULL
-    ORDER BY FIELD(m.round,
-        'R256','R128','R64','R32','R16',
-        'quarterfinal','semifinal','final'
-    ), m.match_id ASC
+    ORDER BY FIELD(m.round, 'R256','R128','R64','R32','R16','quarterfinal','semifinal','final'),
+             m.match_id ASC
 ");
-$stmt->bind_param("i", $tournament_id);
-$stmt->execute();
-$matches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$matches->bind_param("i", $tournament_id);
+$matches->execute();
+$matchesResult = $matches->get_result();
+
+/* ---------- FETCH CHAMPION IF COMPLETED ---------- */
+$champion = null;
+if ($tournamentStatus === 'completed') {
+    $result = $conn->prepare("
+        SELECT t.team_name
+        FROM matches m
+        JOIN teams t ON m.winner_team_id = t.team_id
+        WHERE m.tournament_id = ? AND m.round = 'final' AND m.status = 'completed'
+        LIMIT 1
+    ");
+    $result->bind_param("i", $tournament_id);
+    $result->execute();
+    $champion = $result->get_result()->fetch_assoc();
+}
+
+$flash = $_SESSION['flash'] ?? '';
+unset($_SESSION['flash']);
+
+// Determine if any pending matches exist (to enable/disable save button)
+$hasPendingMatches = $matchesResult->num_rows > 0; // all fetched matches are pending because we filtered status in query? Actually we removed status filter to show completed too, so we need to check.
+$matchesResult->data_seek(0);
+$hasPendingMatches = false;
+while ($m = $matchesResult->fetch_assoc()) {
+    if ($m['status'] === 'pending') {
+        $hasPendingMatches = true;
+        break;
+    }
+}
+$matchesResult->data_seek(0);
 ?>
-<!DOCTYPE html>
-
-
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Manage Match Scores</title>
-
-<style>
-body{
-    background:#0f172a;
-    color:#fff;
-    font-family:Arial;
-    padding:30px;
-}
-.container{
-    max-width:1000px;
-    margin:auto;
-}
-.round-title{
-    font-size:22px;
-    margin:25px 0 10px;
-}
-.match{
-    background:#020617;
-    padding:15px;
-    border-radius:8px;
-    margin-bottom:12px;
-}
-.score-box{
-    margin-top:10px;
-}
-input{
-    width:60px;
-    padding:6px;
-    margin-right:10px;
-}
-button{
-    margin-top:20px;
-    padding:12px 20px;
-    background:#22c55e;
-    border:none;
-    cursor:pointer;
-}
-.notice{
-    margin-top:15px;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>Single Elimination Score Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">🏆 Score Entry – <?= htmlspecialchars($tournament['title'] ?? '') ?></h1>
+            <a href="SingleEliminationSchedule.php?tournament_id=<?= $tournament_id ?>"
+               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                📅 Back to Schedule
+            </a>
+        </div>
 
-<body>
-<div class="container">
+        <?php if ($flash): ?>
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                <?= $flash ?>
+            </div>
+        <?php endif; ?>
 
-<h2>Score Management (BO3)</h2>
+        <?php if ($tournamentStatus === 'completed' && $champion): ?>
+            <div class="bg-gradient-to-r from-yellow-100 to-yellow-200 border border-yellow-400 rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-center text-yellow-800">🏆 Champion: <?= htmlspecialchars($champion['team_name'] ?? '') ?> 🏆</h2>
+            </div>
+        <?php endif; ?>
 
-<form id="scoreForm">
+        <?php if ($matchesResult->num_rows === 0): ?>
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                No matches ready for score entry. Make sure they are scheduled and both teams are known.
+            </div>
+        <?php else: ?>
+            <form method="post">
+                <?php
+                $currentRound = '';
+                while ($m = $matchesResult->fetch_assoc()):
+                    if ($currentRound !== $m['round']):
+                        $currentRound = $m['round'];
+                        echo "<h2 class='text-xl font-semibold mt-6 mb-2'>" . strtoupper($currentRound) . "</h2>";
+                    endif;
 
-<?php 
-$currentRound = "";
-foreach($matches as $m): 
-    if ($currentRound !== $m['round']):
-        if ($currentRound !== "") echo "</div>";
-        $currentRound = $m['round'];
-        echo "<div class='round-title'>".strtoupper($currentRound)."</div>";
-        echo "<div>";
-    endif;
-?>
+                    $maxWins = ($m['round'] === 'final') ? 3 : 2;
+                    $isCompleted = ($m['status'] === 'completed');
+                    $disabled = ($tournamentStatus === 'completed' || $isCompleted) ? 'disabled' : '';
+                ?>
+                    <div class="bg-white p-4 rounded shadow mb-2 flex flex-wrap items-center gap-4">
+                        <div class="w-64 font-medium">
+                            <?= htmlspecialchars($m['team1_name'] ?? 'TBD') ?> vs <?= htmlspecialchars($m['team2_name'] ?? 'TBD') ?>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" name="score1[<?= $m['match_id'] ?>]" min="0" max="<?= $maxWins ?>"
+                                   class="w-16 border rounded px-2 py-1 text-center"
+                                   value="<?= $m['team1_score'] ?>"
+                                   <?= $disabled ?>
+                                   <?= (!$isCompleted && $tournamentStatus !== 'completed') ? 'required' : '' ?>>
+                            <span class="font-bold">:</span>
+                            <input type="number" name="score2[<?= $m['match_id'] ?>]" min="0" max="<?= $maxWins ?>"
+                                   class="w-16 border rounded px-2 py-1 text-center"
+                                   value="<?= $m['team2_score'] ?>"
+                                   <?= $disabled ?>
+                                   <?= (!$isCompleted && $tournamentStatus !== 'completed') ? 'required' : '' ?>>
+                        </div>
+                        <?php if ($isCompleted): ?>
+                            <span class="text-green-600 font-semibold text-sm bg-green-50 px-3 py-1 rounded">
+                                ✓ Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                <?php endwhile; ?>
 
-<div class="match">
-    <strong><?= htmlspecialchars($m['team_a']) ?> vs <?= htmlspecialchars($m['team_b']) ?></strong>
-    <div class="score-box">
-        <?= htmlspecialchars($m['team_a']) ?> Wins:
-        <input type="number" min="0" max="2"
-            name="score[<?= $m['match_id'] ?>][a]">
-        <?= htmlspecialchars($m['team_b']) ?> Wins:
-        <input type="number" min="0" max="2"
-            name="score[<?= $m['match_id'] ?>][b]">
+                <!-- Save button – always visible, disabled when tournament completed or no pending matches -->
+                <div class="mt-6 flex justify-end">
+                    <button type="submit"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                            <?= ($tournamentStatus === 'completed' || !$hasPendingMatches) ? 'disabled' : '' ?>>
+                        💾 Save Results
+                    </button>
+                </div>
+            </form>
+        <?php endif; ?>
     </div>
-</div>
-
-<?php endforeach; ?>
-
-<button type="submit">Save Results</button>
-<div class="notice" id="notice"></div>
-
-</form>
-
-</div>
-
-<script>
-document.getElementById("scoreForm")
-.addEventListener("submit", function(e){
-    e.preventDefault();
-
-    fetch("", {
-        method: "POST",
-        body: new FormData(this)
-    })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("notice").innerText =
-            "Saved: " + data.saved;
-        location.reload(); // refresh to show next round
-    })
-    .catch(() => {
-        document.getElementById("notice").innerText = "Error saving";
-    });
-});
-</script>
-
 </body>
 </html>
