@@ -214,78 +214,312 @@ unset($_SESSION['flash']);
     <meta charset="UTF-8">
     <title>Manage Schedule</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Riot style blue‑black theme with enhanced gaming touches */
+        body {
+            background-color: #0a0c10;
+            color: #e8e9ea;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+        .riot-card {
+            border-top: 4px solid #0b4a8f;
+            transition: all 0.3s ease;
+            background-color: #1a1c22;
+            border-color: #2f3136;
+            box-shadow: 0 0 10px rgba(11, 74, 143, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .riot-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(11, 74, 143, 0.2) 50%,
+                transparent 70%
+            );
+            transform: rotate(25deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        .riot-card:hover::after {
+            opacity: 1;
+            animation: shine 1.5s infinite;
+        }
+        .riot-card:hover {
+            box-shadow: 0 0 25px rgba(11, 74, 143, 0.9);
+            transform: translateY(-2px);
+        }
+        @keyframes shine {
+            0% { transform: rotate(25deg) translateX(-100%); }
+            100% { transform: rotate(25deg) translateX(100%); }
+        }
+        .group-badge {
+            background: linear-gradient(135deg, #0b4a8f 0%, #0a1a2b 100%);
+            text-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+        input[type="datetime-local"] {
+            background-color: #2d2f36;
+            border-color: #3f424a;
+            color: #ffffff;
+            border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        input[type="datetime-local"]:focus {
+            ring-color: #0b4a8f;
+            border-color: #0b4a8f;
+            outline: none;
+            box-shadow: 0 0 15px #0b4a8f;
+        }
+        input[type="datetime-local"]:read-only {
+            background-color: #1e1f25;
+            color: #9ca3af;
+            cursor: default;
+            border-color: #3f424a;
+            box-shadow: none;
+        }
+        .round-header {
+            border-bottom-color: #0b4a8f;
+            text-shadow: 0 0 10px #0b4a8f;
+        }
+        .completed-badge {
+            background-color: #065f46;
+            color: #d1fae5;
+            border: 1px solid #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+        .btn-gaming {
+            background: linear-gradient(145deg, #0b4a8f, #062c4f);
+            border: 1px solid #2f6bb0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-gaming::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255,255,255,0.3) 50%,
+                transparent 70%
+            );
+            transform: rotate(25deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        .btn-gaming:hover::after {
+            opacity: 1;
+            animation: shine 1.5s infinite;
+        }
+        .btn-gaming:hover {
+            background: linear-gradient(145deg, #0f5bb0, #083a66);
+            box-shadow: 0 0 25px #0b4a8f;
+            transform: scale(1.05);
+        }
+        .back-btn {
+            background: linear-gradient(145deg, #2d2f36, #1a1c22);
+            border: 1px solid #0b4a8f;
+        }
+        .back-btn:hover {
+            background: linear-gradient(145deg, #3a3d47, #23262e);
+            box-shadow: 0 0 20px #0b4a8f;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-5xl mx-auto">
+<body class="p-6 font-sans antialiased">
+    <div class="max-w-6xl mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">📅 Match Schedule – <?= htmlspecialchars($tournament['title']) ?></h1>
+            <h1 class="text-3xl font-bold text-blue-400 flex items-center gap-2" style="text-shadow: 0 0 12px #3b82f6;">
+                <span>📅</span> Match Schedule – <?= htmlspecialchars($tournament['title']) ?>
+            </h1>
             <a href="resultManagement.php?tournament_id=<?= $tournament_id ?>" 
-               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+               class="btn-gaming text-white px-5 py-2.5 rounded-lg transition shadow-md flex items-center gap-2 border border-blue-500">
                 🏆 Go to Bracket
             </a>
         </div>
 
         <?php if (isset($_GET['generated'])): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                ✅ Tournament matches have been generated successfully.
+            <div class="bg-blue-900 border-l-4 border-blue-400 text-blue-100 px-4 py-3 rounded-lg shadow-lg mb-4 flex items-center">
+                <span class="text-xl mr-2">✅</span> Tournament matches have been generated successfully.
             </div>
         <?php endif; ?>
 
         <?php if ($flash): ?>
-            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-                <?= $flash ?>
+            <div class="bg-blue-900 border-l-4 border-blue-400 text-blue-100 px-4 py-3 rounded-lg shadow-lg mb-4 flex items-center">
+                <span class="text-xl mr-2">ℹ️</span> <?= $flash ?>
             </div>
         <?php endif; ?>
 
         <?php if ($matches->num_rows === 0): ?>
-            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                ⏳ No matches yet. 
-                <?php if ($tournament['status'] !== 'ongoing'): ?>
-                    Tournament status is <strong><?= $tournament['status'] ?></strong>. 
-                    Matches will be generated when status becomes 'ongoing' and all teams have registered.
-                <?php elseif ($teamCount < $tournament['max_participants']): ?>
-                    Waiting for more teams to register (<?= $teamCount ?> / <?= $tournament['max_participants'] ?>).
-                <?php elseif (!in_array($teamCount, [12,16,24])): ?>
-                    This tournament has <?= $teamCount ?> teams, but only 12, 16, or 24 are supported for standard bracket.
-                <?php endif; ?>
-            </div>
-        <?php else: ?>
-            <form method="post" class="space-y-4">
-                <?php
-                $currentRound = '';
-                while ($m = $matches->fetch_assoc()):
-                    if ($currentRound !== $m['round']):
-                        $currentRound = $m['round'];
-                        echo "<h2 class='text-xl font-semibold mt-6 mb-2 capitalize'>" . str_replace('_', ' ', $currentRound) . "</h2>";
-                    endif;
-                ?>
-                    <div class="bg-white p-4 rounded shadow flex flex-wrap items-center gap-4">
-                        <div class="w-64">
-                            <?= $m['group_name'] ? "<span class='text-sm font-medium bg-gray-200 px-2 py-1 rounded'>Group {$m['group_name']}</span>" : '' ?>
-                            <span class="font-medium">
-                                <?= htmlspecialchars($m['team1'] ?? 'TBD') ?> vs <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
-                            </span>
-                        </div>
-                        <div class="flex-1">
-                            <input type="datetime-local" 
-                                   name="schedule[<?= $m['match_id'] ?>]" 
-                                   value="<?= $m['scheduled_time'] ? date('Y-m-d\TH:i', strtotime($m['scheduled_time'])) : '' ?>"
-                                   class="border rounded px-3 py-2 w-full max-w-xs">
-                        </div>
-                        <?php if ($m['status'] === 'completed'): ?>
-                            <span class="text-green-600 font-semibold text-sm bg-green-50 px-3 py-1 rounded">✓ Completed</span>
+            <div class="bg-gray-800 border-l-4 border-yellow-600 text-yellow-200 px-4 py-3 rounded-lg shadow-lg">
+                <div class="flex items-center">
+                    <span class="text-xl mr-2">⏳</span>
+                    <div>
+                        No matches yet. 
+                        <?php if ($tournament['status'] !== 'ongoing'): ?>
+                            Tournament status is <strong><?= $tournament['status'] ?></strong>. 
+                            Matches will be generated when status becomes 'ongoing' and all teams have registered.
+                        <?php elseif ($teamCount < $tournament['max_participants']): ?>
+                            Waiting for more teams to register (<?= $teamCount ?> / <?= $tournament['max_participants'] ?>).
+                        <?php elseif (!in_array($teamCount, [12,16,24])): ?>
+                            This tournament has <?= $teamCount ?> teams, but only 12, 16, or 24 are supported for standard bracket.
                         <?php endif; ?>
                     </div>
-                <?php endwhile; ?>
+                </div>
+            </div>
+        <?php else: 
+            // Reorganize matches by round and group
+            $matchesArray = [];
+            while ($row = $matches->fetch_assoc()) {
+                $round = $row['round'];
+                if ($round === 'group') {
+                    $group = $row['group_name'] ?? '?';
+                    $matchesArray['group'][$group][] = $row;
+                } else {
+                    $matchesArray[$round][] = $row;
+                }
+            }
 
-                <div class="mt-6 flex justify-end">
+            // Define round order for display
+            $roundOrder = ['group', 'quarterfinal', 'semifinal', 'final', 'third_place'];
+            $roundLabels = [
+                'group' => 'Group Stage',
+                'quarterfinal' => 'Quarterfinals',
+                'semifinal' => 'Semifinals',
+                'final' => 'Final',
+                'third_place' => 'Third Place Match'
+            ];
+        ?>
+            <form method="post" class="space-y-6">
+                <?php foreach ($roundOrder as $round): ?>
+                    <?php if (!isset($matchesArray[$round])) continue; ?>
+
+                    <!-- Round heading -->
+                    <h2 class="text-2xl font-bold text-gray-200 border-b-2 border-blue-800 pb-1 mt-6 first:mt-0 flex items-center round-header">
+                        <span class="bg-blue-700 text-white text-sm px-3 py-1 rounded-full mr-3 shadow-lg">
+                            <?= $round === 'group' ? '👥' : '🏆' ?>
+                        </span>
+                        <?= $roundLabels[$round] ?? ucfirst($round) ?>
+                    </h2>
+
+                    <?php if ($round === 'group'): ?>
+                        <!-- Group Stage: each group in its own card -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <?php 
+                            $groupNames = ['A', 'B', 'C', 'D'];
+                            foreach ($groupNames as $group): 
+                                if (!isset($matchesArray['group'][$group])) continue;
+                                $groupMatches = $matchesArray['group'][$group];
+                            ?>
+                                <div class="riot-card rounded-xl shadow-md overflow-hidden border border-gray-700">
+                                    <div class="group-badge px-4 py-3 text-white font-bold text-lg flex items-center">
+                                        <span class="bg-white text-blue-800 rounded-full w-7 h-7 flex items-center justify-center mr-2 text-sm">⚔️</span>
+                                        Group <?= $group ?>
+                                        <span class="ml-auto text-sm bg-blue-900 px-3 py-1 rounded-full border border-blue-400"><?= count($groupMatches) ?> matches</span>
+                                    </div>
+                                    <div class="p-4 space-y-3">
+                                        <?php foreach ($groupMatches as $m): ?>
+                                            <div class="flex flex-wrap items-center gap-3 border-b border-gray-700 pb-2 last:border-0">
+                                                <div class="w-8 text-sm font-medium text-gray-400">#<?= $m['match_order'] ?></div>
+                                                <div class="flex-1 font-medium text-gray-200">
+                                                    <?= htmlspecialchars($m['team1'] ?? 'TBD') ?> 
+                                                    <span class="text-gray-500 mx-1">vs</span> 
+                                                    <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <input type="datetime-local" 
+                                                           name="schedule[<?= $m['match_id'] ?>]" 
+                                                           value="<?= $m['scheduled_time'] ? date('Y-m-d\TH:i', strtotime($m['scheduled_time'])) : '' ?>"
+                                                           <?= $m['status'] === 'completed' ? 'readonly' : '' ?>
+                                                           class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                                                    <?php if ($m['status'] === 'completed'): ?>
+                                                        <span class="completed-badge text-xs font-semibold px-2.5 py-1 rounded-full">✓ Completed</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <!-- Knockout Rounds: each round in a single card -->
+                        <div class="riot-card rounded-xl shadow-md overflow-hidden border border-gray-700 mt-4">
+                            <div class="bg-gray-800 px-4 py-3 border-b border-gray-700 flex items-center">
+                                <span class="text-blue-400 font-semibold">🏅 <?= $roundLabels[$round] ?? ucfirst($round) ?></span>
+                                <span class="ml-auto text-sm text-gray-400"><?= count($matchesArray[$round]) ?> matches</span>
+                            </div>
+                            <div class="p-4 space-y-3">
+                                <?php foreach ($matchesArray[$round] as $m): ?>
+                                    <div class="flex flex-wrap items-center gap-3 border-b border-gray-700 pb-2 last:border-0">
+                                        <div class="w-8 text-sm font-medium text-gray-400">#<?= $m['match_order'] ?></div>
+                                        <div class="flex-1 font-medium text-gray-200">
+                                            <?= htmlspecialchars($m['team1'] ?? 'TBD') ?> 
+                                            <span class="text-gray-500 mx-1">vs</span> 
+                                            <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input type="datetime-local" 
+                                                   name="schedule[<?= $m['match_id'] ?>]" 
+                                                   value="<?= $m['scheduled_time'] ? date('Y-m-d\TH:i', strtotime($m['scheduled_time'])) : '' ?>"
+                                                   <?= $m['status'] === 'completed' ? 'readonly' : '' ?>
+                                                   class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+                                            <?php if ($m['status'] === 'completed'): ?>
+                                                <span class="completed-badge text-xs font-semibold px-2.5 py-1 rounded-full">✓ Completed</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+
+                <div class="mt-8 flex justify-between items-center">
+                    <!-- Back button at bottom left -->
+                    <a href="tournaments.php" 
+                       class="back-btn text-white px-6 py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center gap-2 border border-blue-500">
+                        <span>←</span> Back to Dashboard
+                    </a>
+                    <!-- Save button at bottom right -->
                     <button type="submit" 
-                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded shadow">
-                        💾 Save All Schedules
+                            class="btn-gaming text-white font-bold py-3 px-8 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center gap-2 border border-blue-500">
+                        <span>💾</span> Save Schedules
                     </button>
                 </div>
             </form>
         <?php endif; ?>
     </div>
+
+    <script>
+        // Disable past dates in datetime-local inputs (except readonly ones)
+        (function() {
+            const now = new Date();
+            // Format: YYYY-MM-DDTHH:MM (local)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            document.querySelectorAll('input[type="datetime-local"]:not([readonly])').forEach(input => {
+                input.setAttribute('min', minDateTime);
+            });
+        })();
+    </script>
 </body>
 </html>
