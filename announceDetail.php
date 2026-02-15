@@ -202,7 +202,7 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
       border-left: 4px solid #ff0000;
       border-radius: 4px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
     }
 
     /* Header with Back Button on Right */
@@ -234,7 +234,7 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
 
     .btn-back:hover {
       background: #ff0000;
-      box-shadow: 0 0 15px rgba(255,0,0,0.5);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
     }
 
     .title {
@@ -264,11 +264,13 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
     }
 
     .image::after {
-        content: "";
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 100px;
-        background: linear-gradient(transparent, #151515);
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      background: linear-gradient(transparent, #151515);
     }
 
     /* ===== DATE CARDS ===== */
@@ -288,9 +290,31 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
       transition: 0.3s;
     }
 
-    .date-card:hover { border-color: #ff0000; }
+    .date-card:hover {
+      border-color: #ff0000;
+    }
 
-    .date-card.reg-end { border-bottom: 3px solid #ff0000; }
+    .date-card1 {
+      flex: 1;
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 15px;
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .date-card1:hover {
+      border-color: #fff;
+    }
+
+    .reg-end {
+      border-bottom: 3px solid #ff0000;
+    }
+
+    .white-end{
+      border-bottom: 3px solid #fff;
+    }
 
     .date-label {
       font-size: 11px;
@@ -319,7 +343,7 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
     /* ===== CONTENT ===== */
     .content {
       padding: 30px;
-      background: rgba(0,0,0,0.2);
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .grid {
@@ -352,24 +376,45 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
       white-space: pre-line;
     }
 
-    .scroll-box::-webkit-scrollbar { width: 5px; }
-    .scroll-box::-webkit-scrollbar-thumb { background: #ff0000; }
-    .scroll-box::-webkit-scrollbar-track { background: #111; }
+    .scroll-box::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .scroll-box::-webkit-scrollbar-thumb {
+      background: #ff0000;
+    }
+
+    .scroll-box::-webkit-scrollbar-track {
+      background: #111;
+    }
 
     /* ===== ACTIONS ===== */
     .fee-joined-row {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #222;
     }
 
-    .fee { font-size: 18px; color: #fff; font-weight: bold; }
-    .fee span { color: #ff0000; }
-    .joined { color: #aaa; font-weight: bold; }
+    .fee {
+      font-size: 18px;
+      color: #fff;
+      font-weight: bold;
+    }
 
-    .actions { margin-top: 25px; }
+    .fee span {
+      color: #ff0000;
+    }
+
+    .joined {
+      color: #aaa;
+      font-weight: bold;
+    }
+
+    .actions {
+      margin-top: 25px;
+    }
 
     .checkbox {
       display: flex;
@@ -438,12 +483,31 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
     }
 
     @media(max-width:768px) {
-      .header { flex-direction: column-reverse; gap: 15px; }
-      .btn-back { margin-left: 0; align-self: flex-start; }
-      .grid { grid-template-columns: 1fr; }
-      .dates { flex-direction: column; }
-      .image { height: 200px; }
-      button#registerBtn { clip-path: none; }
+      .header {
+        flex-direction: column-reverse;
+        gap: 15px;
+      }
+
+      .btn-back {
+        margin-left: 0;
+        align-self: flex-start;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dates {
+        flex-direction: column;
+      }
+
+      .image {
+        height: 200px;
+      }
+
+      button#registerBtn {
+        clip-path: none;
+      }
     }
   </style>
 </head>
@@ -463,15 +527,15 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
     <div class="image" style="background-image:url('images/games/<?= htmlspecialchars($tournament['game_image'] ?: 'defaultTournament.jpg') ?>')"></div>
 
     <div class="dates">
-      <div class="date-card">
+      <div class="date-card white-end">
         <span class="date-label">Registration Start</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['created_at'])) ?></div>
       </div>
-      <div class="date-card">
+      <div class="date-card1 reg-end">
         <span class="date-label">Registration Deadline</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_deadline'])) ?></div>
       </div>
-      <div class="date-card reg-end">
+      <div class="date-card white-end">
         <span class="date-label">Tournament Start</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_start_date'])) ?></div>
       </div>
@@ -494,12 +558,12 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
       </div>
 
       <div class="fee-joined-row">
-          <div class="fee">
-            Entry Fee: <span>$<?= number_format($tournament['fee'], 2) ?></span>
-          </div>
-          <div class="joined">
-            SLOTS: <?= $joinedTeams ?> / <?= $tournament['max_participants'] ?>
-          </div>
+        <div class="fee">
+          Entry Fee: <span>$<?= number_format($tournament['fee'], 2) ?></span>
+        </div>
+        <div class="joined">
+          SLOTS: <?= $joinedTeams ?> / <?= $tournament['max_participants'] ?>
+        </div>
       </div>
 
       <?php if ($isCompleted): ?>
