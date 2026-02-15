@@ -147,15 +147,15 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                             <div class="noti-header">
                                 Notifications
                                 <?php if ($unread_count > 0): ?>
-                                    <span style="font-size: 11px; color: #64748b; font-weight: normal;">(<?php echo $unread_count; ?> unread)</span>
+                                    <span class="noti-unread-meta">(<?php echo $unread_count; ?> unread)</span>
                                 <?php endif; ?>
                             </div>
 
-                            <div class="noti-body" style="max-height: 300px; overflow-y: auto;">
+                            <div class="noti-body">
                                 <?php if (empty($notifications)): ?>
-                                    <div class="noti-item" style="cursor: default;">
-                                        <div class="noti-text" style="width: 100%; text-align: center; padding: 10px;">
-                                            <p style="color: #94a3b8;">No new notifications</p>
+                                    <div class="noti-item empty">
+                                        <div class="noti-text noti-empty-text">
+                                            <p>No new notifications</p>
                                         </div>
                                     </div>
                                 <?php else: ?>
@@ -179,7 +179,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                                                     <?php echo htmlspecialchars($n['message']); ?>
                                                 </p>
                                                 <small>
-                                                    <i class="fa-regular fa-clock" style="margin-right: 3px;"></i>
+                                                    <i class="fa-regular fa-clock noti-time-icon"></i>
                                                     <?php echo date('M d, h:i A', strtotime($n['created_at'])); ?>
                                                 </small>
                                             </div>
@@ -253,7 +253,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                         ${data.message}
                     </p>
                     <small>
-                        <i class="fa-regular fa-clock" style="margin-right: 3px;"></i>
+                        <i class="fa-regular fa-clock noti-time-icon"></i>
                         ${data.created_at}
                     </small>
                 </div>
@@ -263,9 +263,9 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                     notiBody.prepend(div);
 
                     // Remove "No new notifications" message if present
-                    const noNotiMsg = notiBody.querySelector('.noti-item p[style*="color: #94a3b8"]');
-                    if (noNotiMsg && noNotiMsg.textContent.includes("No new notifications")) {
-                        noNotiMsg.closest('.noti-item').remove();
+                    const noNotiItem = notiBody.querySelector('.noti-item.empty');
+                    if (noNotiItem) {
+                        noNotiItem.remove();
                     }
 
                     // Update unread count
@@ -290,9 +290,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                         // Create unread span if it doesn't exist
                         const notiHeader = document.querySelector('.noti-header');
                         const newSpan = document.createElement('span');
-                        newSpan.style.fontSize = '11px';
-                        newSpan.style.color = '#64748b';
-                        newSpan.style.fontWeight = 'normal';
+                        newSpan.className = 'noti-unread-meta';
                         newSpan.textContent = `(1 unread)`;
                         notiHeader.appendChild(newSpan);
                     }
@@ -342,7 +340,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                         if (!notiItem) return;
 
 
-                        if (notiItem.querySelector('p[style*="color: #94a3b8"]')) {
+                        if (notiItem.classList.contains('empty')) {
                             return;
                         }
 

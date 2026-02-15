@@ -40,6 +40,41 @@ function pm_build_query(array $params): string
     return http_build_query($clean);
 }
 
+function pm_team_status_key(?string $status): string
+{
+    $normalized = strtolower(trim((string)$status));
+    if ($normalized === 'disban') {
+        return 'disbanded';
+    }
+    if ($normalized === 'ban') {
+        return 'banned';
+    }
+    if ($normalized === '') {
+        return 'unknown';
+    }
+    return $normalized;
+}
+
+function pm_team_status_label(?string $status): string
+{
+    return strtoupper(pm_team_status_key($status));
+}
+
+function pm_team_status_class(?string $status): string
+{
+    $normalized = pm_team_status_key($status);
+    if ($normalized === 'active') {
+        return 'pb-status-active';
+    }
+    if ($normalized === 'disbanded') {
+        return 'pb-status-disbanded';
+    }
+    if ($normalized === 'banned') {
+        return 'pb-status-banned';
+    }
+    return 'pb-status-other';
+}
+
 function pm_get_games(mysqli $conn): array
 {
     $games = [];
@@ -111,6 +146,7 @@ function pm_get_teams(mysqli $conn, int $limit, int $page, string $search = '', 
                 t.team_id,
                 t.team_name,
                 t.short_name,
+                t.status,
                 COALESCE(g.name, 'General') AS game_name,
                 COALESCE(u.username, 'N/A') AS leader_name,
                 COUNT(DISTINCT tm.user_id) AS player_count
@@ -119,7 +155,7 @@ function pm_get_teams(mysqli $conn, int $limit, int $page, string $search = '', 
             LEFT JOIN users u ON u.user_id = t.leader_id
             LEFT JOIN team_members tm ON tm.team_id = t.team_id
             $whereSql
-            GROUP BY t.team_id, t.team_name, t.short_name, g.name, u.username
+            GROUP BY t.team_id, t.team_name, t.short_name, t.status, g.name, u.username
             ORDER BY t.team_id DESC
             LIMIT ? OFFSET ?";
     $stmt = $conn->prepare($sql);
@@ -149,6 +185,7 @@ function pm_get_team_with_players(mysqli $conn, int $teamId): array
                                     t.team_id,
                                     t.team_name,
                                     t.short_name,
+                                    t.status,
                                     COALESCE(g.name, 'General') AS game_name,
                                     COALESCE(u.username, 'N/A') AS leader_name
                                 FROM teams t
@@ -317,11 +354,14 @@ require_once __DIR__ . '/sidebar.php';
                                 ['team_id' => (int)$team['team_id']]
                             ));
                             $teamUrl = 'players.php?' . $teamQuery;
+                            $teamStatusRaw = (string)($team['status'] ?? 'unknown');
+                            $teamStatusClass = pm_team_status_class($teamStatusRaw);
+                            $teamStatusLabel = pm_team_status_label($teamStatusRaw);
                             ?>
                             <a class="pb-card pb-team-card" href="<?= pm_h($teamUrl) ?>">
                                 <div class="pb-card-top">
                                     <span class="pb-tag"><?= pm_h((string)$team['game_name']) ?></span>
-                                    <span class="pb-meta-pill"><?= (int)$team['player_count'] ?> Players</span>
+                                    <span class="pb-status-pill <?= pm_h($teamStatusClass) ?>"><?= pm_h($teamStatusLabel) ?></span>
                                 </div>
                                 <h3><?= pm_h((string)$team['team_name']) ?></h3>
                                 <p class="pb-subtitle">
@@ -329,6 +369,9 @@ require_once __DIR__ . '/sidebar.php';
                                 </p>
                                 <p class="pb-meta">
                                     Leader: <strong><?= pm_h((string)$team['leader_name']) ?></strong>
+                                </p>
+                                <p class="pb-meta">
+                                    Players: <strong><?= (int)$team['player_count'] ?></strong>
                                 </p>
                             </a>
                         <?php endforeach; ?>
@@ -385,11 +428,18 @@ require_once __DIR__ . '/sidebar.php';
                     <?php
                     $team = $teamPayload['team'];
                     $players = $teamPayload['players'];
+                    $teamStatusRaw = (string)($team['status'] ?? 'unknown');
+                    $teamStatusClass = pm_team_status_class($teamStatusRaw);
+                    $teamStatusLabel = pm_team_status_label($teamStatusRaw);
                     ?>
                     <div class="pb-team-meta">
                         <span><i class="fa-solid fa-shield-halved"></i> <?= pm_h((string)$team['game_name']) ?></span>
                         <span><i class="fa-solid fa-crown"></i> <?= pm_h((string)$team['leader_name']) ?></span>
                         <span><i class="fa-solid fa-users"></i> <?= count($players) ?> Player(s)</span>
+                        <span class="pb-status-pill <?= pm_h($teamStatusClass) ?>">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <?= pm_h($teamStatusLabel) ?>
+                        </span>
                     </div>
 
                     <?php if (!empty($players)): ?>
