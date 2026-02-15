@@ -438,7 +438,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         /* ================= LIVE MATCHES ================= */
         .match-section {
             padding: 100px 10%;
-            background: rgba(255, 255, 255, 0.02);
         }
 
         .match-list {
@@ -796,12 +795,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             <div class="game-grid">
                 <?php
                 $games = [
-                    ['img' => 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800', 'title' => 'VALORANT', 'type' => 'TACTICAL SHOOTER'],
-                    ['img' => 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=800', 'title' => 'CS2', 'type' => 'ACTION'],
-                    ['img' => 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=800', 'title' => 'DOTA 2', 'type' => 'MOBA'],
-                    ['img' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=800', 'title' => 'PUBG', 'type' => 'BATTLE ROYALE'],
-                    ['img' => 'https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?auto=format&fit=crop&q=80&w=800', 'title' => 'FREE FIRE', 'type' => 'SURVIVAL'],
-                    ['img' => 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800', 'title' => 'FORTNITE', 'type' => 'BUILDER'],
+                    ['img' => 'images/valorant.jpg', 'title' => 'VALORANT', 'type' => 'TACTICAL SHOOTER'],
+                    ['img' => 'images/cs.jpg', 'title' => 'COUNTER STRIKE', 'type' => 'ACTION'],
+                    ['img' => 'images/dota2.jpg', 'title' => 'DOTA 2', 'type' => 'MOBA'],
+                    ['img' => 'images/pubg.jpg', 'title' => 'PUBG', 'type' => 'BATTLE ROYALE'],
+                    ['img' => 'images/fifa24.jpg', 'title' => 'FIFA24', 'type' => 'SURVIVAL'],
+                    ['img' => 'images/mlbb.jpg', 'title' => 'MOBILE LEGENDS', 'type' => 'BUILDER'],
+                    ['img' => 'images/lol.jpg', 'title' => 'LEAGUE OF LEGENDS', 'type' => 'SHOOTER']
                 ];
 
                 foreach ($games as $game): ?>

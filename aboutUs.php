@@ -230,8 +230,6 @@ include('partial/header.php');
     </section>
 </div>
 
-</body>
-</html>
 
 <?php
 include('partial/footer.php');

@@ -140,8 +140,8 @@
         <div class="footer-col links">
             <h4>Support</h4>
             <ul>
-                <li><a href="faq.php">Help Center</a></li>
-                <li><a href="contact.php">Contact Us</a></li>
+                <li><a href="FAQS.php">Help Center</a></li>
+                <li><a href="aboutUs.php">About Us</a></li>
                 <li><a href="terms.php">Terms of Service</a></li>
             </ul>
         </div>
