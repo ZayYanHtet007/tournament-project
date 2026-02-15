@@ -48,13 +48,26 @@ $result = $stmt->get_result();
 $tournament_data = $result->fetch_assoc();
 $genre = $tournament_data ? $tournament_data['genre'] : 'MOBA';
 
-if ($genre === 'BATTLE_ROYALE') {
+$stmtFortype = $conn->prepare("SELECT type FROM tournaments WHERE tournament_id = ?");
+$stmtFortype->bind_param("i",$id);
+$stmtFortype->execute();
+$typeResult = $stmtFortype->get_result();
+
+$typeData = $typeResult->fetch_assoc();
+$type = $typeData ? $typeData['type'] : 'standard';
+
+if ($type === 'singleelimination'){
+    $scorePage = "singleEliminationScore.php";
+    $schedulePage = "SingleEliminationSchedule.php";
+}
+  else if ($genre === 'BATTLE_ROYALE' && $type='standarad') {
     $scorePage = "brScoreManagement.php";
     $schedulePage = "brScheduleManagement.php";
-} else {
+} else if($genre !== 'BATTLE_ROYALE' && $type='standard'){
     $scorePage = "resultManagement.php";
     $schedulePage = "scheduleManagement.php";
 }
+  
 ?>
 
 <style>
