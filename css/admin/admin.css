@@ -648,6 +648,7 @@ body {
   max-width: 1200px;
   margin: 30px auto;
   background: linear-gradient(135deg, #120c4d, #849dd3);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-radius: 15px;
   box-shadow: 0 5px 30px rgba(0, 0, 0, 0.1);
@@ -724,6 +725,7 @@ label {
 .tournament-card-wrapper {
   /* background: linear-gradient(135deg, #120c4d, #849dd3); */
   border-radius: 12px;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
