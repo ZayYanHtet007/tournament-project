@@ -39,6 +39,7 @@ if ($stmt) {
     error_log('DB prepare failed: ' . $conn->error);
 }
 
+// ---------- Participants chart data (lifetime, unchanged) ----------
 $gameLabels = [];
 $participantCounts = [];
 
@@ -67,6 +68,27 @@ while ($row = $result->fetch_assoc()) {
     $participantCounts[] = (int)$row['teams_joined'];
 }
 
+// ---------- Revenue chart data (aggregated Jan–Apr across all years) ----------
+$revenueLabels = ['Jan', 'Feb', 'Mar', 'Apr'];
+$revenueData = array_fill(0, 4, 0.0); // initialise zeros
+
+$revStmt = $conn->prepare("
+    SELECT MONTH(tp.payment_date) AS month_num, SUM(tp.amount) AS total
+    FROM tournament_payments tp
+    JOIN tournaments t ON tp.tournament_id = t.tournament_id
+    WHERE t.organizer_id = ?
+      AND tp.status = 'completed'
+      AND MONTH(tp.payment_date) IN (1,2,3,4)
+    GROUP BY MONTH(tp.payment_date)
+");
+$revStmt->bind_param("i", $_SESSION['user_id']);
+$revStmt->execute();
+$revResult = $revStmt->get_result();
+
+while ($row = $revResult->fetch_assoc()) {
+    $index = $row['month_num'] - 1; // convert month (1-4) to array index (0-3)
+    $revenueData[$index] = (float)$row['total'];
+}
 
 include("header.php");
 ?>
@@ -207,9 +229,8 @@ include("header.php");
 
     /* =========================
        PARTICIPANTS BAR CHART
-       (REAL DATABASE DATA)
+       (LIFETIME DATA)
     ========================== */
-
     const gameLabels = <?= json_encode($gameLabels) ?>;
     const participantData = <?= json_encode($participantCounts) ?>;
 
@@ -229,17 +250,19 @@ include("header.php");
 
     /* =========================
        REVENUE LINE CHART
-       (UNCHANGED / STATIC)
+       (AGGREGATED JAN–APR ACROSS ALL YEARS)
     ========================== */
+    const revenueLabels = <?= json_encode($revenueLabels) ?>;
+    const revenueData   = <?= json_encode($revenueData) ?>;
 
     const ctx2 = document.getElementById('revenueChart').getContext('2d');
     new Chart(ctx2, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+            labels: revenueLabels,
             datasets: [{
-                label: 'Revenue',
-                data: [5000, 8500, 6000, 11000],
+                label: 'Revenue (USD)',
+                data: revenueData,
                 borderColor: '#1e90ff',
                 backgroundColor: 'rgba(30,144,255,0.15)',
                 tension: 0.3
@@ -248,6 +271,5 @@ include("header.php");
         options: commonOptions
     });
 </script>
-
 
     <?php include("footer.php"); ?>
