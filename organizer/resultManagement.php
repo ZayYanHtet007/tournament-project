@@ -703,7 +703,6 @@ $roundLabels = [
             transition: all 0.2s;
         }
         input[type="number"]:focus, input[type="text"]:focus {
-            ring-color: #0b4a8f;
             border-color: #0b4a8f;
             outline: none;
             box-shadow: 0 0 15px #0b4a8f;
