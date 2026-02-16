@@ -643,212 +643,310 @@ $roundLabels = [
 <head>
     <meta charset="UTF-8">
     <title>Bracket Management</title>
+    <!-- Simple, clean font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons (monochrome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Riot style blue‑black theme with enhanced gaming touches */
+        /* ----- SQUARE DESIGN, BRIGHTER BLUE ACCENTS, MINIMAL ICONS (NO COLOR) ----- */
         body {
-            background-color: #0a0c10;
-            color: #e8e9ea;
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background-color: #0b0d12;
+            color: #e1e5ec;
+            font-family: 'Inter', sans-serif;
+            padding: 2rem 1rem;
         }
-        .riot-card {
-            border-top: 4px solid #0b4a8f;
-            transition: all 0.3s ease;
-            background-color: #1a1c22;
-            border-color: #2f3136;
-            box-shadow: 0 0 10px rgba(11, 74, 143, 0.3);
-            position: relative;
-            overflow: hidden;
+
+        /* Main container – dark, square */
+        .square-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            background-color: #10131c;
+            border: 1px solid #2f3a4a;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+            padding: 2rem;
         }
-        .riot-card::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                45deg,
-                transparent 30%,
-                rgba(11, 74, 143, 0.2) 50%,
-                transparent 70%
-            );
-            transform: rotate(25deg);
-            transition: all 0.5s ease;
-            opacity: 0;
+
+        /* Header – brighter blue border */
+        .header-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            border-bottom: 2px solid #2d7ff9; /* brighter blue */
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .riot-card:hover::after {
-            opacity: 1;
-            animation: shine 1.5s infinite;
+
+        /* Square cards */
+        .square-card {
+            background-color: #161b26;
+            border: 1px solid #2f3a4a;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+            transition: all 0.15s ease;
         }
-        .riot-card:hover {
-            box-shadow: 0 0 25px rgba(11, 74, 143, 0.9);
-            transform: translateY(-2px);
+        .square-card:hover {
+            border-color: #2d7ff9; /* bright blue */
+            box-shadow: 0 0 15px #2d7ff9;
         }
-        @keyframes shine {
-            0% { transform: rotate(25deg) translateX(-100%); }
-            100% { transform: rotate(25deg) translateX(100%); }
+
+        /* Card header – flat, no icon colors */
+        .card-header-square {
+            background-color: #1f2632;
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid #2f3a4a;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #d0e0f5;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .group-badge {
-            background: linear-gradient(135deg, #0b4a8f 0%, #0a1a2b 100%);
-            text-shadow: 0 0 8px rgba(255,255,255,0.5);
+        .card-header-square i {
+            color: #a0b8d0; /* muted icon */
+            width: 1.6rem;
+            text-align: center;
+            font-size: 1.2rem;
         }
+
+        /* Match row – straight lines */
+        .match-row-square {
+            background-color: #1a202b;
+            border: 1px solid #2b3442;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+        .match-row-square:hover {
+            background-color: #202636;
+            border-color: #2d7ff9; /* bright blue */
+        }
+
+        /* Team name */
+        .team-name-square {
+            font-weight: 500;
+            color: #d6e2f0;
+        }
+
+        /* Input fields – sharp edges */
         input[type="number"], input[type="text"] {
-            background-color: #2d2f36;
-            border-color: #3f424a;
-            color: #ffffff;
-            border-radius: 0.5rem;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.875rem;
-            transition: all 0.2s;
+            background-color: #0f141e;
+            border: 1px solid #2f3a4a;
+            color: #e0e6f0;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 0; /* square */
+            transition: 0.1s;
         }
         input[type="number"]:focus, input[type="text"]:focus {
-            border-color: #0b4a8f;
             outline: none;
-            box-shadow: 0 0 15px #0b4a8f;
+            border-color: #2d7ff9; /* bright blue */
+            box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
         }
-        input:disabled {
-            background-color: #1e1f25;
-            color: #9ca3af;
-            cursor: default;
-            border-color: #3f424a;
-            box-shadow: none;
+        input[type="number"]:disabled, input[type="text"]:disabled {
+            background-color: #1c222d;
+            color: #7c8a9c;
+            border-color: #353e4e;
         }
-        .round-header {
-            border-bottom-color: #0b4a8f;
-            text-shadow: 0 0 10px #0b4a8f;
+
+        /* Completed badge – simple, with bright blue border */
+        .completed-badge-square {
+            background-color: #1d2c3a;
+            color: #b0d0ee;
+            border: 1px solid #2d7ff9; /* bright blue */
+            padding: 0.25rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 0;
         }
-        .completed-badge {
-            background-color: #065f46;
-            color: #d1fae5;
-            border: 1px solid #10b981;
-            box-shadow: 0 0 8px #10b981;
+
+        /* Group badge – brighter blue border */
+        .group-badge-square {
+            background-color: #1b2533;
+            border: 1px solid #2d7ff9; /* bright blue */
+            color: #c0dcff;
+            padding: 0.25rem 1.2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 0;
         }
-        .btn-gaming {
-            background: linear-gradient(145deg, #0b4a8f, #062c4f);
-            border: 1px solid #2f6bb0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+
+        /* Buttons – square, brighter blue */
+        .btn-square-primary {
+            background-color: #1e3142;
+            border: 1px solid #2d7ff9; /* bright blue */
+            color: white;
+            font-weight: 500;
+            padding: 0.7rem 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.1s;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            border-radius: 0;
         }
-        .btn-gaming::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                45deg,
-                transparent 30%,
-                rgba(255,255,255,0.3) 50%,
-                transparent 70%
-            );
-            transform: rotate(25deg);
-            transition: all 0.5s ease;
-            opacity: 0;
+        .btn-square-primary:hover {
+            background-color: #264763;
+            border-color: #5a9eff; /* even brighter */
         }
-        .btn-gaming:hover::after {
-            opacity: 1;
-            animation: shine 1.5s infinite;
+
+        .btn-square-secondary {
+            background-color: #222834;
+            border: 1px solid #3f4b5c;
+            color: #d0dbea;
+            font-weight: 500;
+            padding: 0.7rem 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.1s;
+            border-radius: 0;
         }
-        .btn-gaming:hover {
-            background: linear-gradient(145deg, #0f5bb0, #083a66);
-            box-shadow: 0 0 25px #0b4a8f;
-            transform: scale(1.05);
+        .btn-square-secondary:hover {
+            background-color: #2b3442;
+            border-color: #2d7ff9; /* bright blue */
+            color: white;
         }
+
+        /* Flash message – square with bright blue border */
+        .flash-square {
+            background-color: #1b2535;
+            border: 1px solid #2d7ff9; /* bright blue */
+            color: #c0dcff;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-radius: 0;
+        }
+
+        /* Round label – bright blue left border */
+        .round-label-square {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            border-left: 5px solid #2d7ff9; /* bright blue */
+            padding-left: 1rem;
+            margin: 2rem 0 1rem 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .round-label-square i {
+            color: #7f9bc0;
+            font-size: 1.4rem;
+        }
+
+        /* Icons are all muted – no bright colors, but they inherit color from parent */
+        i {
+            color: inherit;
+        }
+
+        /* Force all icons to be monochrome */
+        .fa, .fas, .far {
+            color: inherit;
+        }
+
+        /* Additional bright blue hover effects */
+        .square-card:hover .card-header-square {
+            border-bottom-color: #2d7ff9;
+        }
+
+        /* Table styles */
         table {
-            color: #e8e9ea;
+            color: #e1e5ec;
+            width: 100%;
+            font-size: 0.9rem;
         }
         th {
             color: #9ca3af;
+            font-weight: 600;
+            text-align: left;
+            padding: 0.5rem 0;
         }
-        .bg-green-50 {
-            background-color: rgba(5, 150, 105, 0.2) !important;
+        td {
+            padding: 0.4rem 0;
         }
-        .bg-white {
-            background-color: #1a1c22 !important;
-            border-color: #2f3136;
-        }
-        .bg-gray-100 {
-            background-color: #2d2f36 !important;
-        }
-        .text-gray-800, .text-gray-700 {
-            color: #e8e9ea !important;
-        }
-        .text-yellow-800 {
-            color: #fbbf24 !important;
-        }
-        .border-gray-200, .border-gray-300 {
-            border-color: #3f424a !important;
-        }
-        .bg-gradient-to-r {
-            background: linear-gradient(135deg, #0b4a8f 0%, #0a1a2b 100%) !important;
-        }
-        .border-yellow-400 {
-            border-color: #fbbf24 !important;
-        }
-        .back-btn {
-            background: linear-gradient(145deg, #2d2f36, #1a1c22);
-            border: 1px solid #0b4a8f;
-        }
-        .back-btn:hover {
-            background: linear-gradient(145deg, #3a3d47, #23262e);
-            box-shadow: 0 0 20px #0b4a8f;
+        .bg-green-900 {
+            background-color: rgba(45, 127, 249, 0.1) !important;
         }
     </style>
 </head>
-<body class="p-6 font-sans antialiased">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-blue-400 flex items-center gap-2" style="text-shadow: 0 0 12px #3b82f6;">
-                <span>🏆</span> <?= htmlspecialchars($tournament['title']) ?> – Bracket
+<body>
+    <div class="square-container">
+        <!-- Header with tournament title (no colorful icons) -->
+        <div class="flex justify-between items-center flex-wrap gap-4 mb-6">
+            <h1 class="header-title">
+                <i class="fas fa-trophy"></i>
+                <?= htmlspecialchars($tournament['title']) ?> – Bracket
             </h1>
             <a href="scheduleManagement.php?tournament_id=<?= $tournament_id ?>"
-               class="btn-gaming text-white px-5 py-2.5 rounded-lg transition shadow-md flex items-center gap-2 border border-blue-500">
-                📅 Back to Schedule
+               class="btn-square-primary">
+                <i class="fas fa-calendar-alt"></i> Back to Schedule
             </a>
         </div>
 
+        <!-- Flash messages -->
         <?php if ($flash): ?>
-            <div class="bg-blue-900 border-l-4 border-blue-400 text-blue-100 px-4 py-3 rounded-lg shadow-lg mb-4 flex items-center">
-                <span class="text-xl mr-2">ℹ️</span> <?= $flash ?>
+            <div class="flash-square">
+                <i class="fas fa-info-circle"></i>
+                <?= $flash ?>
             </div>
         <?php endif; ?>
 
         <!-- TOURNAMENT RESULTS CARD (only when completed) -->
         <?php if ($tournamentResults && $tournamentResults['winner_name']): ?>
-            <div class="bg-gradient-to-r from-blue-900 to-blue-950 border border-blue-500 rounded-lg shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-center mb-4 text-yellow-400">🏆 Tournament Completed 🏆</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                    
-                    <!-- 1st Runner-up -->
-                    <div class="riot-card rounded-lg p-4 shadow border border-gray-700">
-                        <div class="text-4xl mb-2">🥈</div>
-                        <div class="text-sm uppercase tracking-wide text-gray-400">1st Runner-up</div>
-                        <div class="text-xl font-bold text-gray-200">
-                            <?= htmlspecialchars($tournamentResults['first_runner_up_name'] ?? '—') ?>
+            <div class="square-card mb-8">
+                <div class="card-header-square">
+                    <i class="fas fa-crown"></i> Tournament Completed
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <!-- 1st Runner-up -->
+                        <div class="square-card">
+                            <div class="card-header-square">
+                                <i class="fas fa-medal"></i> 1st Runner-up
+                            </div>
+                            <div class="p-4 text-xl font-bold">
+                                <?= htmlspecialchars($tournamentResults['first_runner_up_name'] ?? '—') ?>
+                            </div>
+                        </div>
+                        <!-- Winner -->
+                        <div class="square-card border-2" style="border-color: #2d7ff9;">
+                            <div class="card-header-square" style="background-color: #1e3142;">
+                                <i class="fas fa-crown" style="color: #ffd966;"></i> Winner
+                            </div>
+                            <div class="p-4 text-xl font-bold" style="color: #ffd966;">
+                                <?= htmlspecialchars($tournamentResults['winner_name'] ?? '—') ?>
+                            </div>
+                        </div>
+                        <!-- 2nd Runner-up -->
+                        <div class="square-card">
+                            <div class="card-header-square">
+                                <i class="fas fa-medal"></i> 2nd Runner-up
+                            </div>
+                            <div class="p-4 text-xl font-bold">
+                                <?= htmlspecialchars($tournamentResults['second_runner_up_name'] ?? '—') ?>
+                            </div>
                         </div>
                     </div>
-                    <!-- Winner -->
-                    <div class="riot-card rounded-lg p-4 shadow border border-yellow-600">
-                        <div class="text-4xl mb-2">🏆</div>
-                        <div class="text-sm uppercase tracking-wide text-yellow-400">Winner</div>
-                        <div class="text-xl font-bold text-yellow-300">
-                            <?= htmlspecialchars($tournamentResults['winner_name'] ?? '—') ?>
-                        </div>
-                    </div>
-                    
-                    <!-- 2nd Runner-up -->
-                    <div class="riot-card rounded-lg p-4 shadow border border-gray-700">
-                        <div class="text-4xl mb-2">🥉</div>
-                        <div class="text-sm uppercase tracking-wide text-gray-400">2nd Runner-up</div>
-                        <div class="text-xl font-bold text-gray-200">
-                            <?= htmlspecialchars($tournamentResults['second_runner_up_name'] ?? '—') ?>
-                        </div>
-                    </div>
-                    
                 </div>
             </div>
         <?php endif; ?>
@@ -856,42 +954,40 @@ $roundLabels = [
         <!-- GROUP STANDINGS -->
         <?php if (!empty($groupStandings)): ?>
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-200 border-b-2 border-blue-800 pb-1 mb-4 flex items-center round-header">
-                    <span class="bg-blue-700 text-white text-sm px-3 py-1 rounded-full mr-3 shadow-lg">📊</span>
-                    Group Stage Standings
+                <h2 class="round-label-square">
+                    <i class="fas fa-table"></i> Group Stage Standings
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <?php foreach (['A','B','C','D'] as $group): ?>
                         <?php if (isset($groupStandings[$group]) && count($groupStandings[$group]) > 0): ?>
-                            <div class="riot-card rounded-xl shadow-md overflow-hidden border border-gray-700">
-                                <div class="group-badge px-4 py-3 text-white font-bold text-lg flex items-center">
-                                    <span class="bg-white text-blue-800 rounded-full w-7 h-7 flex items-center justify-center mr-2 text-sm">⚔️</span>
-                                    Group <?= $group ?>
+                            <div class="square-card">
+                                <div class="card-header-square">
+                                    <i class="fas fa-users"></i> Group <?= $group ?>
                                 </div>
                                 <div class="p-4">
-                                    <table class="w-full text-sm">
+                                    <table>
                                         <thead>
-                                            <tr class="border-b border-gray-700">
-                                                <th class="text-left py-2 text-gray-400">Team</th>
-                                                <th class="text-center text-gray-400">P</th>
-                                                <th class="text-center text-gray-400">W</th>
-                                                <th class="text-center text-gray-400">L</th>
-                                                <th class="text-center text-gray-400">PTS</th>
-                                                <th class="text-center text-gray-400">NET</th>
-                                                <th class="text-center text-gray-400">DUR</th>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th class="text-center">P</th>
+                                                <th class="text-center">W</th>
+                                                <th class="text-center">L</th>
+                                                <th class="text-center">PTS</th>
+                                                <th class="text-center">NET</th>
+                                                <th class="text-center">DUR</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php $rank = 1; ?>
                                             <?php foreach ($groupStandings[$group] as $team): ?>
-                                                <tr class="<?= $rank <= 2 ? 'bg-green-900 bg-opacity-20' : '' ?> border-b border-gray-700 last:border-0">
-                                                    <td class="py-2 text-gray-200"><?= htmlspecialchars($team['team_name']) ?></td>
-                                                    <td class="text-center text-gray-300"><?= $team['played'] ?></td>
-                                                    <td class="text-center text-gray-300"><?= $team['wins'] ?></td>
-                                                    <td class="text-center text-gray-300"><?= $team['losses'] ?></td>
-                                                    <td class="text-center font-bold text-blue-400"><?= $team['points'] ?></td>
-                                                    <td class="text-center text-gray-300"><?= $team['net_game'] ?></td>
-                                                    <td class="text-center text-gray-300"><?= gmdate('i:s', $team['duration']) ?></td>
+                                                <tr class="<?= $rank <= 2 ? 'bg-green-900 bg-opacity-20' : '' ?>">
+                                                    <td><?= htmlspecialchars($team['team_name']) ?></td>
+                                                    <td class="text-center"><?= $team['played'] ?></td>
+                                                    <td class="text-center"><?= $team['wins'] ?></td>
+                                                    <td class="text-center"><?= $team['losses'] ?></td>
+                                                    <td class="text-center font-bold" style="color:#2d7ff9;"><?= $team['points'] ?></td>
+                                                    <td class="text-center"><?= $team['net_game'] ?></td>
+                                                    <td class="text-center"><?= gmdate('i:s', $team['duration']) ?></td>
                                                 </tr>
                                                 <?php $rank++; ?>
                                             <?php endforeach; ?>
@@ -907,95 +1003,102 @@ $roundLabels = [
 
         <!-- MATCHES FORM -->
         <?php if (empty($matchesList)): ?>
-            <div class="bg-gray-800 border-l-4 border-yellow-600 text-yellow-200 px-4 py-3 rounded-lg shadow-lg">
-                <div class="flex items-center">
-                    <span class="text-xl mr-2">⏳</span>
+            <div class="square-card">
+                <div class="card-header-square">
+                    <i class="fas fa-hourglass-half"></i> No Matches Yet
+                </div>
+                <div class="p-5 text-gray-300 flex items-center gap-3">
+                    <i class="fas fa-clock text-2xl"></i>
                     <div>
-                        No matches have been generated yet. Go to <a href="scheduleManagement.php?tournament_id=<?= $tournament_id ?>" class="underline text-blue-400">Schedule page</a> to generate them.
+                        No matches have been generated yet. Go to <a href="scheduleManagement.php?tournament_id=<?= $tournament_id ?>" class="underline" style="color:#2d7ff9;">Schedule page</a> to generate them.
                     </div>
                 </div>
             </div>
         <?php else: ?>
-            <form method="post" class="space-y-6">
+            <form method="post">
                 <input type="hidden" name="bulk_save" value="1">
-                
+
                 <?php foreach ($roundOrder as $round): ?>
                     <?php if (!isset($groupedMatches[$round])) continue; ?>
-                    
+
                     <!-- Round heading -->
-                    <h2 class="text-2xl font-bold text-gray-200 border-b-2 border-blue-800 pb-1 mt-8 first:mt-0 flex items-center round-header">
-                        <span class="bg-blue-700 text-white text-sm px-3 py-1 rounded-full mr-3 shadow-lg">
-                            <?= $round === 'group' ? '👥' : '🏆' ?>
-                        </span>
+                    <h2 class="round-label-square">
+                        <?php if ($round === 'group'): ?>
+                            <i class="fas fa-layer-group"></i>
+                        <?php elseif ($round === 'quarterfinal'): ?>
+                            <i class="fas fa-chart-simple"></i>
+                        <?php elseif ($round === 'semifinal'): ?>
+                            <i class="fas fa-chart-line"></i>
+                        <?php elseif ($round === 'final'): ?>
+                            <i class="fas fa-crown"></i>
+                        <?php else: ?>
+                            <i class="fas fa-medal"></i>
+                        <?php endif; ?>
                         <?= $roundLabels[$round] ?? ucfirst($round) ?>
                     </h2>
-                    
+
                     <?php if ($round === 'group'): ?>
-                        <!-- Group Stage: each group in its own card -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                        <!-- Group Stage: each group in its own square card -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
                             <?php 
                             $groupNames = ['A', 'B', 'C', 'D'];
                             foreach ($groupNames as $group): 
                                 if (!isset($groupedMatches['group'][$group])) continue;
                                 $groupMatches = $groupedMatches['group'][$group];
                             ?>
-                                <div class="riot-card rounded-xl shadow-md overflow-hidden border border-gray-700">
-                                    <div class="group-badge px-4 py-3 text-white font-bold text-lg flex items-center">
-                                        <span class="bg-white text-blue-800 rounded-full w-7 h-7 flex items-center justify-center mr-2 text-sm">⚔️</span>
-                                        Group <?= $group ?>
-                                        <span class="ml-auto text-sm bg-blue-900 px-3 py-1 rounded-full border border-blue-400"><?= count($groupMatches) ?> matches</span>
+                                <div class="square-card">
+                                    <div class="card-header-square">
+                                        <i class="fas fa-users"></i> Group <?= $group ?>
+                                        <span class="ml-auto group-badge-square text-sm">
+                                            <i class="fas fa-shield-alt"></i> <?= count($groupMatches) ?> matches
+                                        </span>
                                     </div>
-                                    <div class="p-4 space-y-3">
+                                    <div class="p-4 space-y-2">
                                         <?php foreach ($groupMatches as $m): 
                                             $isEditable = ($m['status'] === 'pending' && !empty($m['scheduled_time']) && $m['team1_id'] && $m['team2_id']);
                                             $maxScore = 2; // group stage best of 3 -> max 2
                                         ?>
-                                            <div class="flex flex-wrap items-center gap-3 border-b border-gray-700 pb-2 last:border-0">
-                                                <div class="w-8 text-sm font-medium text-gray-400">#<?= $m['match_order'] ?></div>
-                                                <div class="flex-1 font-medium text-gray-200">
-                                                    <?= htmlspecialchars($m['team1'] ?? 'TBD') ?> 
-                                                    <span class="text-gray-500 mx-1">vs</span> 
-                                                    <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                                            <div class="match-row-square">
+                                                <div class="flex items-center gap-3 w-full md:w-auto flex-1">
+                                                    <span class="text-gray-400 text-sm w-8">#<?= $m['match_order'] ?></span>
+                                                    <span class="team-name-square">
+                                                        <?= htmlspecialchars($m['team1'] ?? 'TBD') ?>
+                                                    </span>
+                                                    <span class="text-gray-500">vs</span>
+                                                    <span class="team-name-square">
+                                                        <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                                                    </span>
                                                 </div>
                                                 <div class="flex items-center gap-2">
                                                     <?php if ($isEditable): ?>
                                                         <input type="number" name="score1[<?= $m['match_id'] ?>]" min="0" max="<?= $maxScore ?>"
-                                                               class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                               value="<?= $m['score1'] ?>">
+                                                               class="w-16 text-center" value="<?= $m['score1'] ?>">
                                                     <?php else: ?>
-                                                        <input type="number" disabled
-                                                               class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                               value="<?= $m['score1'] ?>">
+                                                        <input type="number" disabled class="w-16 text-center" value="<?= $m['score1'] ?>">
                                                     <?php endif; ?>
                                                     <span class="font-bold text-gray-400">:</span>
                                                     <?php if ($isEditable): ?>
                                                         <input type="number" name="score2[<?= $m['match_id'] ?>]" min="0" max="<?= $maxScore ?>"
-                                                               class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                               value="<?= $m['score2'] ?>">
+                                                               class="w-16 text-center" value="<?= $m['score2'] ?>">
                                                     <?php else: ?>
-                                                        <input type="number" disabled
-                                                               class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                               value="<?= $m['score2'] ?>">
+                                                        <input type="number" disabled class="w-16 text-center" value="<?= $m['score2'] ?>">
                                                     <?php endif; ?>
                                                 </div>
                                                 <!-- Duration for group stage -->
                                                 <div class="w-32">
                                                     <?php if ($isEditable): ?>
                                                         <input type="text" name="duration[<?= $m['match_id'] ?>]"
-                                                               placeholder="mm:ss"
-                                                               class="w-full border rounded-lg px-3 py-1.5 text-sm"
+                                                               placeholder="mm:ss" class="w-full"
                                                                value="<?= $m['duration_seconds'] ? gmdate('i:s', $m['duration_seconds']) : '' ?>">
                                                     <?php else: ?>
-                                                        <input type="text" disabled
-                                                               placeholder="mm:ss"
-                                                               class="w-full border rounded-lg px-3 py-1.5 text-sm"
+                                                        <input type="text" disabled placeholder="mm:ss" class="w-full"
                                                                value="<?= $m['duration_seconds'] ? gmdate('i:s', $m['duration_seconds']) : '' ?>">
                                                     <?php endif; ?>
                                                 </div>
                                                 <!-- Status -->
                                                 <div class="text-right">
                                                     <?php if ($m['status'] === 'completed'): ?>
-                                                        <span class="completed-badge text-xs font-semibold px-2.5 py-1 rounded-full">✓ Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?></span>
+                                                        <span class="completed-badge-square"><i class="fas fa-check-circle mr-1"></i> Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?></span>
                                                     <?php elseif (!$m['team1_id'] || !$m['team2_id']): ?>
                                                         <span class="text-gray-500 text-sm">Waiting for assignment</span>
                                                     <?php elseif (empty($m['scheduled_time'])): ?>
@@ -1011,50 +1114,47 @@ $roundLabels = [
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <!-- Knockout Rounds: each round in a single card -->
-                        <div class="riot-card rounded-xl shadow-md overflow-hidden border border-gray-700 mt-4">
-                            <div class="bg-gray-800 px-4 py-3 border-b border-gray-700 flex items-center">
-                                <span class="text-blue-400 font-semibold">🏅 <?= $roundLabels[$round] ?? ucfirst($round) ?></span>
+                        <!-- Knockout Rounds: each round in a single square card -->
+                        <div class="square-card mt-4">
+                            <div class="card-header-square">
+                                <i class="fas fa-bracket-curly"></i> <?= $roundLabels[$round] ?? ucfirst($round) ?>
                                 <span class="ml-auto text-sm text-gray-400"><?= count($groupedMatches[$round]) ?> matches</span>
                             </div>
-                            <div class="p-4 space-y-3">
+                            <div class="p-4 space-y-2">
                                 <?php foreach ($groupedMatches[$round] as $m): 
                                     $isEditable = ($m['status'] === 'pending' && !empty($m['scheduled_time']) && $m['team1_id'] && $m['team2_id']);
-                                    $isGroup = false; // not group stage
                                     $maxScore = ($m['round'] === 'final') ? 3 : 2;
                                 ?>
-                                    <div class="flex flex-wrap items-center gap-3 border-b border-gray-700 pb-2 last:border-0">
-                                        <div class="w-8 text-sm font-medium text-gray-400">#<?= $m['match_order'] ?></div>
-                                        <div class="flex-1 font-medium text-gray-200">
-                                            <?= htmlspecialchars($m['team1'] ?? 'TBD') ?> 
-                                            <span class="text-gray-500 mx-1">vs</span> 
-                                            <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                                    <div class="match-row-square">
+                                        <div class="flex items-center gap-3 w-full md:w-auto flex-1">
+                                            <span class="text-gray-400 text-sm w-8">#<?= $m['match_order'] ?></span>
+                                            <span class="team-name-square">
+                                                <?= htmlspecialchars($m['team1'] ?? 'TBD') ?>
+                                            </span>
+                                            <span class="text-gray-500">vs</span>
+                                            <span class="team-name-square">
+                                                <?= htmlspecialchars($m['team2'] ?? 'TBD') ?>
+                                            </span>
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <?php if ($isEditable): ?>
                                                 <input type="number" name="score1[<?= $m['match_id'] ?>]" min="0" max="<?= $maxScore ?>"
-                                                       class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                       value="<?= $m['score1'] ?>">
+                                                       class="w-16 text-center" value="<?= $m['score1'] ?>">
                                             <?php else: ?>
-                                                <input type="number" disabled
-                                                       class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                       value="<?= $m['score1'] ?>">
+                                                <input type="number" disabled class="w-16 text-center" value="<?= $m['score1'] ?>">
                                             <?php endif; ?>
                                             <span class="font-bold text-gray-400">:</span>
                                             <?php if ($isEditable): ?>
                                                 <input type="number" name="score2[<?= $m['match_id'] ?>]" min="0" max="<?= $maxScore ?>"
-                                                       class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                       value="<?= $m['score2'] ?>">
+                                                       class="w-16 text-center" value="<?= $m['score2'] ?>">
                                             <?php else: ?>
-                                                <input type="number" disabled
-                                                       class="w-16 border rounded-lg px-2 py-1.5 text-center"
-                                                       value="<?= $m['score2'] ?>">
+                                                <input type="number" disabled class="w-16 text-center" value="<?= $m['score2'] ?>">
                                             <?php endif; ?>
                                         </div>
                                         <!-- No duration input for knockout rounds -->
                                         <div class="w-40 text-right">
                                             <?php if ($m['status'] === 'completed'): ?>
-                                                <span class="completed-badge text-xs font-semibold px-2.5 py-1 rounded-full">✓ Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?></span>
+                                                <span class="completed-badge-square"><i class="fas fa-check-circle mr-1"></i> Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?></span>
                                             <?php elseif (!$m['team1_id'] || !$m['team2_id']): ?>
                                                 <span class="text-gray-500 text-sm">Waiting for assignment</span>
                                             <?php elseif (empty($m['scheduled_time'])): ?>
@@ -1070,16 +1170,13 @@ $roundLabels = [
                     <?php endif; ?>
                 <?php endforeach; ?>
 
-                <div class="mt-8 flex justify-between items-center">
-                    <!-- Back button at bottom left -->
-                    <a href="tournaments.php" 
-                       class="back-btn text-white px-6 py-3 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center gap-2 border border-blue-500">
-                        <span>←</span> Back to Dashboard
+                <!-- Bottom action buttons -->
+                <div class="mt-10 flex justify-between items-center flex-wrap gap-4">
+                    <a href="manageTournament.php?tournament_id=<?= $tournament_id ?>" class="btn-square-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
                     </a>
-                    <!-- Save button at bottom right -->
-                    <button type="submit"
-                            class="btn-gaming text-white font-bold py-3 px-8 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center gap-2 border border-blue-500">
-                        <span>💾</span> Save Results
+                    <button type="submit" class="btn-square-primary">
+                        <i class="fas fa-save"></i> Save Results
                     </button>
                 </div>
             </form>

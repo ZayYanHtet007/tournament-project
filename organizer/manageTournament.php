@@ -40,6 +40,14 @@ while ($row = $res->fetch_assoc()) {
 
 // Get the ID from the URL (defaulting to 5 as seen in your screenshot)
 $id = isset($_GET['id']) ? $_GET['id'] : 5;
+
+/* FETCH TOURNAMENT TITLE */
+$stmtTitle = $conn->prepare("SELECT title FROM tournaments WHERE tournament_id = ?");
+$stmtTitle->bind_param("i", $id);
+$stmtTitle->execute();
+$titleResult = $stmtTitle->get_result();
+$tournamentTitle = $titleResult->fetch_assoc()['title'] ?? 'Tournament Management';
+
 $stmt = $conn->prepare("SELECT g.genre FROM games g JOIN tournaments t ON t.game_id = g.game_id    WHERE t.tournament_id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -204,7 +212,7 @@ if ($type === 'singleelimination'){
 
 <div class="container">
 
-    <h1>Tournament Management</h1>
+    <h1><?php echo htmlspecialchars($tournamentTitle); ?> Management</h1>
     <p class="subtitle">Select a category to manage tournament <p>
 
     <div class="managecard">

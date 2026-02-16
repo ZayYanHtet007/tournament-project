@@ -196,135 +196,187 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edit Tournament</title>
+<!-- Font Awesome for icons (monochrome) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+    /* ================= SQUARE DESIGN, BRIGHTER BLUE ACCENTS ================= */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
-      background-color: #010a13;
-      color: #f0f5f5;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 40px 20px;
+        background-color: #0b0d12;
+        color: #e1e5ec;
+        font-family: 'Inter', sans-serif;
+        padding: 2rem 1rem;
+        min-height: 100vh;
     }
 
+    /* Main container – dark, square */
     .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: #051923;
-      padding: 40px;
-      border: 1px solid #00eeff;
-      border-radius: 4px;
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #10131c;
+        border: 1px solid #2f3a4a;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+        padding: 2rem;
     }
 
+    /* Header row */
     .header-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
-        border-bottom: 1px solid rgba(0, 238, 255, 0.2);
-        padding-bottom: 20px;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #2f3a4a;
+        padding-bottom: 1rem;
     }
 
     h1 {
-      margin: 0;
-      font-size: 1.8rem;
-      color: #fff;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #b8d0f0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0;
     }
 
     .btn-back {
         text-decoration: none;
-        color: #00eeff;
-        font-size: 0.8rem;
-        font-weight: bold;
+        color: #b8d0f0;
+        font-size: 0.9rem;
+        font-weight: 500;
         text-transform: uppercase;
-        border: 1px solid #00eeff;
-        padding: 8px 15px;
-        transition: 0.3s;
+        border: 1px solid #2d7ff9;
+        padding: 0.5rem 1rem;
+        transition: 0.1s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 0;
     }
-
     .btn-back:hover {
-        background: #00eeff;
-        color: #000;
+        background-color: #264763;
+        border-color: #5a9eff;
+        color: white;
     }
 
     h2 {
-      margin-top: 30px;
-      font-size: 1rem;
-      color: #00eeff;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #b8d0f0;
+        border-left: 4px solid #2d7ff9;
+        padding-left: 0.75rem;
+        margin: 2rem 0 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     label {
         display: block;
-        font-size: 0.75rem;
-        color: #a0a0a0;
-        margin-top: 15px;
-        margin-bottom: 5px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #9aaec9;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     input, textarea {
-      width: 100%;
-      padding: 12px;
-      background: #010a13;
-      border: 1px solid #1a2e38;
-      border-radius: 4px;
-      color: #fff;
-      font-size: 1rem;
-      box-sizing: border-box;
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #0f141e;
+        border: 1px solid #2f3a4a;
+        color: #e0e6f0;
+        font-size: 0.95rem;
+        border-radius: 0; /* square */
+        transition: 0.1s;
+        font-family: 'Inter', sans-serif;
     }
 
     input:focus, textarea:focus {
-      outline: none;
-      border-color: #00eeff;
+        outline: none;
+        border-color: #2d7ff9;
+        box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
     }
 
     input[readonly], textarea[readonly] {
-        background: rgba(255,255,255,0.05);
-        color: #777;
-        cursor: not-allowed;
+        background-color: #1c222d;
+        color: #7c8a9c;
+        border-color: #353e4e;
     }
 
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 0.5rem;
     }
 
     button {
-      margin-top: 40px;
-      width: 100%;
-      padding: 15px;
-      background: #00eeff;
-      color: #000;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: 0.3s;
+        margin-top: 2rem;
+        width: 100%;
+        padding: 0.9rem;
+        background-color: #1e3142;
+        border: 1px solid #2d7ff9;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: 0.1s;
+        border-radius: 0;
     }
 
     button:hover:not(:disabled) {
-      background: #00c2cf;
+        background-color: #264763;
+        border-color: #5a9eff;
     }
 
     button:disabled {
-      background: #1a2e38;
-      color: #555;
-      cursor: not-allowed;
+        background-color: #1a1f2a;
+        border-color: #353e4e;
+        color: #6b7a8f;
+        cursor: not-allowed;
     }
 
+    /* Alert messages – square, bright blue border */
     .alert {
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      text-align: center;
-      font-weight: bold;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #2d7ff9;
+        background-color: #1b2535;
+        color: #c0dcff;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 0;
     }
-    .alert.error { background: #fee2e2; color: #991b1b; }
-    .alert.success { background: #dcfce7; color: #166534; }
+    .alert.error {
+        border-color: #2d7ff9; /* consistent, no extra colors */
+    }
+    .alert.success {
+        border-color: #2d7ff9;
+    }
+
+    /* Icons */
+    i {
+        color: inherit;
+    }
+
+    /* Adjust spacing for textareas */
+    textarea {
+        resize: vertical;
+    }
 </style>
 </head>
 
@@ -332,19 +384,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
 <div class="container">
 
 <div class="header-row">
-    <h1>Edit Tournament</h1>
-    <a href="manageTournament.php" class="btn-back">← Back</a>
+    <h1><i class="fas fa-pen"></i> Edit Tournament</h1>
+    <a href="manageTournament.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
 
 <?php if ($message): ?>
-<div class="alert <?= str_contains($message,'❌')?'error':'success' ?>">
-  <?= $message ?>
+<div class="alert <?= strpos($message,'❌') !== false ? 'error' : 'success' ?>">
+    <i class="fas <?= strpos($message,'❌') !== false ? 'fa-exclamation-circle' : 'fa-check-circle' ?>"></i>
+    <?= $message ?>
 </div>
 <?php endif; ?>
 
 <form method="post">
 
-<h2>🏷 Tournament Information</h2>
+<h2><i class="fas fa-tag"></i> Tournament Information</h2>
 <label>Title</label>
 <input type="text" name="title" value="<?= htmlspecialchars($tournament['title']) ?>" <?= $readOnly ?>>
 
@@ -362,7 +415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     </div>
 </div>
 
-<h2>💰 Fees & Prize Pool</h2>
+<h2><i class="fas fa-coins"></i> Fees & Prize Pool</h2>
 <div class="grid">
     <div>
         <label>Fee</label>
@@ -374,7 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
     </div>
 </div>
 
-<h2>📅 Tournament Dates</h2>
+<h2><i class="fas fa-calendar-alt"></i> Tournament Dates</h2>
 <div class="grid">
   <div>
     <label>Registration Start</label>
@@ -390,13 +443,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
   </div>
 </div>
 
-<h2>📜 Rules & Regulations</h2>
+<h2><i class="fas fa-gavel"></i> Rules & Regulations</h2>
 <textarea name="rules" rows="5" <?= $readOnly ?>><?= htmlspecialchars($announcement['rules']) ?></textarea>
 
-<h2>⚙ Tournament System</h2>
+<h2><i class="fas fa-cog"></i> Tournament System</h2>
 <textarea name="system_info" rows="4" <?= $readOnly ?>><?= htmlspecialchars($announcement['system_info']) ?></textarea>
 
-<button <?= $disabled ?>>Update Tournament</button>
+<button <?= $disabled ?>><i class="fas fa-save"></i> Update Tournament</button>
 
 </form>
 </div>

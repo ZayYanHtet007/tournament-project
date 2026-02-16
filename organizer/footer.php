@@ -155,18 +155,6 @@
         <div class="footer-col about">
             <img src="../images/TX.png" class="footer-logo" alt="TournaX">
             <p>The ultimate arena for competitive gaming. Join daily tournaments, climb the global leaderboard, and win legendary prizes in the most secure environment.</p>
-            
-            <div class="social-links">
-                <a href="#" class="social-btn">
-                    <lord-icon src="https://cdn.lordicon.com/hpivxauj.json" trigger="hover" colors="primary:#ffffff" style="width:24px;height:24px"></lord-icon>
-                </a>
-                <a href="#" class="social-btn">
-                    <lord-icon src="https://cdn.lordicon.com/iqaguvqv.json" trigger="hover" colors="primary:#ffffff" style="width:24px;height:24px"></lord-icon>
-                </a>
-                <a href="#" class="social-btn">
-                    <lord-icon src="https://cdn.lordicon.com/khheayfj.json" trigger="hover" colors="primary:#ffffff" style="width:24px;height:24px"></lord-icon>
-                </a>
-            </div>
         </div>
 
         <div class="footer-col links">
