@@ -19,9 +19,9 @@ function clean($v)
 }
 
 /* ---------- FETCH TOURNAMENT ---------- */
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) die("Invalid request");
+if (!isset($_GET['tournament_id']) || !is_numeric($_GET['tournament_id'])) die("Invalid request");
 
-$tournament_id = (int)$_GET['id'];
+$tournament_id = (int)$_GET['tournament_id'];
 $organizer_id  = (int)$_SESSION['user_id'];
 
 $stmt = $conn->prepare("SELECT * FROM tournaments WHERE tournament_id=? AND organizer_id=? LIMIT 1");

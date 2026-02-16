@@ -30,7 +30,7 @@ $res = $stmt->get_result();
 $tournaments = [];
 while ($row = $res->fetch_assoc()) {
     $tournaments[] = [
-        'id' => $row['tournament_id'],
+        'tournament_id' => $row['tournament_id'],
         'name' => $row['title'],
         'details' => 'Status: ' . $row['status'],
         'status' => ucfirst($row['status']),
@@ -39,7 +39,12 @@ while ($row = $res->fetch_assoc()) {
 }
 
 // Get the ID from the URL (defaulting to 5 as seen in your screenshot)
-$id = isset($_GET['id']) ? $_GET['id'] : 5;
+$id = isset($_GET['tournament_id']) ? $_GET['tournament_id'] : 0;
+if($id === 0){
+  echo"Tournament ID not found !";
+  return;
+}
+
 
 /* FETCH TOURNAMENT TITLE */
 $stmtTitle = $conn->prepare("SELECT title FROM tournaments WHERE tournament_id = ?");
@@ -216,7 +221,7 @@ if ($type === 'singleelimination'){
     <p class="subtitle">Select a category to manage tournament <p>
 
     <div class="managecard">
-        <a href="editTournament.php?id=<?php echo $id; ?>" class="mgmt-card">
+        <a href="editTournament.php?tournament_id=<?php echo $id; ?>" class="mgmt-card">
             <div class="icon-box"><i class="fa-solid fa-trophy"></i></div>
             <h3>Tournaments</h3>
             <p>Edit Tournament Details</p>

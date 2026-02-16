@@ -302,7 +302,7 @@ $result = $stmt->get_result();
               <div class="date-label">System Date</div>
               <div style="font-size: 0.85rem; font-weight: 500;"><?= date('d M Y', strtotime($row['created_at'])) ?></div>
           </div>
-          <a href="manageTournament.php?id=<?= $row['tournament_id'] ?>" class="btn-riot">
+          <a href="manageTournament.php?tournament_id=<?= $row['tournament_id'] ?>" class="btn-riot">
             Manage
           </a>
         </div>
