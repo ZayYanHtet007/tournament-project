@@ -134,9 +134,9 @@
   /*======================== Noti Color =====================*/
   --noti-bg: #1e293b;
   --noti-border: #334155;
-  --noti-header-bg: #0f172a;
+  --noti-header-bg: #111827;
   --noti-hover: #334155;
-  --noti-unread: rgba(79, 70, 229, 0.15);
+  --noti-unread: #1f2f4a;
   --noti-text: #f1f5f9;
   --noti-muted: #94a3b8;
   --noti-icon-bg: #312e81;
@@ -633,6 +633,128 @@ body {
   margin-top: 0 !important;
 }
 /* ==================== DASHBOARD OVERVIEW ==================== */
+.dashboard-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.45rem, 1.8vw, 2rem);
+  font-weight: 800;
+}
+
+.dashboard-header p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+
+.dashboard-month-filter {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--card-bg);
+  box-shadow: var(--card-glass-box-shadow);
+}
+
+.dashboard-date-filter {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-date-filter .dashboard-date-range {
+  min-width: 340px;
+  height: 52px;
+  border-radius: 12px;
+  padding: 0 16px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: #f1f5f9;
+}
+
+.dashboard-date-filter .date-range-input-clean {
+  font-size: 14px;
+  color: #7c838d;
+}
+
+.dashboard-date-filter .calendar-icon {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.dashboard-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-filter-field label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dashboard-filter-field input[type="month"],
+.dashboard-filter-field input[type="date"] {
+  border: 1px solid var(--search-border);
+  border-radius: 10px;
+  height: 38px;
+  padding: 0 10px;
+  background: var(--search-bg);
+  color: var(--text-primary);
+  min-width: 145px;
+}
+
+.dashboard-filter-field input[type="month"]:focus,
+.dashboard-filter-field input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.dashboard-filter-btn,
+.dashboard-filter-reset {
+  height: 38px;
+  border-radius: 10px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-filter-btn {
+  background: linear-gradient(135deg, #0f766e, #0e7490);
+  color: #ffffff;
+  border-color: rgba(15, 118, 110, 0.6);
+}
+
+.dashboard-filter-reset {
+  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--text-secondary);
+}
+
+.dashboard-range-note {
+  margin: 6px 0 12px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -763,6 +885,29 @@ body {
 }
 
 @media (max-width: 1024px) {
+  .dashboard-month-filter {
+    width: 100%;
+  }
+
+  .dashboard-date-filter {
+    width: 100%;
+  }
+
+  .dashboard-date-filter .dashboard-date-range {
+    min-width: 100%;
+  }
+
+  .dashboard-filter-field input[type="month"],
+  .dashboard-filter-field input[type="date"] {
+    min-width: 130px;
+    width: 100%;
+  }
+
+  .dashboard-filter-btn,
+  .dashboard-filter-reset {
+    width: 100%;
+  }
+
   .charts-grid {
     grid-template-columns: 1fr;
   }
@@ -2006,12 +2151,12 @@ input[readonly] {
   position: absolute;
   top: 100%;
   right: 0;
-  width: 320px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 12px;
-  box-shadow: var(--card-glass-box-shadow);
+  width: min(360px, 92vw);
+  background: var(--noti-bg);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 55px rgba(2, 6, 23, 0.35),
+    0 8px 18px rgba(15, 23, 42, 0.2);
   border: 1px solid var(--noti-border);
   margin-top: 10px;
   display: none;
@@ -2023,39 +2168,82 @@ input[readonly] {
   animation: fadeIn 0.3s ease;
 }
 .noti-header {
-  padding: 15px;
-  background: var(--glass-bg);
+  padding: 14px 15px;
+  background: var(--noti-header-bg);
   border-bottom: 1px solid var(--noti-border);
   color: var(--noti-text);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   font-size: 14px;
 }
+
+.noti-unread-meta {
+  font-size: 11px;
+  color: var(--noti-muted);
+  font-weight: 500;
+}
+
+.noti-body {
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--noti-bg);
+}
+
+.noti-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.noti-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.noti-body::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 999px;
+}
+
 .noti-item {
   display: flex;
   gap: 12px;
-  padding: 15px;
+  padding: 14px 15px;
   border-bottom: 1px solid var(--noti-border);
   transition: 0.2s;
   cursor: pointer;
-  background-color: transparent;
+  background-color: var(--noti-bg);
 }
 
 .noti-item:hover {
-  background-color: rgba(148, 163, 184, 0.14);
+  background-color: var(--noti-hover);
 }
 
 .noti-item.unread {
-  background-color: rgba(59, 130, 246, 0.12);
+  background-color: var(--noti-unread);
+}
+
+.noti-item.empty {
+  cursor: default;
+}
+
+.noti-empty-text {
+  width: 100%;
+  text-align: center;
+  padding: 10px 6px;
+}
+
+.noti-empty-text p {
+  color: var(--noti-muted);
+  margin: 0;
 }
 
 .noti-icon {
-  width: 22px;
-  height: 22px;
-  background: transparent;
-  color: #08d4ff;
-  border-radius: 0;
+  width: 30px;
+  height: 30px;
+  background: var(--noti-icon-bg);
+  color: var(--noti-icon-color);
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2075,11 +2263,21 @@ input[readonly] {
 .noti-text p {
   margin: 0;
   font-size: 13px;
+  line-height: 1.45;
   color: var(--noti-text);
+  word-break: break-word;
 }
 .noti-text small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
   color: var(--noti-muted);
   font-size: 11px;
+}
+
+.noti-time-icon {
+  margin-right: 2px;
 }
 
 @keyframes fadeIn {
@@ -3521,6 +3719,44 @@ span.flatpickr-weekday {
   border: 1px solid rgba(15, 118, 110, 0.24);
 }
 
+.players-browser .pb-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+}
+
+.players-browser .pb-status-active {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.14);
+  border-color: rgba(22, 163, 74, 0.34);
+}
+
+.players-browser .pb-status-disbanded {
+  color: #92400e;
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.34);
+}
+
+.players-browser .pb-status-banned {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(220, 38, 38, 0.34);
+}
+
+.players-browser .pb-status-other {
+  color: #475569;
+  background: rgba(100, 116, 139, 0.14);
+  border-color: rgba(100, 116, 139, 0.34);
+}
+
 .players-browser .pb-card h3 {
   margin: 0;
   font-size: 1.05rem;
@@ -3557,6 +3793,30 @@ span.flatpickr-weekday {
   padding: 7px 12px;
   font-size: 0.8rem;
   color: var(--text-secondary);
+}
+
+.players-browser .pb-team-meta .pb-status-active {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.14);
+  border-color: rgba(22, 163, 74, 0.34);
+}
+
+.players-browser .pb-team-meta .pb-status-disbanded {
+  color: #92400e;
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.34);
+}
+
+.players-browser .pb-team-meta .pb-status-banned {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(220, 38, 38, 0.34);
+}
+
+.players-browser .pb-team-meta .pb-status-other {
+  color: #475569;
+  background: rgba(100, 116, 139, 0.14);
+  border-color: rgba(100, 116, 139, 0.34);
 }
 
 .players-browser .pb-player-main {
@@ -3720,6 +3980,46 @@ span.flatpickr-weekday {
   background: rgba(127, 29, 29, 0.5);
 }
 
+[data-theme="dark"] .players-browser .pb-status-active {
+  color: #86efac;
+  background: rgba(22, 163, 74, 0.26);
+}
+
+[data-theme="dark"] .players-browser .pb-status-disbanded {
+  color: #fcd34d;
+  background: rgba(180, 83, 9, 0.32);
+}
+
+[data-theme="dark"] .players-browser .pb-status-banned {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.35);
+}
+
+[data-theme="dark"] .players-browser .pb-status-other {
+  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.42);
+}
+
+[data-theme="dark"] .players-browser .pb-team-meta .pb-status-active {
+  color: #86efac;
+  background: rgba(22, 163, 74, 0.26);
+}
+
+[data-theme="dark"] .players-browser .pb-team-meta .pb-status-disbanded {
+  color: #fcd34d;
+  background: rgba(180, 83, 9, 0.32);
+}
+
+[data-theme="dark"] .players-browser .pb-team-meta .pb-status-banned {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.35);
+}
+
+[data-theme="dark"] .players-browser .pb-team-meta .pb-status-other {
+  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.42);
+}
+
 /* ==================== Player Detail Page ==================== */
 .player-detail-page {
   --pdp-accent: #0f766e;
@@ -3773,6 +4073,36 @@ span.flatpickr-weekday {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.player-detail-page .pdp-actions .pdp-link-btn:first-of-type {
+  margin-left: auto;
+}
+
+.player-detail-page .pdp-team-tools {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.player-detail-page .pdp-team-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--pdp-border);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.player-detail-page .pdp-inline-form {
+  margin: 0;
 }
 
 .player-detail-page .pdp-link-btn {
@@ -4027,6 +4357,7 @@ span.flatpickr-weekday {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -4090,6 +4421,30 @@ span.flatpickr-weekday {
   color: #7c3aed;
   border-color: rgba(124, 58, 237, 0.3);
   background: rgba(124, 58, 237, 0.12);
+}
+
+.player-detail-page .pdp-team-status-active {
+  color: #15803d;
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.14);
+}
+
+.player-detail-page .pdp-team-status-disbanded {
+  color: #92400e;
+  border-color: rgba(217, 119, 6, 0.35);
+  background: rgba(217, 119, 6, 0.14);
+}
+
+.player-detail-page .pdp-team-status-banned {
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.14);
+}
+
+.player-detail-page .pdp-team-status-other {
+  color: #475569;
+  border-color: rgba(100, 116, 139, 0.35);
+  background: rgba(100, 116, 139, 0.14);
 }
 
 .player-detail-page .pdp-empty {
@@ -4164,6 +4519,30 @@ span.flatpickr-weekday {
   background: rgba(220, 38, 38, 0.26);
 }
 
+[data-theme="dark"] .player-detail-page .pdp-team-context {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+[data-theme="dark"] .player-detail-page .pdp-team-status-active {
+  color: #86efac;
+  background: rgba(22, 163, 74, 0.24);
+}
+
+[data-theme="dark"] .player-detail-page .pdp-team-status-disbanded {
+  color: #fcd34d;
+  background: rgba(180, 83, 9, 0.26);
+}
+
+[data-theme="dark"] .player-detail-page .pdp-team-status-banned {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.32);
+}
+
+[data-theme="dark"] .player-detail-page .pdp-team-status-other {
+  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.42);
+}
+
 @media (max-width: 900px) {
   .players-browser .pb-filter {
     grid-template-columns: 1fr;
@@ -4178,6 +4557,14 @@ span.flatpickr-weekday {
   .player-detail-page .pdp-summary {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .player-detail-page .pdp-team-tools {
+    justify-content: flex-start;
+  }
+
+  .player-detail-page .pdp-actions .pdp-link-btn:first-of-type {
+    margin-left: 0;
   }
 }
 

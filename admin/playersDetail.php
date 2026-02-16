@@ -42,6 +42,80 @@ function pd_status_class(string $status): string
     return 'pdp-status-other';
 }
 
+function pd_team_status_key(string $status): string
+{
+    $normalized = strtolower(trim($status));
+    if ($normalized === 'disban') {
+        return 'disbanded';
+    }
+    if ($normalized === 'ban') {
+        return 'banned';
+    }
+    if ($normalized === '') {
+        return 'unknown';
+    }
+    return $normalized;
+}
+
+function pd_team_status_class(string $status): string
+{
+    $normalized = pd_team_status_key($status);
+    if ($normalized === 'active') {
+        return 'pdp-team-status-active';
+    }
+    if ($normalized === 'disbanded') {
+        return 'pdp-team-status-disbanded';
+    }
+    if ($normalized === 'banned') {
+        return 'pdp-team-status-banned';
+    }
+    return 'pdp-team-status-other';
+}
+
+function pd_team_status_label(string $status): string
+{
+    return strtoupper(pd_team_status_key($status));
+}
+
+function pd_get_context_team(mysqli $conn, int $teamId, int $userId): ?array
+{
+    if ($teamId <= 0 || $userId <= 0) {
+        return null;
+    }
+
+    $teamStmt = $conn->prepare("SELECT
+                                    t.team_id,
+                                    t.team_name,
+                                    t.short_name,
+                                    t.status,
+                                    COALESCE(g.name, 'General') AS game_name,
+                                    COALESCE(u.username, 'N/A') AS leader_name
+                                FROM teams t
+                                LEFT JOIN games g ON g.game_id = t.aim_for
+                                LEFT JOIN users u ON u.user_id = t.leader_id
+                                WHERE t.team_id = ?
+                                  AND (
+                                      t.leader_id = ?
+                                      OR EXISTS (
+                                          SELECT 1
+                                          FROM team_members tm
+                                          WHERE tm.team_id = t.team_id
+                                            AND tm.user_id = ?
+                                      )
+                                  )
+                                LIMIT 1");
+    if (!$teamStmt) {
+        return null;
+    }
+
+    $teamStmt->bind_param('iii', $teamId, $userId, $userId);
+    $teamStmt->execute();
+    $team = $teamStmt->get_result()->fetch_assoc();
+    $teamStmt->close();
+
+    return $team ?: null;
+}
+
 function pd_format_date(?string $date): string
 {
     if (!$date) {
@@ -93,41 +167,124 @@ if ($selfQuery !== '') {
     $selfUrl .= '?' . $selfQuery;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ban_user'])) {
-    $banUserId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
-    $notice = 'ban-failed';
+$contextTeam = pd_get_context_team($conn, $teamId, $userId);
 
-    if ($banUserId > 0 && $banUserId === $userId) {
-        $checkStmt = $conn->prepare("SELECT is_banned FROM users WHERE user_id = ? AND is_organizer = 0 LIMIT 1");
-        if ($checkStmt) {
-            $checkStmt->bind_param('i', $banUserId);
-            $checkStmt->execute();
-            $existing = $checkStmt->get_result()->fetch_assoc();
-            $checkStmt->close();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $notice = '';
+    $postAction = strtolower(trim((string)($_POST['action'] ?? '')));
+    $isBanUserRequest = $postAction === 'ban_user' || isset($_POST['ban_user']) || isset($_POST['user_id']);
+    $isBanTeamRequest = $postAction === 'ban_team' || isset($_POST['ban_team']);
 
-            if ($existing) {
-                if ((int)$existing['is_banned'] === 1) {
-                    $notice = 'already-banned';
-                } else {
-                    $banStmt = $conn->prepare("UPDATE users SET is_banned = 1 WHERE user_id = ? AND is_organizer = 0");
-                    if ($banStmt) {
-                        $banStmt->bind_param('i', $banUserId);
-                        $ok = $banStmt->execute();
-                        $affected = $banStmt->affected_rows;
-                        $banStmt->close();
-                        if ($ok && $affected > 0) {
-                            $notice = 'banned';
+    if ($isBanUserRequest) {
+        $banUserId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
+        $notice = 'ban-failed';
+
+        if ($banUserId > 0 && $banUserId === $userId) {
+            $checkStmt = $conn->prepare("SELECT is_banned FROM users WHERE user_id = ? AND is_organizer = 0 LIMIT 1");
+            if ($checkStmt) {
+                $checkStmt->bind_param('i', $banUserId);
+                $checkStmt->execute();
+                $existing = $checkStmt->get_result()->fetch_assoc();
+                $checkStmt->close();
+
+                if ($existing) {
+                    if ((int)$existing['is_banned'] === 1) {
+                        $notice = 'already-banned';
+                    } else {
+                        $banStmt = $conn->prepare("UPDATE users SET is_banned = 1 WHERE user_id = ? AND is_organizer = 0");
+                        if ($banStmt) {
+                            $banStmt->bind_param('i', $banUserId);
+                            $ok = $banStmt->execute();
+                            $affected = $banStmt->affected_rows;
+                            $banStmt->close();
+                            if ($ok && $affected > 0) {
+                                $notice = 'banned';
+                            }
                         }
                     }
                 }
             }
         }
+    } elseif ($isBanTeamRequest) {
+        $banTeamId = isset($_POST['team_id']) ? (int)$_POST['team_id'] : 0;
+        $notice = 'team-ban-failed';
+
+        if ($banTeamId > 0 && $banTeamId === $teamId && $contextTeam) {
+            $teamStatus = pd_team_status_key((string)$contextTeam['status']);
+            if ($teamStatus === 'banned') {
+                $notice = 'team-already-banned';
+            } else {
+                $conn->begin_transaction();
+                try {
+                    $teamUpdated = false;
+                    foreach (['banned', 'ban'] as $banValue) {
+                        $teamStmt = $conn->prepare("UPDATE teams SET status = ? WHERE team_id = ?");
+                        if (!$teamStmt) {
+                            throw new RuntimeException('Unable to prepare team update query.');
+                        }
+
+                        $teamStmt->bind_param('si', $banValue, $banTeamId);
+                        $teamOk = $teamStmt->execute();
+                        $teamError = (string)$teamStmt->error;
+                        $teamAffected = $teamStmt->affected_rows;
+                        $teamStmt->close();
+
+                        if ($teamOk && $teamAffected > 0) {
+                            $teamUpdated = true;
+                            break;
+                        }
+
+                        // Try legacy enum token only when current value is not accepted.
+                        $isEnumError = stripos($teamError, 'truncated') !== false
+                            || stripos($teamError, 'incorrect') !== false
+                            || stripos($teamError, 'enum') !== false;
+                        if (!$isEnumError) {
+                            break;
+                        }
+                    }
+
+                    if (!$teamUpdated) {
+                        throw new RuntimeException('Team status update failed.');
+                    }
+
+                    $memberStmt = $conn->prepare("UPDATE users
+                                                  SET is_banned = 1
+                                                  WHERE is_organizer = 0
+                                                    AND user_id IN (
+                                                        SELECT tm.user_id
+                                                        FROM team_members tm
+                                                        WHERE tm.team_id = ?
+
+                                                        UNION
+
+                                                        SELECT t.leader_id
+                                                        FROM teams t
+                                                        WHERE t.team_id = ?
+                                                    )");
+                    if (!$memberStmt) {
+                        throw new RuntimeException('Unable to prepare member update query.');
+                    }
+                    $memberStmt->bind_param('ii', $banTeamId, $banTeamId);
+                    $memberStmt->execute();
+                    $memberStmt->close();
+
+                    $conn->commit();
+                    $notice = 'team-banned';
+                } catch (Throwable $error) {
+                    $conn->rollback();
+                }
+            }
+        } else {
+            $notice = 'team-not-found';
+        }
     }
 
-    $redirectParams = array_merge($selfParams, ['notice' => $notice]);
-    $redirectQuery = pd_build_query($redirectParams);
-    header('Location: playersDetail.php?' . $redirectQuery);
-    exit;
+    if ($notice !== '') {
+        $redirectParams = array_merge($selfParams, ['notice' => $notice]);
+        $redirectQuery = pd_build_query($redirectParams);
+        header('Location: playersDetail.php?' . $redirectQuery);
+        exit;
+    }
 }
 
 $player = null;
@@ -154,7 +311,8 @@ if ($player) {
                                     p.short_name,
                                     p.member_role,
                                     p.game_name,
-                                    p.leader_name
+                                    p.leader_name,
+                                    p.team_status
                                  FROM (
                                      SELECT
                                          t.team_id,
@@ -162,7 +320,8 @@ if ($player) {
                                          t.short_name,
                                          tm.role AS member_role,
                                          COALESCE(g.name, 'General') AS game_name,
-                                         COALESCE(u.username, 'N/A') AS leader_name
+                                         COALESCE(u.username, 'N/A') AS leader_name,
+                                         t.status AS team_status
                                      FROM team_members tm
                                      JOIN teams t ON t.team_id = tm.team_id
                                      LEFT JOIN games g ON g.game_id = t.aim_for
@@ -177,7 +336,8 @@ if ($player) {
                                          t.short_name,
                                          'leader' AS member_role,
                                          COALESCE(g.name, 'General') AS game_name,
-                                         COALESCE(u.username, 'N/A') AS leader_name
+                                         COALESCE(u.username, 'N/A') AS leader_name,
+                                         t.status AS team_status
                                      FROM teams t
                                      LEFT JOIN games g ON g.game_id = t.aim_for
                                      LEFT JOIN users u ON u.user_id = t.leader_id
@@ -250,6 +410,18 @@ if ($noticeKey === 'banned') {
 } elseif ($noticeKey === 'ban-failed') {
     $noticeType = 'danger';
     $noticeMessage = 'Failed to ban this player account.';
+} elseif ($noticeKey === 'team-banned') {
+    $noticeType = 'success';
+    $noticeMessage = 'Team has been banned and all members are now banned.';
+} elseif ($noticeKey === 'team-already-banned') {
+    $noticeType = 'warning';
+    $noticeMessage = 'This team is already banned.';
+} elseif ($noticeKey === 'team-not-found') {
+    $noticeType = 'warning';
+    $noticeMessage = 'Team not found for this player context.';
+} elseif ($noticeKey === 'team-ban-failed') {
+    $noticeType = 'danger';
+    $noticeMessage = 'Failed to ban this team.';
 }
 
 require_once __DIR__ . '/sidebar.php';
@@ -280,6 +452,31 @@ require_once __DIR__ . '/sidebar.php';
                         <i class="fa-solid fa-layer-group"></i>
                         Back To Teams
                     </a>
+                    <?php if ($contextTeam): ?>
+                        <?php
+                        $teamContextStatus = (string)($contextTeam['status'] ?? 'unknown');
+                        $teamContextClass = pd_team_status_class($teamContextStatus);
+                        $teamContextLabel = pd_team_status_label($teamContextStatus);
+                        $teamContextIsBanned = pd_team_status_key($teamContextStatus) === 'banned';
+                        ?>
+                        <div class="pdp-team-tools">
+                            <span class="pdp-team-context">
+                                <i class="fa-solid fa-users"></i>
+                                <?= pd_h((string)$contextTeam['team_name']) ?>
+                                <span class="pdp-pill <?= pd_h($teamContextClass) ?>">
+                                    <?= pd_h($teamContextLabel) ?>
+                                </span>
+                            </span>
+                            <form method="POST" action="<?= pd_h($selfUrl) ?>" id="pdpTeamBanForm" class="pdp-inline-form">
+                                <input type="hidden" name="action" value="ban_team">
+                                <input type="hidden" name="team_id" value="<?= (int)$contextTeam['team_id'] ?>">
+                                <button type="submit" name="ban_team" class="pdp-ban-btn" <?= $teamContextIsBanned ? 'disabled' : '' ?>>
+                                    <i class="fa-solid fa-ban"></i>
+                                    <?= $teamContextIsBanned ? 'Team Already Banned' : 'Ban Team' ?>
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </header>
 
@@ -311,6 +508,7 @@ require_once __DIR__ . '/sidebar.php';
                     </div>
 
                     <form method="POST" action="<?= pd_h($selfUrl) ?>" id="pdpBanForm">
+                        <input type="hidden" name="action" value="ban_user">
                         <input type="hidden" name="user_id" value="<?= (int)$player['user_id'] ?>">
                         <button type="submit" name="ban_user" class="pdp-ban-btn" <?= $isBanned ? 'disabled' : '' ?>>
                             <i class="fa-solid fa-user-slash"></i>
@@ -328,10 +526,16 @@ require_once __DIR__ . '/sidebar.php';
                     <?php if (!empty($joinedTeams)): ?>
                         <div class="pdp-grid pdp-team-grid">
                             <?php foreach ($joinedTeams as $team): ?>
+                                <?php
+                                $teamStatusRaw = (string)($team['team_status'] ?? 'unknown');
+                                $teamStatusClass = pd_team_status_class($teamStatusRaw);
+                                $teamStatusLabel = pd_team_status_label($teamStatusRaw);
+                                ?>
                                 <article class="pdp-card">
                                     <div class="pdp-card-top">
                                         <span class="pdp-pill"><?= pd_h(strtoupper((string)$team['member_role'])) ?></span>
                                         <span class="pdp-sub-pill"><?= pd_h((string)$team['game_name']) ?></span>
+                                        <span class="pdp-pill <?= pd_h($teamStatusClass) ?>"><?= pd_h($teamStatusLabel) ?></span>
                                     </div>
                                     <h4><?= pd_h((string)$team['team_name']) ?></h4>
                                     <p class="pdp-muted">
@@ -389,40 +593,60 @@ require_once __DIR__ . '/sidebar.php';
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const banForm = document.getElementById('pdpBanForm');
-        if (!banForm || typeof Swal === 'undefined') {
+        if (typeof Swal === 'undefined') {
             return;
         }
 
-        const banButton = banForm.querySelector('button[name="ban_user"]');
-        if (!banButton || banButton.disabled) {
-            return;
-        }
-
-        banForm.addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const result = await Swal.fire({
-                title: 'Confirm ban?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, proceed',
-                cancelButtonText: 'Cancel',
-                customClass: {
-                    container: 'player-ban-backdrop',
-                    popup: 'player-ban-popup',
-                    icon: 'player-ban-icon',
-                    title: 'player-ban-title',
-                    actions: 'player-ban-actions',
-                    confirmButton: 'player-ban-confirm',
-                    cancelButton: 'player-ban-cancel'
-                },
-                buttonsStyling: false
-            });
-
-            if (result.isConfirmed) {
-                banForm.submit();
+        const bindBanConfirmation = function(formId, buttonSelector, title, text) {
+            const form = document.getElementById(formId);
+            if (!form) {
+                return;
             }
-        });
+
+            const button = form.querySelector(buttonSelector);
+            if (!button || button.disabled) {
+                return;
+            }
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                const result = await Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, proceed',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        container: 'player-ban-backdrop',
+                        popup: 'player-ban-popup',
+                        icon: 'player-ban-icon',
+                        title: 'player-ban-title',
+                        actions: 'player-ban-actions',
+                        confirmButton: 'player-ban-confirm',
+                        cancelButton: 'player-ban-cancel'
+                    },
+                    buttonsStyling: false
+                });
+
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        };
+
+        bindBanConfirmation(
+            'pdpBanForm',
+            'button[name="ban_user"]',
+            'Confirm player ban?',
+            'This player account will be marked as banned.'
+        );
+        bindBanConfirmation(
+            'pdpTeamBanForm',
+            'button[name="ban_team"]',
+            'Confirm team ban?',
+            'This will set team status to BANNED and ban all team members.'
+        );
     });
 </script>
