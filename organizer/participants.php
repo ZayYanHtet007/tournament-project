@@ -91,203 +91,306 @@ foreach ($membersRaw as $m) {
 <head>
 <meta charset="UTF-8">
 <title>Teams & Players</title>
-<link rel="stylesheet" href="../css/organizer/brscore.css">
+<!-- Font Awesome for icons (monochrome) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ================= PARTICIPANTS ================= */
-.br-search { 
-margin: 20px auto; 
-max-width: 360px; 
+/* ================= SQUARE DESIGN, BRIGHTER BLUE ACCENTS, MINIMAL ICONS ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0b0d12;
+    color: #e1e5ec;
+    font-family: 'Inter', sans-serif;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+}
+
+/* Main container – dark, square */
+.br-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    background-color: #10131c;
+    border: 1px solid #2f3a4a;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+    padding: 2rem;
+}
+
+/* Title area */
+.br-title {
+    margin-bottom: 2rem;
+}
+.br-title h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #b8d0f0;
+    border-bottom: 2px solid #2d7ff9; /* brighter blue */
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.br-title p {
+    color: #9aaec9;
+    margin-top: 0.5rem;
+}
+
+/* Search input – square, dark */
+.br-search {
+    margin: 20px auto;
+    max-width: 360px;
 }
 .br-search input {
-    width: 100%; 
-    padding: 12px 16px; 
-    border-radius: 14px;
-    background: rgba(0,0,0,0.6); 
-    border: 1px solid rgba(0,247,255,0.4); 
-    color: #fff;
+    width: 100%;
+    padding: 12px 16px;
+    background-color: #0f141e;
+    border: 1px solid #2f3a4a;
+    color: #e0e6f0;
+    font-size: 0.95rem;
+    border-radius: 0; /* square */
+    transition: 0.1s;
 }
-.br-participants { 
-    display: flex; 
-    gap: 20px; 
-    margin-top: 30px; 
-    overflow: hidden; 
-}
-.br-team-grid { 
-    flex: 1; 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); 
-    gap: 20px; transition: transform 0.5s ease; 
-}
-.br-team-card { 
-    background: rgba(255,255,255,0.06); 
-    border-radius: 16px; 
-    padding: 20px; 
-    text-align: center; 
-    cursor: pointer; 
-    transition: 0.35s ease; 
-    box-shadow: 0 0 20px rgba(0,247,255,0.12); 
-}
-.br-team-card:hover { 
-    transform: translateY(-6px) scale(1.04); 
-}
-.br-team-card.active { 
-    border: 2px solid #00f7ff; 
-    box-shadow: 0 0 35px rgba(0,247,255,0.6); 
-}
-.br-team-card img { 
-    width: 80px; 
-    height: 80px; 
-    border-radius: 50%; 
-    object-fit: cover; 
-    margin-bottom: 10px; 
-}
-.br-team-card h3 { 
-    color: #00f7ff; 
-    font-size: 1.05rem; 
+.br-search input:focus {
+    outline: none;
+    border-color: #2d7ff9;
+    box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
 }
 
-/* panel */
-.br-team-panel { 
-    width: 0; 
-    opacity: 0; 
-    overflow: hidden; 
+/* Participants layout */
+.br-participants {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+/* Team grid – square cards */
+.br-team-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    transition: transform 0.5s ease;
+}
+.br-team-card {
+    background-color: #161b26;
+    border: 1px solid #2f3a4a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    transition: all 0.15s ease;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 0; /* square */
+}
+.br-team-card:hover {
+    border-color: #2d7ff9;
+    box-shadow: 0 0 15px #2d7ff9;
+    transform: translateY(-2px);
+}
+.br-team-card.active {
+    border: 2px solid #2d7ff9;
+    box-shadow: 0 0 25px #2d7ff9;
+}
+.br-team-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 0; /* square */
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 1px solid #2f3a4a;
+}
+.br-team-card h3 {
+    color: #b8d0f0;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* Team panel – square, sliding */
+.br-team-panel {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
     transition: all 0.5s ease;
-    background: rgba(0,0,0,0.55); 
-    border-radius: 18px; 
-    position: relative; 
-    perspective: 1000px; 
-    flex-shrink: 0; 
+    background-color: #161b26;
+    border: 1px solid #2f3a4a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    border-radius: 0; /* square */
+    position: relative;
+    perspective: 1000px;
+    flex-shrink: 0;
 }
-.br-team-panel.active { 
-    width: 360px; 
-    opacity: 1; 
-    padding: 20px; 
-}
-
-.br-panel-inner { 
-    transition: transform 0.6s; 
-    transform-style: preserve-3d; 
-    position: relative; 
-}
-.br-panel-inner.flip { 
-    transform: rotateY(180deg); 
+.br-team-panel.active {
+    width: 360px;
+    opacity: 1;
+    padding: 20px;
 }
 
-.br-panel-front, .br-panel-back { 
-    backface-visibility: hidden; 
-    position: absolute; 
-    width: 100%; top: 0; 
-    left: 0; 
+.br-panel-inner {
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
 }
-.br-panel-back { 
-    transform: rotateY(180deg); 
+.br-panel-inner.flip {
+    transform: rotateY(180deg);
 }
 
-.br-panel-title { 
-    font-size: 1.4rem; 
-    text-align: center; 
-    color: #00f7ff; 
-    margin-bottom: 18px; 
+.br-panel-front, .br-panel-back {
+    backface-visibility: hidden;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
 }
-.br-role-block { 
-    background: rgba(255,255,255,0.06); 
-    border-radius: 12px; 
+.br-panel-back {
+    transform: rotateY(180deg);
+}
+
+.br-panel-title {
+    font-size: 1.4rem;
+    text-align: center;
+    color: #b8d0f0;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #2f3a4a;
+    padding-bottom: 0.5rem;
+}
+
+/* Role blocks */
+.br-role-block {
+    background-color: #1a202b;
+    border: 1px solid #2b3442;
+    border-radius: 0; /* square */
     padding: 12px;
-     margin-bottom: 14px; 
-    }
-.br-role-block h4 { 
-    font-size: 0.8rem; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-    color: #9ca3af; 
-    margin-bottom: 6px; 
+    margin-bottom: 14px;
 }
-.br-member { 
-    font-size: 0.95rem; 
-    padding: 3px 0; 
+.br-role-block h4 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af;
+    margin-bottom: 6px;
 }
-.br-empty { 
-    font-size: 0.85rem; 
-    color: #9ca3af; 
-    font-style: italic; 
+.br-member {
+    font-size: 0.95rem;
+    padding: 3px 0;
+    color: #d6e2f0;
 }
-
-.br-ban-btn { 
-    background:#dc2626; 
-    border:none; 
-    color:white; 
-    width:100%; 
-    padding:10px; 
-    border-radius:10px; 
-    cursor:pointer; 
-    margin-bottom:14px; 
-    font-weight:600; 
-}
-.br-ban-btn:hover { 
-    background:#b91c1c; 
+.br-empty {
+    font-size: 0.85rem;
+    color: #7f8fa0;
+    font-style: italic;
 }
 
-.br-back-textarea { 
-    width: 100%; 
-    min-height: 100px; 
-    padding: 10px; 
-    border-radius: 10px; 
-    border: 1px solid #00f7ff; 
-    resize: none; 
-    margin-bottom: 14px; 
-    background: rgba(255,255,255,0.05); 
-    color: #fff; 
+/* Ban button */
+.br-ban-btn {
+    background-color: #1e3142;
+    border: 1px solid #2d7ff9;
+    color: white;
+    width: 100%;
+    padding: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 14px;
+    border-radius: 0; /* square */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: 0.1s;
 }
-.br-back-header { 
-    font-size: 1rem; 
-    margin-bottom: 10px; 
-    color: #00f7ff; 
-}
-.br-commit-btn, .br-back-btn { 
-    width: 100%; 
-    padding: 10px; 
-    border-radius: 10px; 
-    background: #00f7ff; 
-    border: none; 
-    color: #000; 
-    font-weight: 600; 
-    cursor: pointer; 
-    margin-bottom: 10px; 
-}
-.br-commit-btn:hover, .br-back-btn:hover { 
-    background: #00cfff; 
+.br-ban-btn:hover {
+    background-color: #264763;
+    border-color: #5a9eff;
 }
 
-/* Notification Messages */
+/* Back side form elements */
+.br-back-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    background-color: #0f141e;
+    border: 1px solid #2f3a4a;
+    color: #e0e6f0;
+    border-radius: 0;
+    resize: none;
+    margin-bottom: 14px;
+    font-family: 'Inter', sans-serif;
+}
+.br-back-textarea:focus {
+    outline: none;
+    border-color: #2d7ff9;
+    box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
+}
+.br-back-header {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #b8d0f0;
+}
+.br-commit-btn, .br-back-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #1e3142;
+    border: 1px solid #2d7ff9;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    border-radius: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: 0.1s;
+}
+.br-commit-btn:hover, .br-back-btn:hover {
+    background-color: #264763;
+    border-color: #5a9eff;
+}
+
+/* Notification messages – square, bright blue border */
 .notification {
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 15px 20px;
-    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    background-color: #1b2535;
+    border: 1px solid #2d7ff9;
+    color: #c0dcff;
     z-index: 1000;
     animation: slideIn 0.3s ease;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
-
-.success {
-    background-color: #10b981;
-    color: white;
+.notification.success {
+    border-color: #2d7ff9; /* same bright blue, no extra colors */
 }
-
-.error {
-    background-color: #ef4444;
-    color: white;
+.notification.error {
+    border-color: #2d7ff9; /* consistent */
 }
-
 @keyframes slideIn {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
 }
 
-/* responsive */
+/* Icons – monochrome */
+i, .fa, .fas, .far {
+    color: inherit;
+}
+
+/* Responsive */
 @media(max-width:900px){
-    .br-participants { flex-direction: column; }
-    .br-team-panel.active { width: 100%; margin-top: 20px; }
+    .br-participants {
+        flex-direction: column;
+    }
+    .br-team-panel.active {
+        width: 100%;
+        margin-top: 20px;
+    }
 }
 </style>
 </head>
@@ -297,14 +400,20 @@ max-width: 360px;
 
 <!-- Notification Messages -->
 <?php if ($successMessage): ?>
-<div class="notification success"><?= htmlspecialchars($successMessage) ?></div>
+<div class="notification success">
+    <i class="fas fa-check-circle"></i>
+    <?= htmlspecialchars($successMessage) ?>
+</div>
 <?php endif; ?>
 <?php if ($errorMessage): ?>
-<div class="notification error"><?= htmlspecialchars($errorMessage) ?></div>
+<div class="notification error">
+    <i class="fas fa-exclamation-circle"></i>
+    <?= htmlspecialchars($errorMessage) ?>
+</div>
 <?php endif; ?>
 
 <div class="br-title">
-    <h1>👥 Teams & Players</h1>
+    <h1><i class="fas fa-users"></i> Teams & Players</h1>
     <p><?= htmlspecialchars($tournament['title']) ?></p>
 </div>
 
@@ -333,33 +442,33 @@ max-width: 360px;
             <div class="br-panel-title" id="panelTitle"></div>
 
             <div class="br-role-block">
-                <h4>Coach</h4>
+                <h4><i class="fas fa-chalkboard-teacher"></i> Coach</h4>
                 <div id="coachBlock"></div>
             </div>
             <div class="br-role-block">
-                <h4>Leader</h4>
+                <h4><i class="fas fa-crown"></i> Leader</h4>
                 <div id="leaderBlock"></div>
             </div>
             <div class="br-role-block">
-                <h4>Members</h4>
+                <h4><i class="fas fa-gamepad"></i> Members</h4>
                 <div id="memberBlock"></div>
             </div>
             <div class="br-role-block">
-                <h4>Substitutes</h4>
+                <h4><i class="fas fa-exchange-alt"></i> Substitutes</h4>
                 <div id="subBlock"></div>
             </div>
 
-            <button class="br-ban-btn" id="banBtn">Ban Team</button>
+            <button class="br-ban-btn" id="banBtn"><i class="fas fa-ban"></i> Ban Team</button>
         </div>
 
         <div class="br-panel-back">
-            <div class="br-back-header">Write your reason why should admin ban this team and players from this website</div>
+            <div class="br-back-header"><i class="fas fa-exclamation-triangle"></i> Write your reason why should admin ban this team and players from this website</div>
             <form id="banForm" method="POST">
                 <input type="hidden" name="team_id" id="formTeamId">
                 <input type="hidden" name="ban_team" value="1">
                 <textarea class="br-back-textarea" id="banReason" name="reason" required placeholder="Enter ban reason..."></textarea>
-                <button type="submit" class="br-commit-btn" id="commitBanBtn">Submit</button>
-                <button type="button" class="br-back-btn" id="backBtn">Back</button>
+                <button type="submit" class="br-commit-btn" id="commitBanBtn"><i class="fas fa-paper-plane"></i> Submit</button>
+                <button type="button" class="br-back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back</button>
             </form>
         </div>
 

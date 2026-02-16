@@ -424,7 +424,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <header class="tx-header">
 
         <span id="notif-icon">
-            <i class="fa-solid fa-bell"></i>
+            <i class="fa-regular fa-bell"></i>
         </span>
 
 
