@@ -77,7 +77,8 @@ $currentStep = 1;
 
 /* ---------- FETCH GAMES ---------- */
 $games = [];
-$q = $conn->query("SELECT game_id, name, genre FROM games ORDER BY name");
+$q = $conn->query("SELECT game_id, name, genre FROM games WHERE game_status = 'available' 
+                   ORDER BY name");
 while ($row = $q->fetch_assoc()) {
     $games[] = $row;
 }

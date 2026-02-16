@@ -13,6 +13,9 @@ if (!$tournament) {
     die("Tournament not found");
 }
 
+// Check if tournament is already completed
+$tournamentCompleted = ($tournament['status'] === 'completed');
+
 /* ================= TEAM COUNT ================= */
 $totalTeams = $pdo->query("
     SELECT COUNT(*) FROM tournament_teams WHERE tournament_id=$tournament_id
@@ -21,7 +24,7 @@ $totalTeams = $pdo->query("
 $canSchedule = in_array($totalTeams, [16, 25]);
 
 /* ================= AUTO CREATE MATCHES ================= */
-if ($canSchedule) {
+if ($canSchedule && !$tournamentCompleted) {
 
     $existingRounds = $pdo->query("
         SELECT round FROM matches WHERE tournament_id=$tournament_id
@@ -66,6 +69,10 @@ $matches = $stmt->fetchAll();
 $allCompleted = count($matches) === 3 &&
     count(array_filter($matches, fn($m) => $m['status'] === 'completed')) === 3;
 
+if ($tournamentCompleted) {
+    $allCompleted = true;
+}
+
 /* ================= SAVE SCHEDULE ================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$allCompleted) {
 
@@ -109,7 +116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$allCompleted) {
     }
 
     if (!$errorMessage && $savedRounds) {
-        $successMessage = "✅ " . implode(', ', $savedRounds) . " schedule saved successfully.";
+        $count = count($savedRounds);
+        $roundsList = implode(', ', $savedRounds);
+        $successMessage = "✅ $count schedule(s) saved: $roundsList.";
     }
 }
 
@@ -121,6 +130,8 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$tournament_id]);
 $matches = $stmt->fetchAll();
+
+$minDateTime = date('Y-m-d\TH:i');
 ?>
 
 <!DOCTYPE html>
@@ -137,6 +148,11 @@ $matches = $stmt->fetchAll();
         <div class="br-title">
             <h1>📅 Battle Royale Schedule</h1>
             <p><?= htmlspecialchars($tournament['title']) ?></p>
+        </div>
+
+        <!-- Back to Tournament Management -->
+        <div style="margin-bottom: 20px;">
+            <a href="manageTournament.php?tournament_id=<?= $tournament_id ?>" class="br-btn" style="background: #4b5563;">← Back</a>
         </div>
 
         <?php if ($errorMessage): ?>
@@ -156,68 +172,72 @@ $matches = $stmt->fetchAll();
             </div>
         <?php endif; ?>
 
-        <?php if (!$canSchedule): ?>
+        <?php if (!$canSchedule && !$allCompleted): ?>
             <div class="br-message error">
                 Tournament needs more teams to schedule matches.
             </div>
-    </div>
-</body>
-
-</html>
-<?php exit;
+            </div> <!-- close container -->
+            </body>
+            </html>
+            <?php exit;
         endif; ?>
 
-<form method="POST">
+        <?php if ($tournamentCompleted): ?>
+            <div class="br-message info">Tournament is already marked as completed.</div>
+        <?php endif; ?>
 
-    <div class="br-match-grid">
+        <form method="POST">
 
-        <?php foreach ($matches as $m): ?>
-            <div class="br-match-card <?= $m['status'] === 'completed' ? 'completed' : '' ?>">
+            <div class="br-match-grid">
 
-                <?php if ($m['status'] === 'completed'): ?>
-                    <div class="br-match-round">
-                        <?= htmlspecialchars($m['round']) ?>
+                <?php foreach ($matches as $m): ?>
+                    <div class="br-match-card <?= $m['status'] === 'completed' ? 'completed' : '' ?>">
+
+                        <?php if ($m['status'] === 'completed'): ?>
+                            <div class="br-match-round">
+                                <?= htmlspecialchars($m['round']) ?>
+                            </div>
+                            <div class="br-match-time">
+                                <?= date('d M Y, h:i A', strtotime($m['scheduled_time'])) ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="br-match-round">
+                                Match <?= htmlspecialchars($m['round']) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="br-input-group">
+                            <label>Schedule Date & Time</label>
+                            <input
+                                type="datetime-local"
+                                name="schedule[<?= $m['match_id'] ?>]"
+                                value="<?= $m['scheduled_time']
+                                            ? date('Y-m-d\TH:i', strtotime($m['scheduled_time']))
+                                            : '' ?>"
+                                min="<?= $minDateTime ?>"
+                                <?= $m['status'] === 'completed' || $allCompleted ? 'readonly disabled' : '' ?>>
+                        </div>
+
+                        <?php if ($m['status'] === 'completed'): ?>
+                            <div class="br-message info">
+                                Match completed
+                            </div>
+                        <?php endif; ?>
+
                     </div>
-                    <div class="br-match-time">
-                        <?= date('d M Y, h:i A', strtotime($m['scheduled_time'])) ?>
-                    </div>
-                <?php else: ?>
-                    <div class="br-match-round">
-                        Match <?= htmlspecialchars($m['round']) ?>
-                    </div>
-                <?php endif; ?>
-
-                <div class="br-input-group">
-                    <label>Schedule Date & Time</label>
-                    <input
-                        type="datetime-local"
-                        name="schedule[<?= $m['match_id'] ?>]"
-                        value="<?= $m['scheduled_time']
-                                    ? date('Y-m-d\TH:i', strtotime($m['scheduled_time']))
-                                    : '' ?>"
-                        <?= $m['status'] === 'completed' || $allCompleted ? 'readonly disabled' : '' ?>>
-                </div>
-
-                <?php if ($m['status'] === 'completed'): ?>
-                    <div class="br-message info">
-                        Match completed
-                    </div>
-                <?php endif; ?>
+                <?php endforeach; ?>
 
             </div>
-        <?php endforeach; ?>
+
+            <div class="br-btn-wrapper">
+                <button class="br-btn" type="submit" <?= $allCompleted ? 'disabled' : '' ?>>
+                    Save Schedule
+                </button>
+            </div>
+
+        </form>
 
     </div>
-
-    <div class="br-btn-wrapper">
-        <button class="br-btn" type="submit" disabled="<?= $allCompleted ? 'disabled' : '' ?>">
-            Save Schedule
-        </button>
-    </div>
-
-</form>
-
-</div>
 </body>
 
 </html>
