@@ -3582,6 +3582,65 @@ span.flatpickr-weekday {
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
 }
 
+.players-browser .pb-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.players-browser .pb-inline-form {
+  margin: 0;
+}
+
+.players-browser .pb-ban-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(220, 38, 38, 0.36);
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  color: #b91c1c;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.players-browser .pb-ban-btn:disabled {
+  opacity: 0.64;
+  cursor: not-allowed;
+}
+
+.players-browser .pb-alert {
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.players-browser .pb-alert.success {
+  background: rgba(22, 163, 74, 0.12);
+  border-color: rgba(22, 163, 74, 0.28);
+  color: #166534;
+}
+
+.players-browser .pb-alert.warning {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.28);
+  color: #92400e;
+}
+
+.players-browser .pb-alert.danger {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #b91c1c;
+}
+
 .players-browser .pb-filter {
   display: grid;
   grid-template-columns: minmax(240px, 380px) minmax(180px, 240px) auto auto;
@@ -3962,6 +4021,30 @@ span.flatpickr-weekday {
 [data-theme="dark"] .players-browser .pb-reset-btn {
   background: rgba(15, 23, 42, 0.7);
   color: #e2e8f0;
+}
+
+[data-theme="dark"] .players-browser .pb-ban-btn {
+  background: linear-gradient(135deg, rgba(153, 27, 27, 0.46), rgba(127, 29, 29, 0.4));
+  border-color: rgba(252, 165, 165, 0.5);
+  color: #fee2e2;
+}
+
+[data-theme="dark"] .players-browser .pb-alert.success {
+  background: rgba(6, 95, 70, 0.34);
+  border-color: rgba(52, 211, 153, 0.42);
+  color: #bbf7d0;
+}
+
+[data-theme="dark"] .players-browser .pb-alert.warning {
+  background: rgba(146, 64, 14, 0.36);
+  border-color: rgba(251, 191, 36, 0.42);
+  color: #fde68a;
+}
+
+[data-theme="dark"] .players-browser .pb-alert.danger {
+  background: rgba(127, 29, 29, 0.4);
+  border-color: rgba(248, 113, 113, 0.44);
+  color: #fecaca;
 }
 
 [data-theme="dark"] .pb-page-btn {
@@ -4552,6 +4635,10 @@ span.flatpickr-weekday {
   .player-detail-page .pdp-hero {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .players-browser .pb-actions {
+    justify-content: flex-start;
   }
 
   .player-detail-page .pdp-summary {
