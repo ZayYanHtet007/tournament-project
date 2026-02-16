@@ -70,7 +70,7 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
 
             <div class="sidebar-menu">
                 <a href="adminDashboard.php"><i class="fa fa-chart-line"></i> Dashboard</a>
-                <a href="players.php"><i class="fa fa-users"></i> Players</a>
+                <a href="players.php"><i class="fa fa-users"></i> Teams & Players</a>
                 <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
                 <a href="organizers.php"><i class="fa fa-user-check"></i> Organizers</a>
                 <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
