@@ -41,10 +41,7 @@ $stmt->bind_param("i", $tournament_id);
 $stmt->execute();
 $joined = (int)$stmt->get_result()->fetch_assoc()['total'];
 
-if ($joined < $maxParticipants) {
-    $needed = $maxParticipants - $joined;
-    die("Tournament needs $needed more teams to start scheduling.");
-}
+$teamsNeeded = $maxParticipants - $joined;
 
 /* ---------- ROUND ORDER ---------- */
 $roundOrder = [
@@ -62,7 +59,7 @@ $stmt->bind_param("i", $tournament_id);
 $stmt->execute();
 $existingMatches = (int)$stmt->get_result()->fetch_assoc()['total'];
 
-if ($existingMatches === 0) {
+if ($teamsNeeded <= 0 && $existingMatches === 0) {
     $firstRoundMap = [
         256 => 'R256',
         128 => 'R128',
@@ -183,8 +180,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($mode === 'round') {
             foreach ($_POST['schedule_round'] as $round => $datetime) {
                 if (empty($datetime)) continue;
-                $ts = strtotime($datetime);
-                if ($ts === false || $ts <= time()) continue;
+                // Convert to MySQL format
+                $mysqlDatetime = date('Y-m-d H:i:s', strtotime($datetime));
+                if ($mysqlDatetime === false) continue;
 
                 $stmt = $conn->prepare("
                     UPDATE matches
@@ -193,22 +191,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       AND round = ?
                       AND status = 'pending'
                 ");
-                $stmt->bind_param("sis", $datetime, $tournament_id, $round);
+                $stmt->bind_param("sis", $mysqlDatetime, $tournament_id, $round);
                 $stmt->execute();
                 $updatedCount += $stmt->affected_rows;
             }
         } else {
             foreach ($_POST['schedule'] as $match_id => $datetime) {
                 if (empty($datetime)) continue;
-                $ts = strtotime($datetime);
-                if ($ts === false || $ts <= time()) continue;
+                $mysqlDatetime = date('Y-m-d H:i:s', strtotime($datetime));
+                if ($mysqlDatetime === false) continue;
 
                 $stmt = $conn->prepare("
                     UPDATE matches
                     SET scheduled_time = ?
                     WHERE match_id = ? AND tournament_id = ? AND status = 'pending'
                 ");
-                $stmt->bind_param("sii", $datetime, $match_id, $tournament_id);
+                $stmt->bind_param("sii", $mysqlDatetime, $match_id, $tournament_id);
                 $stmt->execute();
                 if ($stmt->affected_rows > 0) $updatedCount++;
             }
@@ -260,9 +258,28 @@ $matchesResult->data_seek(0); // reset for display
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         function toggleMode(mode) {
-            document.getElementById('round-mode').style.display = mode === 'round' ? 'block' : 'none';
-            document.getElementById('match-mode').style.display = mode === 'match' ? 'block' : 'none';
+            const roundDiv = document.getElementById('round-mode');
+            const matchDiv = document.getElementById('match-mode');
+
+            if (mode === 'round') {
+                roundDiv.style.display = 'block';
+                matchDiv.style.display = 'none';
+                // Enable all round inputs, disable all match inputs
+                roundDiv.querySelectorAll('input').forEach(input => input.disabled = false);
+                matchDiv.querySelectorAll('input').forEach(input => input.disabled = true);
+            } else {
+                roundDiv.style.display = 'none';
+                matchDiv.style.display = 'block';
+                // Enable all match inputs, disable all round inputs
+                roundDiv.querySelectorAll('input').forEach(input => input.disabled = true);
+                matchDiv.querySelectorAll('input').forEach(input => input.disabled = false);
+            }
         }
+
+        // Initialize on page load: match mode active, round inputs disabled
+        window.onload = function() {
+            toggleMode('match');
+        };
     </script>
 </head>
 <body class="bg-gray-100 p-6">
@@ -287,98 +304,104 @@ $matchesResult->data_seek(0); // reset for display
             </div>
         <?php endif; ?>
 
-        <!-- Mode selection (only if tournament not completed) -->
-        <?php if ($tournamentStatus !== 'completed'): ?>
-        <div class="bg-white p-4 rounded shadow mb-6">
-            <span class="font-semibold mr-4">Scheduling mode:</span>
-            <label class="mr-4">
-                <input type="radio" name="mode" value="match" checked onclick="toggleMode('match')"> Match by match
-            </label>
-            <label>
-                <input type="radio" name="mode" value="round" onclick="toggleMode('round')"> Round by round
-            </label>
-        </div>
-        <?php endif; ?>
+        <?php if ($teamsNeeded > 0): ?>
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6">
+                <p class="font-bold">⏳ Tournament not full</p>
+                <p>Currently <?= $joined ?> / <?= $maxParticipants ?> teams registered. <?= $teamsNeeded ?> more team(s) needed to start scheduling.</p>
+            </div>
+        <?php else: ?>
+            <!-- Mode selection (only if tournament not completed) -->
+            <?php if ($tournamentStatus !== 'completed'): ?>
+            <div class="bg-white p-4 rounded shadow mb-6">
+                <span class="font-semibold mr-4">Scheduling mode:</span>
+                <label class="mr-4">
+                    <input type="radio" name="mode" value="match" checked onclick="toggleMode('match')"> Match by match
+                </label>
+                <label>
+                    <input type="radio" name="mode" value="round" onclick="toggleMode('round')"> Round by round
+                </label>
+            </div>
+            <?php endif; ?>
 
-        <form method="post">
-            <!-- Round-by-round mode (hidden by default) -->
-            <div id="round-mode" style="display: none;">
-                <?php
-                $matchesResult->data_seek(0);
-                $roundGroups = [];
-                while ($m = $matchesResult->fetch_assoc()) {
-                    $roundGroups[$m['round']][] = $m;
-                }
-                foreach ($roundGroups as $round => $roundMatches):
-                    $hasPending = false;
-                    foreach ($roundMatches as $m) {
-                        if ($m['status'] === 'pending') {
-                            $hasPending = true;
-                            break;
-                        }
+            <form method="post">
+                <!-- Round-by-round mode (initially hidden and disabled) -->
+                <div id="round-mode">
+                    <?php
+                    $matchesResult->data_seek(0);
+                    $roundGroups = [];
+                    while ($m = $matchesResult->fetch_assoc()) {
+                        $roundGroups[$m['round']][] = $m;
                     }
-                    if (!$hasPending) continue;
-                ?>
-                    <div class="bg-white p-4 rounded shadow mb-4">
-                        <h3 class="font-semibold text-lg mb-2"><?= strtoupper($round) ?></h3>
-                        <input type="datetime-local"
-                        name="schedule_round[<?= $round ?>]"
-                        min="<?= date('Y-m-d\TH:i') ?>"
-                        class="border rounded px-3 py-2 w-full max-w-xs"
-                        <?= $tournamentStatus === 'completed' ? 'disabled' : '' ?>
-                        <?= $tournamentStatus !== 'completed' ? 'required' : '' ?>>
-                        <p class="text-sm text-gray-500 mt-1">This time will be applied to all <?= count($roundMatches) ?> matches of this round.</p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Match-by-match mode (default visible) -->
-            <div id="match-mode">
-                <?php
-                $matchesResult->data_seek(0);
-                $currentRound = '';
-                while ($m = $matchesResult->fetch_assoc()):
-                    if ($currentRound !== $m['round']):
-                        $currentRound = $m['round'];
-                        echo "<h2 class='text-xl font-semibold mt-6 mb-2'>" . strtoupper($currentRound) . "</h2>";
-                    endif;
-
-                    $teamA = $m['team1_name'] ?? 'TBD';
-                    $teamB = $m['team2_name'] ?? 'TBD';
-                    $isCompleted = ($m['status'] === 'completed');
-                    $disabled = ($tournamentStatus === 'completed' || $isCompleted) ? 'disabled' : '';
-                ?>
-                    <div class="bg-white p-4 rounded shadow mb-2 flex flex-wrap items-center gap-4">
-                        <div class="w-64">
-                            <span class="font-medium"><?= htmlspecialchars($teamA) ?> vs <?= htmlspecialchars($teamB) ?></span>
+                    foreach ($roundGroups as $round => $roundMatches):
+                        $hasPending = false;
+                        foreach ($roundMatches as $m) {
+                            if ($m['status'] === 'pending') {
+                                $hasPending = true;
+                                break;
+                            }
+                        }
+                        if (!$hasPending) continue;
+                    ?>
+                        <div class="bg-white p-4 rounded shadow mb-4">
+                            <h3 class="font-semibold text-lg mb-2"><?= strtoupper($round) ?></h3>
+                            <input type="datetime-local"
+                                   name="schedule_round[<?= $round ?>]"
+                                   min="<?= date('Y-m-d\TH:i') ?>"
+                                   class="border rounded px-3 py-2 w-full max-w-xs"
+                                   <?= $tournamentStatus === 'completed' ? 'disabled' : '' ?>>
+                            <p class="text-sm text-gray-500 mt-1">This time will be applied to all <?= count($roundMatches) ?> matches of this round.</p>
                         </div>
-                        <div class="flex-1">
-                        <input type="datetime-local"
-                        name="schedule[<?= $m['match_id'] ?>]"
-                        value="<?= $m['scheduled_time'] ? date('Y-m-d\TH:i', strtotime($m['scheduled_time'])) : '' ?>"
-                        min="<?= date('Y-m-d\TH:i') ?>"
-                        class="border rounded px-3 py-2 w-full max-w-xs"
-                        <?= $disabled ?>
-                        <?= (!$isCompleted && $tournamentStatus !== 'completed') ? 'required' : '' ?>>
-                        </div>
-                        <?php if ($isCompleted): ?>
-                            <span class="text-green-600 font-semibold text-sm bg-green-50 px-3 py-1 rounded">
-                                ✓ Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                <?php endwhile; ?>
-            </div>
+                    <?php endforeach; ?>
+                </div>
 
-            <!-- Save button – always visible, disabled when tournament completed or no pending matches -->
-            <div class="mt-6 flex justify-end">
-                <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                        <?= ($tournamentStatus === 'completed' || !$hasPendingMatches) ? 'disabled' : '' ?>>
-                    💾 Save Schedules
-                </button>
-            </div>
-        </form>
+                <!-- Match-by-match mode (default visible) -->
+                <div id="match-mode">
+                    <?php
+                    $matchesResult->data_seek(0);
+                    $currentRound = '';
+                    while ($m = $matchesResult->fetch_assoc()):
+                        if ($currentRound !== $m['round']):
+                            $currentRound = $m['round'];
+                            echo "<h2 class='text-xl font-semibold mt-6 mb-2'>" . strtoupper($currentRound) . "</h2>";
+                        endif;
+
+                        $teamA = $m['team1_name'] ?? 'TBD';
+                        $teamB = $m['team2_name'] ?? 'TBD';
+                        $isCompleted = ($m['status'] === 'completed');
+                        $disabled = ($tournamentStatus === 'completed' || $isCompleted) ? 'disabled' : '';
+                    ?>
+                        <div class="bg-white p-4 rounded shadow mb-2 flex flex-wrap items-center gap-4">
+                            <div class="w-64">
+                                <span class="font-medium"><?= htmlspecialchars($teamA) ?> vs <?= htmlspecialchars($teamB) ?></span>
+                            </div>
+                            <div class="flex-1">
+                                <input type="datetime-local"
+                                       name="schedule[<?= $m['match_id'] ?>]"
+                                       value="<?= $m['scheduled_time'] ? date('Y-m-d\TH:i', strtotime($m['scheduled_time'])) : '' ?>"
+                                       min="<?= date('Y-m-d\TH:i') ?>"
+                                       class="border rounded px-3 py-2 w-full max-w-xs"
+                                       <?= $disabled ?>>
+                            </div>
+                            <?php if ($isCompleted): ?>
+                                <span class="text-green-600 font-semibold text-sm bg-green-50 px-3 py-1 rounded">
+                                    ✓ Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endwhile; ?>
+                </div>
+
+                <!-- Save button – visible only if tournament not completed and there are pending matches -->
+                <?php if ($tournamentStatus !== 'completed' && $hasPendingMatches): ?>
+                <div class="mt-6 flex justify-end">
+                    <button type="submit"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded shadow">
+                        💾 Save Schedules
+                    </button>
+                </div>
+                <?php endif; ?>
+            </form>
+        <?php endif; ?>
     </div>
 </body>
 </html>
