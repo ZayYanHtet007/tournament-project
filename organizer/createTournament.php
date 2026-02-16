@@ -137,153 +137,302 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
     <meta charset="UTF-8">
     <title>Create Tournament | Pro Gamer Portal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons (monochrome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --neon-blue: #00d2ff;
-            --deep-blue: #004e92;
-            --dark-bg: #060b28;
-            --glass-bg: rgba(15, 23, 42, 0.9);
+        /* ================= SQUARE DESIGN, BRIGHTER BLUE ACCENTS ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: radial-gradient(circle at top, #101e4a 0%, #060b28 100%);
-            background-attachment: fixed;
-            color: #e2e8f0;
-            font-family: 'Rajdhani', sans-serif;
+            background-color: #0b0d12;
+            color: #e1e5ec;
+            font-family: 'Inter', sans-serif;
+            padding: 2rem 1rem;
             min-height: 100vh;
         }
 
-        h1, h2, h3, .font-bold {
-            font-family: 'Orbitron', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        /* Main container – dark, square */
+        .max-w-4xl {
+            max-width: 1280px;
+            margin: 0 auto;
+            background-color: #10131c;
+            border: 1px solid #2f3a4a;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+            padding: 2rem;
         }
 
-        .input {
-            width: 100%;
-            padding: .75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            border-radius: .5rem;
+        /* Header with title and back button */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #2f3a4a;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        /* Back button */
+        .btn-back {
+            background-color: #1e3142;
+            border: 1px solid #2d7ff9;
             color: white;
-            transition: all 0.3s ease;
-        }
-
-        .input:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
-        }
-
-        .btn {
-            padding: .75rem 1.5rem;
-            border-radius: .5rem;
-            cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
+            padding: 0.7rem 1.5rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.1s;
             text-transform: uppercase;
-            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+        }
+        .btn-back:hover {
+            background-color: #264763;
+            border-color: #5a9eff;
         }
 
-        .btn-primary {
-            background: linear-gradient(90deg, #004e92, #00d2ff);
-            color: #fff;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        /* Alert message */
+        .bg-red-900\/50 {
+            background-color: #1b2535;
+            border: 1px solid #2d7ff9;
+            color: #c0dcff;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-radius: 0;
         }
 
-        .btn-primary:hover {
-            box-shadow: 0 0 25px rgba(0, 210, 255, 0.6);
-            transform: translateY(-2px);
-        }
-
-        .btn-outline {
-            border: 1px solid var(--neon-blue);
-            background: transparent;
-            color: var(--neon-blue);
-        }
-
-        .btn-outline:hover {
-            background: rgba(0, 210, 255, 0.1);
-        }
-
-        .hidden { display: none; }
-
+        /* Glass card */
         .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            background-color: #161b26;
+            border: 1px solid #2f3a4a;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+            padding: 1.5rem;
         }
 
+        /* Progress bar */
+        .bg-gray-800 {
+            background-color: #1f2632;
+        }
+        #progress {
+            background: #2d7ff9;
+            height: 100%;
+            transition: width 0.5s;
+        }
+
+        /* Step indicator */
+        .text-center.text-blue-400 {
+            color: #b8d0f0;
+            font-weight: 500;
+        }
+
+        /* Labels */
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #9aaec9;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Inputs */
+        .input, select.input, textarea.input {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #0f141e;
+            border: 1px solid #2f3a4a;
+            color: #e0e6f0;
+            font-size: 0.95rem;
+            border-radius: 0;
+            transition: 0.1s;
+            margin-bottom: 1.5rem;
+        }
+        .input:focus, select.input:focus, textarea.input:focus {
+            outline: none;
+            border-color: #2d7ff9;
+            box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
+        }
+        .input[readonly] {
+            background-color: #1c222d;
+            color: #7c8a9c;
+            border-color: #353e4e;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.7rem 1.5rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: 0.1s;
+            border-radius: 0;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: #1e3142;
+            border: 1px solid #2d7ff9;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #264763;
+            border-color: #5a9eff;
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #2f3a4a;
+            color: #b8d0f0;
+        }
+        .btn-outline:hover {
+            border-color: #2d7ff9;
+            background-color: #1e3142;
+        }
+
+        /* Format cards */
+        .format-section {
+            margin-bottom: 1.5rem;
+        }
         .card {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.03);
+            background-color: #161b26;
+            border: 1px solid #2f3a4a;
             padding: 1rem;
             text-align: center;
             cursor: pointer;
-            border-radius: .5rem;
-            transition: 0.3s;
+            transition: 0.1s;
         }
-
+        .card:hover {
+            border-color: #2d7ff9;
+            box-shadow: 0 0 10px #2d7ff9;
+        }
         .card.selected {
-            background: rgba(0, 210, 255, 0.25);
-            border-color: var(--neon-blue);
-            color: white;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+            border: 2px solid #2d7ff9;
+            box-shadow: 0 0 15px #2d7ff9;
+            background-color: #1e3142;
+        }
+        .disabled {
+            opacity: 0.4;
+            pointer-events: none;
         }
 
+        /* Bracket preview */
         .bracket {
             display: flex;
             gap: 20px;
             overflow-x: auto;
-            padding: 15px;
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border: 1px solid #2f3a4a;
+            background-color: #0f141e;
+            min-height: 120px;
+            align-items: center;
+            justify-content: center;
         }
-
         .match {
-            background: rgba(255, 255, 255, 0.05);
-            border-left: 3px solid var(--neon-blue);
+            background-color: #161b26;
+            border-left: 3px solid #2d7ff9;
             padding: 6px;
             margin-bottom: 8px;
             font-size: 11px;
+            color: #9aaec9;
         }
 
-        #progress {
-            box-shadow: 0 0 10px var(--neon-blue);
+        /* Icons */
+        i {
+            color: inherit;
         }
 
-        label { color: var(--neon-blue); font-size: 0.9rem; margin-bottom: 0.4rem; display: block; }
-        
-        .format-section.disabled {
-            opacity: 0.25;
-            pointer-events: none;
-            filter: grayscale(1);
+        /* Grid utilities */
+        .grid {
+            display: grid;
+            gap: 1rem;
         }
+        .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .md\:grid-cols-2 { @media (min-width: 768px) { grid-template-columns: repeat(2, 1fr); } }
+        .md\:grid-cols-3 { @media (min-width: 768px) { grid-template-columns: repeat(3, 1fr); } }
+        .md\:grid-cols-6 { @media (min-width: 768px) { grid-template-columns: repeat(6, 1fr); } }
+        .gap-6 { gap: 1.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+
+        /* Margins */
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mt-3 { margin-top: 0.75rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .pt-6 { padding-top: 1.5rem; }
+
+        /* Flex */
+        .flex { display: flex; }
+        .justify-between { justify-content: space-between; }
+        .justify-end { justify-content: flex-end; }
+        .items-center { align-items: center; }
+        .gap-3 { gap: 0.75rem; }
+
+        /* Hidden */
+        .hidden { display: none; }
+
+        /* Border */
+        .border-t { border-top: 1px solid #2f3a4a; }
+
+        /* Text colors */
+        .text-blue-400 { color: #b8d0f0; }
+        .text-white { color: #e1e5ec; }
+        .text-gray-400 { color: #9aaec9; }
+        .text-sm { font-size: 0.875rem; }
+        .tracking-widest { letter-spacing: 1px; }
+        .font-bold { font-weight: 600; }
     </style>
 </head>
 
 <body class="p-4 md:p-10">
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8 text-center text-white italic">
-            <span class="text-blue-400">⚡</span> Create Tournament <span class="text-blue-400">⚡</span>
-        </h1>
+        <!-- Header with title and back button -->
+        <div class="header-row">
+            <h1><i class="fas fa-bolt"></i> Create Tournament</h1>
+            <a href="organizerDashboard.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+        </div>
 
         <?php if ($message): ?>
             <div class="bg-red-900/50 border border-red-500 text-red-100 p-4 rounded mb-6">
-                <?= $message ?>
+                <i class="fas fa-exclamation-circle"></i> <?= $message ?>
             </div>
         <?php endif; ?>
 
         <form method="post">
             <input type="hidden" name="current_step" id="current_step" value="<?= $currentStep ?>">
 
-            <div class="glass-card p-6 md:p-8 rounded-xl">
+            <div class="glass-card p-6 md:p-8">
                 <div class="mb-8">
-                    <div class="bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                        <div id="progress" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-500" style="width:<?= $currentStep / 3 * 100 ?>%"></div>
+                    <div class="bg-gray-800 h-1.5">
+                        <div id="progress" style="width:<?= $currentStep / 3 * 100 ?>%"></div>
                     </div>
                     <div class="mt-3 text-center text-blue-400 text-sm tracking-widest font-bold">
                         PHASE 0<span id="stepNum"><?= $currentStep ?></span> / 03
@@ -316,13 +465,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="button" class="btn btn-primary" onclick="go(2)">Next</button>
+                        <button type="button" class="btn btn-primary" onclick="go(2)"><i class="fas fa-arrow-right"></i> Next</button>
                     </div>
                 </section>
 
                 <section id="step2" class="<?= $currentStep !== 2 ? 'hidden' : '' ?>">
                     <div class="mb-8 space-y-6">
-                        <div class="border border-white/5 rounded-lg p-4 bg-white/5">
+                        <div class="border border-white/5 p-4 bg-white/5">
                             <label class="text-lg font-bold flex items-center gap-3 mb-4 cursor-pointer">
                                 <input type="checkbox" id="checkStandard" checked onclick="toggleFormat('standard')" class="w-5 h-5 accent-blue-500">
                                 <span>Standard Format</span>
@@ -336,7 +485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
                             </div>
                         </div>
 
-                        <div class="border border-white/5 rounded-lg p-4 bg-white/5">
+                        <div class="border border-white/5 p-4 bg-white/5">
                             <label class="text-lg font-bold flex items-center gap-3 mb-4 cursor-pointer">
                                 <input type="checkbox" id="checkElim" onclick="toggleFormat('elim')" class="w-5 h-5 accent-blue-500">
                                 <span>Single Elimination</span>
@@ -369,8 +518,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
                     </div>
 
                     <div class="flex justify-between">
-                        <button type="button" class="btn btn-outline" onclick="go(1)">Back</button>
-                        <button type="button" class="btn btn-primary" onclick="go(3)">Proceed</button>
+                        <button type="button" class="btn btn-outline" onclick="go(1)"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-primary" onclick="go(3)">Proceed <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </section>
 
@@ -398,8 +547,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
                     </div>
 
                     <div class="flex justify-between border-t border-white/10 pt-6">
-                        <button type="button" class="btn btn-outline" onclick="go(2)">Back</button>
-                        <button type="submit" name="btnCreate" class="btn btn-primary">⚡ Deploy Tournament</button>
+                        <button type="button" class="btn btn-outline" onclick="go(2)"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="submit" name="btnCreate" class="btn btn-primary"><i class="fas fa-bolt"></i> Deploy Tournament</button>
                     </div>
                 </section>
             </div>

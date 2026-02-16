@@ -263,32 +263,255 @@ $matchesResult->data_seek(0);
 <head>
     <meta charset="UTF-8">
     <title>Single Elimination Score Entry</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons (monochrome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ================= SQUARE DESIGN, BRIGHTER BLUE ACCENTS ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0b0d12;
+            color: #e1e5ec;
+            font-family: 'Inter', sans-serif;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
+
+        /* Main container – dark, square */
+        .max-w-6xl {
+            max-width: 1280px;
+            margin: 0 auto;
+            background-color: #10131c;
+            border: 1px solid #2f3a4a;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+        }
+
+        /* Header */
+        .flex.justify-between.items-center {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #2f3a4a;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: #1e3142;
+            border: 1px solid #2d7ff9;
+            color: white;
+            font-weight: 500;
+            padding: 0.7rem 1.5rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.1s;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+        }
+        .btn-primary:hover {
+            background-color: #264763;
+            border-color: #5a9eff;
+        }
+
+        /* Flash message */
+        .flash-message {
+            background-color: #1b2535;
+            border: 1px solid #2d7ff9;
+            color: #c0dcff;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-radius: 0;
+        }
+
+        /* Champion card */
+        .champion-card {
+            background-color: #1b2535;
+            border: 1px solid #2d7ff9;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border-radius: 0;
+        }
+        .champion-card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #b8d0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        /* Round header */
+        .round-header {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            border-left: 5px solid #2d7ff9;
+            padding-left: 1rem;
+            margin: 2rem 0 1rem 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Match row */
+        .match-row {
+            background-color: #161b26;
+            border: 1px solid #2f3a4a;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            border-radius: 0;
+        }
+        .match-row .match-teams {
+            width: 250px;
+            font-weight: 500;
+            color: #d6e2f0;
+        }
+        .match-row input[type="number"] {
+            background-color: #0f141e;
+            border: 1px solid #2f3a4a;
+            color: #e0e6f0;
+            padding: 0.5rem;
+            font-size: 0.95rem;
+            border-radius: 0;
+            width: 60px;
+            text-align: center;
+        }
+        .match-row input[type="number"]:focus {
+            outline: none;
+            border-color: #2d7ff9;
+            box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
+        }
+        .match-row input:disabled {
+            background-color: #1c222d;
+            color: #7c8a9c;
+            border-color: #353e4e;
+        }
+        .winner-badge {
+            background-color: #1d2c3a;
+            border: 1px solid #2d7ff9;
+            color: #b0d0ee;
+            padding: 0.25rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+        }
+
+        /* Score separator */
+        .score-separator {
+            font-weight: 700;
+            color: #9aaec9;
+            margin: 0 0.25rem;
+        }
+
+        /* Save button */
+        .btn-save {
+            background-color: #1e3142;
+            border: 1px solid #2d7ff9;
+            color: white;
+            font-weight: 600;
+            padding: 0.9rem 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: 0.1s;
+            border-radius: 0;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-save:hover:not(:disabled) {
+            background-color: #264763;
+            border-color: #5a9eff;
+        }
+        .btn-save:disabled {
+            background-color: #1a1f2a;
+            border-color: #353e4e;
+            color: #6b7a8f;
+            cursor: not-allowed;
+        }
+
+        /* Icons */
+        i {
+            color: inherit;
+        }
+
+        /* Utility classes */
+        .flex { display: flex; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .flex-wrap { flex-wrap: wrap; }
+        .gap-4 { gap: 1rem; }
+        .gap-2 { gap: 0.5rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .text-sm { font-size: 0.875rem; }
+        .font-medium { font-weight: 500; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .ml-4 { margin-left: 1rem; }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">🏆 Score Entry – <?= htmlspecialchars($tournament['title'] ?? '') ?></h1>
-            <a href="SingleEliminationSchedule.php?tournament_id=<?= $tournament_id ?>"
-               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                📅 Back to Schedule
+<body>
+    <div class="max-w-6xl">
+        <!-- Header with back button on left, title on left, no button on right -->
+        <div class="flex items-center gap-4 mb-6" style="border-bottom: 1px solid #2f3a4a; padding-bottom: 1rem;">
+            <a href="SingleEliminationSchedule.php?tournament_id=<?= $tournament_id ?>" class="btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Schedule
             </a>
+            <h1 class="ml-4"><i class="fas fa-trophy"></i> Score Entry – <?= htmlspecialchars($tournament['title'] ?? '') ?></h1>
         </div>
 
         <?php if ($flash): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <div class="flash-message">
+                <i class="fas fa-info-circle"></i>
                 <?= $flash ?>
             </div>
         <?php endif; ?>
 
         <?php if ($tournamentStatus === 'completed' && $champion): ?>
-            <div class="bg-gradient-to-r from-yellow-100 to-yellow-200 border border-yellow-400 rounded-lg shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-center text-yellow-800">🏆 Champion: <?= htmlspecialchars($champion['team_name'] ?? '') ?> 🏆</h2>
+            <div class="champion-card">
+                <h2><i class="fas fa-crown" style="color: #ffd966;"></i> Champion: <?= htmlspecialchars($champion['team_name'] ?? '') ?> <i class="fas fa-crown" style="color: #ffd966;"></i></h2>
             </div>
         <?php endif; ?>
 
         <?php if ($matchesResult->num_rows === 0): ?>
-            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+            <div class="flash-message" style="border-color: #f59e0b;">
+                <i class="fas fa-exclamation-triangle"></i>
                 No matches ready for score entry. Make sure they are scheduled and both teams are known.
             </div>
         <?php else: ?>
@@ -298,44 +521,45 @@ $matchesResult->data_seek(0);
                 while ($m = $matchesResult->fetch_assoc()):
                     if ($currentRound !== $m['round']):
                         $currentRound = $m['round'];
-                        echo "<h2 class='text-xl font-semibold mt-6 mb-2'>" . strtoupper($currentRound) . "</h2>";
+                        echo "<h2 class='round-header'><i class='fas fa-bracket-curly'></i> " . strtoupper($currentRound) . "</h2>";
                     endif;
 
                     $maxWins = ($m['round'] === 'final') ? 3 : 2;
                     $isCompleted = ($m['status'] === 'completed');
                     $disabled = ($tournamentStatus === 'completed' || $isCompleted) ? 'disabled' : '';
                 ?>
-                    <div class="bg-white p-4 rounded shadow mb-2 flex flex-wrap items-center gap-4">
-                        <div class="w-64 font-medium">
+                    <div class="match-row">
+                        <div class="match-teams">
                             <?= htmlspecialchars($m['team1_name'] ?? 'TBD') ?> vs <?= htmlspecialchars($m['team2_name'] ?? 'TBD') ?>
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="number" name="score1[<?= $m['match_id'] ?>]" min="0" max="<?= $maxWins ?>"
-                                   class="w-16 border rounded px-2 py-1 text-center"
                                    value="<?= $m['team1_score'] ?>"
                                    <?= $disabled ?>
                                    <?= (!$isCompleted && $tournamentStatus !== 'completed') ? 'required' : '' ?>>
-                            <span class="font-bold">:</span>
+                            <span class="score-separator">:</span>
                             <input type="number" name="score2[<?= $m['match_id'] ?>]" min="0" max="<?= $maxWins ?>"
-                                   class="w-16 border rounded px-2 py-1 text-center"
                                    value="<?= $m['team2_score'] ?>"
                                    <?= $disabled ?>
                                    <?= (!$isCompleted && $tournamentStatus !== 'completed') ? 'required' : '' ?>>
                         </div>
                         <?php if ($isCompleted): ?>
-                            <span class="text-green-600 font-semibold text-sm bg-green-50 px-3 py-1 rounded">
-                                ✓ Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?>
+                            <span class="winner-badge">
+                                <i class="fas fa-check-circle"></i> Winner: <?= htmlspecialchars($m['winner_name'] ?? '') ?>
                             </span>
                         <?php endif; ?>
                     </div>
                 <?php endwhile; ?>
 
-                <!-- Save button – always visible, disabled when tournament completed or no pending matches -->
-                <div class="mt-6 flex justify-end">
+                <!-- Bottom action buttons: Back on left, Save on right -->
+                <div class="mt-6 flex justify-between items-center">
+                    <a href="manageTournament.php?tournament_id=<?= $tournament_id ?>" class="btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
                     <button type="submit"
-                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="btn-save"
                             <?= ($tournamentStatus === 'completed' || !$hasPendingMatches) ? 'disabled' : '' ?>>
-                        💾 Save Results
+                        <i class="fas fa-save"></i> Save Results
                     </button>
                 </div>
             </form>
