@@ -482,6 +482,16 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
       border: 1px dashed #444;
     }
 
+    .reg-start {
+      border-bottom: 2px solid greenyellow;
+    }
+
+    /* Highlight deadline */
+    .tour-start {
+      border-bottom: 2px solid orange;
+      color: #fff;
+    }
+
     @media(max-width:768px) {
       .header {
         flex-direction: column-reverse;
@@ -527,7 +537,7 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
     <div class="image" style="background-image:url('images/games/<?= htmlspecialchars($tournament['game_image'] ?: 'defaultTournament.jpg') ?>')"></div>
 
     <div class="dates">
-      <div class="date-card white-end">
+      <div class="date-card reg-start">
         <span class="date-label">Registration Start</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['created_at'])) ?></div>
       </div>
@@ -535,7 +545,7 @@ function canTeamRegisterForTournament($pdo, $team_id, $current_tournament_id = n
         <span class="date-label">Registration Deadline</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_deadline'])) ?></div>
       </div>
-      <div class="date-card white-end">
+      <div class="date-card tour-start">
         <span class="date-label">Tournament Start</span>
         <div class="date-value"><?= date('M d, Y', strtotime($tournament['registration_start_date'])) ?></div>
       </div>

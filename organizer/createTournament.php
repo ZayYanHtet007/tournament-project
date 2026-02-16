@@ -417,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
         <!-- Header with title and back button -->
         <div class="header-row">
             <h1><i class="fas fa-bolt"></i> Create Tournament</h1>
-            <a href="organizerDashboard.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+            <a href="organizerDashboard.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
         </div>
 
         <?php if ($message): ?>
