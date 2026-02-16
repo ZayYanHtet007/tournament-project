@@ -144,31 +144,235 @@ if ($isFinished) {
 
 <head>
     <title>Battle Royal Score</title>
-    <link rel="stylesheet" href="../css/organizer/brscore.css">
+    <!-- Font Awesome for icons (monochrome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Make pending match card full‑width and distinct */
+        /* ================= SQUARE DESIGN, BRIGHTER BLUE ACCENTS ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0b0d12;
+            color: #e1e5ec;
+            font-family: 'Inter', sans-serif;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
+
+        /* Main container – dark, square */
+        .br-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            background-color: #10131c;
+            border: 1px solid #2f3a4a;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+        }
+
+        /* Title area */
+        .br-title {
+            margin-bottom: 2rem;
+        }
+        .br-title h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            border-bottom: 2px solid #2d7ff9; /* brighter blue */
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .br-title p {
+            color: #9aaec9;
+            margin-top: 0.5rem;
+        }
+
+        /* Back button */
+        .br-btn {
+            background-color: #1e3142;
+            border: 1px solid #2d7ff9;
+            color: white;
+            font-weight: 500;
+            padding: 0.7rem 1.5rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.1s;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            border-radius: 0;
+            cursor: pointer;
+        }
+        .br-btn:hover {
+            background-color: #264763;
+            border-color: #5a9eff;
+        }
+        .br-btn:disabled {
+            background-color: #1a1f2a;
+            border-color: #353e4e;
+            color: #6b7a8f;
+            cursor: not-allowed;
+        }
+
+        /* Inline messages */
+        .br-message {
+            background-color: #1b2535;
+            border: 1px solid #2d7ff9;
+            color: #c0dcff;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-radius: 0;
+        }
+        .br-message.success {
+            border-color: #2d7ff9;
+        }
+        .br-message.info {
+            border-color: #2d7ff9;
+        }
+
+        /* Top 3 cards */
+        .br-top3-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .br-top3-card {
+            background-color: #161b26;
+            border: 1px solid #2d7ff9;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 200px;
+            border-radius: 0;
+        }
+        .br-top3-card.gold {
+            border-color: #ffd966;
+            color: #ffd966;
+            transform: scale(1.1);
+        }
+        .br-top3-card.silver {
+            border-color: #c0c0c0;
+            color: #c0c0c0;
+        }
+        .br-top3-card.bronze {
+            border-color: #cd7f32;
+            color: #cd7f32;
+        }
+
+        /* Tables */
+        .br-table-wrapper {
+            margin-bottom: 2rem;
+        }
+        .br-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #161b26;
+            border: 1px solid #2f3a4a;
+        }
+        .br-table th {
+            background-color: #1f2632;
+            color: #b8d0f0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #2f3a4a;
+        }
+        .br-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #2f3a4a;
+            color: #d6e2f0;
+        }
+        .br-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Match grid */
+        .br-match-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .br-match-card {
+            background-color: #161b26;
+            border: 1px solid #2f3a4a;
+            padding: 1.5rem;
+            border-radius: 0;
+        }
         .pending-match-card {
-            flex: 0 0 100% !important;
-            max-width: 100% !important;
-            background-color: #e0f2fe !important;
-            border: 3px solid #00f2ff !important;
+            border: 2px solid #2d7ff9;
+            box-shadow: 0 0 15px #2d7ff9;
+            grid-column: 1 / -1; /* full width */
         }
-        .pending-match-card input {
-            font-size: 1.2rem;
-            width: 150px;
+        .br-match-round {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #b8d0f0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            text-align: center;
         }
-        .pending-match-card .team-name-cell {
-            font-size: 1.2rem;
-            min-width: 250px;
+
+        /* Form inputs */
+        input[type="number"] {
+            background-color: #0f141e;
+            border: 1px solid #2f3a4a;
+            color: #e0e6f0;
+            padding: 0.5rem;
+            font-size: 0.95rem;
+            border-radius: 0;
+            width: 100%;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #2d7ff9;
+            box-shadow: 0 0 0 2px rgba(45, 127, 249, 0.3);
         }
         .error-border {
-            border: 2px solid #ef4444 !important;
+            border-color: #ef4444 !important;
         }
         .error-message {
             color: #ef4444;
             font-size: 0.8rem;
-            margin-top: 4px;
+            margin-top: 0.25rem;
             display: block;
+        }
+
+        .team-name-cell {
+            font-weight: 500;
+            color: #d6e2f0;
+        }
+
+        .br-btn-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        /* Icons */
+        i {
+            color: inherit;
         }
     </style>
 </head>
@@ -178,38 +382,40 @@ if ($isFinished) {
 
         <!-- TITLE -->
         <div class="br-title">
-            <h1>🔥 Battle Royale</h1>
+            <h1><i class="fas fa-fire"></i> Battle Royale</h1>
             <p><?= htmlspecialchars($tournament['title']) ?></p>
         </div>
 
         <!-- Back to Tournament Management -->
         <div style="margin-bottom: 20px;">
-            <a href="manageTournament.php?tournament_id=<?= $tournament_id ?>" class="br-btn" style="background: #4b5563;">← Back to Tournament</a>
+            <a href="manageTournament.php?tournament_id=<?= $tournament_id ?>" class="br-btn"><i class="fas fa-arrow-left"></i> Back </a>
         </div>
 
         <!-- INLINE MESSAGES -->
         <?php if ($successMessage): ?>
-            <div class="br-message success"><?= $successMessage ?></div>
+            <div class="br-message success">
+                <i class="fas fa-check-circle"></i> <?= $successMessage ?>
+            </div>
         <?php endif; ?>
 
         <?php if (!$canStart): ?>
             <div class="br-message info">
-                Tournament needs <?= $totalTeams < 16 ? (16 - $totalTeams) : (25 - $totalTeams) ?> more teams to start
+                <i class="fas fa-info-circle"></i> Tournament needs <?= $totalTeams < 16 ? (16 - $totalTeams) : (25 - $totalTeams) ?> more teams to start
             </div>
         <?php endif; ?>
 
         <?php if (!$currentMatch && !$isFinished && $canStart): ?>
-            <div class="br-message info">Next match schedule not set or previous match not finished.</div>
+            <div class="br-message info"><i class="fas fa-clock"></i> Next match schedule not set or previous match not finished.</div>
         <?php elseif ($isFinished): ?>
-            <div class="br-message success">Tournament Completed!</div>
+            <div class="br-message success"><i class="fas fa-trophy"></i> Tournament Completed!</div>
         <?php endif; ?>
 
         <!-- TOP 3 TEAMS -->
         <?php if ($top3): ?>
             <div class="br-top3-wrapper">
-                <div class="br-top3-card silver">🥈 <?= htmlspecialchars($top3[1]['team_name'] ?? '') ?></div>
-                <div class="br-top3-card gold">🥇 <?= htmlspecialchars($top3[0]['team_name'] ?? '') ?></div>
-                <div class="br-top3-card bronze">🥉 <?= htmlspecialchars($top3[2]['team_name'] ?? '') ?></div>
+                <div class="br-top3-card silver"><i class="fas fa-medal"></i> <?= htmlspecialchars($top3[1]['team_name'] ?? '') ?></div>
+                <div class="br-top3-card gold"><i class="fas fa-crown"></i> <?= htmlspecialchars($top3[0]['team_name'] ?? '') ?></div>
+                <div class="br-top3-card bronze"><i class="fas fa-medal"></i> <?= htmlspecialchars($top3[2]['team_name'] ?? '') ?></div>
             </div>
         <?php endif; ?>
 
@@ -242,9 +448,9 @@ if ($isFinished) {
         <div class="br-match-grid">
             <?php if ($currentMatch): ?>
                 <div class="br-match-card pending-match-card">
-                    <div class="br-match-round"><?= ucfirst(strtolower($currentMatch['round'])) ?> Match</div>
-                    <div style="text-align:center; margin-bottom:10px; color:#10b981;">
-                        Scheduled: <?= date('Y-m-d h:i A', strtotime($currentMatch['scheduled_time'])) ?>
+                    <div class="br-match-round"><i class="fas fa-play-circle"></i> <?= ucfirst(strtolower($currentMatch['round'])) ?> Match</div>
+                    <div style="text-align:center; margin-bottom:10px; color:#9aaec9;">
+                        <i class="fas fa-calendar-alt"></i> Scheduled: <?= date('Y-m-d h:i A', strtotime($currentMatch['scheduled_time'])) ?>
                     </div>
                     <form method="POST" id="scoreForm" onsubmit="return validateForm();">
                         <input type="hidden" name="match_id" value="<?= $currentMatch['match_id'] ?>">
@@ -292,14 +498,14 @@ if ($isFinished) {
                         </div>
 
                         <div class="br-btn-wrapper">
-                            <button type="submit" class="br-btn">Save Match</button>
+                            <button type="submit" class="br-btn"><i class="fas fa-save"></i> Save Match</button>
                         </div>
                     </form>
                 </div>
             <?php else: ?>
                 <div class="br-match-card">
                     <div class="br-btn-wrapper">
-                        <button type="button" class="br-btn" disabled>Save Match</button>
+                        <button type="button" class="br-btn" disabled><i class="fas fa-save"></i> Save Match</button>
                     </div>
                 </div>
             <?php endif; ?>
@@ -317,9 +523,9 @@ if ($isFinished) {
                 foreach ($rounds as $round => $matches):
                 ?>
                     <div class="br-match-card completed">
-                        <div class="br-match-round"><?= ucfirst(strtolower($round)) ?> Match</div>
-                        <div style="text-align:center; font-size:0.9rem; margin-bottom:10px;">
-                            <?= date('Y-m-d h:i A', strtotime($matches[0]['scheduled_time'])) ?>
+                        <div class="br-match-round"><i class="fas fa-check-circle"></i> <?= ucfirst(strtolower($round)) ?> Match</div>
+                        <div style="text-align:center; font-size:0.9rem; margin-bottom:10px; color:#9aaec9;">
+                            <i class="fas fa-calendar-alt"></i> <?= date('Y-m-d h:i A', strtotime($matches[0]['scheduled_time'])) ?>
                         </div>
                         <div class="br-table-wrapper" style="padding:10px;">
                             <table class="br-table">

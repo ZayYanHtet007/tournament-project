@@ -385,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isLocked) {
 
 <div class="header-row">
     <h1><i class="fas fa-pen"></i> Edit Tournament</h1>
-    <a href="manageTournament.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+    <a href="manageTournament.php?tournament_id=<?= $tournament_id ?>" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
 
 <?php if ($message): ?>
