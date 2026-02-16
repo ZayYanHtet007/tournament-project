@@ -171,8 +171,11 @@ $contextTeam = pd_get_context_team($conn, $teamId, $userId);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notice = '';
+    $postAction = strtolower(trim((string)($_POST['action'] ?? '')));
+    $isBanUserRequest = $postAction === 'ban_user' || isset($_POST['ban_user']) || isset($_POST['user_id']);
+    $isBanTeamRequest = $postAction === 'ban_team' || isset($_POST['ban_team']);
 
-    if (isset($_POST['ban_user'])) {
+    if ($isBanUserRequest) {
         $banUserId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
         $notice = 'ban-failed';
 
@@ -202,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-    } elseif (isset($_POST['ban_team'])) {
+    } elseif ($isBanTeamRequest) {
         $banTeamId = isset($_POST['team_id']) ? (int)$_POST['team_id'] : 0;
         $notice = 'team-ban-failed';
 
@@ -465,6 +468,7 @@ require_once __DIR__ . '/sidebar.php';
                                 </span>
                             </span>
                             <form method="POST" action="<?= pd_h($selfUrl) ?>" id="pdpTeamBanForm" class="pdp-inline-form">
+                                <input type="hidden" name="action" value="ban_team">
                                 <input type="hidden" name="team_id" value="<?= (int)$contextTeam['team_id'] ?>">
                                 <button type="submit" name="ban_team" class="pdp-ban-btn" <?= $teamContextIsBanned ? 'disabled' : '' ?>>
                                     <i class="fa-solid fa-ban"></i>
@@ -504,6 +508,7 @@ require_once __DIR__ . '/sidebar.php';
                     </div>
 
                     <form method="POST" action="<?= pd_h($selfUrl) ?>" id="pdpBanForm">
+                        <input type="hidden" name="action" value="ban_user">
                         <input type="hidden" name="user_id" value="<?= (int)$player['user_id'] ?>">
                         <button type="submit" name="ban_user" class="pdp-ban-btn" <?= $isBanned ? 'disabled' : '' ?>>
                             <i class="fa-solid fa-user-slash"></i>

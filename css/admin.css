@@ -666,6 +666,30 @@ body {
   box-shadow: var(--card-glass-box-shadow);
 }
 
+.dashboard-date-filter {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-date-filter .dashboard-date-range {
+  min-width: 340px;
+  height: 52px;
+  border-radius: 12px;
+  padding: 0 16px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: #f1f5f9;
+}
+
+.dashboard-date-filter .date-range-input-clean {
+  font-size: 14px;
+  color: #7c838d;
+}
+
+.dashboard-date-filter .calendar-icon {
+  font-size: 18px;
+  color: #64748b;
+}
+
 .dashboard-filter-field {
   display: flex;
   flex-direction: column;
@@ -680,7 +704,8 @@ body {
   color: var(--text-muted);
 }
 
-.dashboard-filter-field input[type="month"] {
+.dashboard-filter-field input[type="month"],
+.dashboard-filter-field input[type="date"] {
   border: 1px solid var(--search-border);
   border-radius: 10px;
   height: 38px;
@@ -690,7 +715,8 @@ body {
   min-width: 145px;
 }
 
-.dashboard-filter-field input[type="month"]:focus {
+.dashboard-filter-field input[type="month"]:focus,
+.dashboard-filter-field input[type="date"]:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -863,8 +889,22 @@ body {
     width: 100%;
   }
 
-  .dashboard-filter-field input[type="month"] {
+  .dashboard-date-filter {
+    width: 100%;
+  }
+
+  .dashboard-date-filter .dashboard-date-range {
+    min-width: 100%;
+  }
+
+  .dashboard-filter-field input[type="month"],
+  .dashboard-filter-field input[type="date"] {
     min-width: 130px;
+    width: 100%;
+  }
+
+  .dashboard-filter-btn,
+  .dashboard-filter-reset {
     width: 100%;
   }
 
