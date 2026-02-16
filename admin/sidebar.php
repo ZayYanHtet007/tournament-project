@@ -72,7 +72,6 @@ if (!empty($adminImg) && $adminImg !== 'default_profile.png') {
                 <a href="adminDashboard.php"><i class="fa fa-chart-line"></i> Dashboard</a>
                 <a href="players.php"><i class="fa fa-users"></i> Players</a>
                 <a href="tournaments.php"><i class="fa fa-trophy"></i> Tournaments</a>
-                <a href="#post.php"><i class="fa fa-pen-to-square"></i> Post</a>
                 <a href="organizers.php"><i class="fa fa-user-check"></i> Organizers</a>
                 <a href="message.php"><i class="fa fa-envelope"></i> Message</a>
                 <a href="games.php"><i class="fa-solid fa-gamepad"></i> Games</a>

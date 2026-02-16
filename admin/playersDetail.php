@@ -116,6 +116,111 @@ function pd_get_context_team(mysqli $conn, int $teamId, int $userId): ?array
     return $team ?: null;
 }
 
+function pd_get_team_status(mysqli $conn, int $teamId): ?string
+{
+    if ($teamId <= 0) {
+        return null;
+    }
+
+    $statusStmt = $conn->prepare("SELECT status FROM teams WHERE team_id = ? LIMIT 1");
+    if (!$statusStmt) {
+        return null;
+    }
+
+    $statusStmt->bind_param('i', $teamId);
+    $statusStmt->execute();
+    $row = $statusStmt->get_result()->fetch_assoc();
+    $statusStmt->close();
+
+    if (!$row) {
+        return null;
+    }
+
+    return (string)($row['status'] ?? '');
+}
+
+function pd_apply_team_ban_status(mysqli $conn, int $teamId): bool
+{
+    foreach (['ban', 'banned'] as $banValue) {
+        $teamStmt = $conn->prepare("UPDATE teams SET status = ? WHERE team_id = ?");
+        if (!$teamStmt) {
+            return false;
+        }
+
+        $teamStmt->bind_param('si', $banValue, $teamId);
+        $teamOk = $teamStmt->execute();
+        $teamError = (string)$teamStmt->error;
+        $teamStmt->close();
+
+        if ($teamOk) {
+            $storedStatus = pd_get_team_status($conn, $teamId);
+            if ($storedStatus !== null && pd_team_status_key($storedStatus) === 'banned') {
+                return true;
+            }
+        }
+
+        $isEnumError = stripos($teamError, 'truncated') !== false
+            || stripos($teamError, 'incorrect') !== false
+            || stripos($teamError, 'enum') !== false;
+        if (!$isEnumError) {
+            break;
+        }
+    }
+
+    return false;
+}
+
+function pd_ban_team(mysqli $conn, int $teamId): string
+{
+    if ($teamId <= 0) {
+        return 'team-not-found';
+    }
+
+    $teamStatusRaw = pd_get_team_status($conn, $teamId);
+    if ($teamStatusRaw === null) {
+        return 'team-not-found';
+    }
+
+    if (pd_team_status_key($teamStatusRaw) === 'banned') {
+        return 'team-already-banned';
+    }
+
+    $conn->begin_transaction();
+    try {
+        if (!pd_apply_team_ban_status($conn, $teamId)) {
+            throw new RuntimeException('Team status update failed.');
+        }
+
+        $memberStmt = $conn->prepare("UPDATE users
+                                      SET is_banned = 1
+                                      WHERE is_organizer = 0
+                                        AND user_id IN (
+                                            SELECT tm.user_id
+                                            FROM team_members tm
+                                            WHERE tm.team_id = ?
+
+                                            UNION
+
+                                            SELECT t.leader_id
+                                            FROM teams t
+                                            WHERE t.team_id = ?
+                                        )");
+        if (!$memberStmt) {
+            throw new RuntimeException('Unable to prepare member update query.');
+        }
+
+        $memberStmt->bind_param('ii', $teamId, $teamId);
+        $memberStmt->execute();
+        $memberStmt->close();
+
+        $conn->commit();
+        return 'team-banned';
+    } catch (Throwable $error) {
+        $conn->rollback();
+        return 'team-ban-failed';
+    }
+}
+
 function pd_format_date(?string $date): string
 {
     if (!$date) {
@@ -207,73 +312,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($isBanTeamRequest) {
         $banTeamId = isset($_POST['team_id']) ? (int)$_POST['team_id'] : 0;
-        $notice = 'team-ban-failed';
 
-        if ($banTeamId > 0 && $banTeamId === $teamId && $contextTeam) {
-            $teamStatus = pd_team_status_key((string)$contextTeam['status']);
-            if ($teamStatus === 'banned') {
-                $notice = 'team-already-banned';
-            } else {
-                $conn->begin_transaction();
-                try {
-                    $teamUpdated = false;
-                    foreach (['banned', 'ban'] as $banValue) {
-                        $teamStmt = $conn->prepare("UPDATE teams SET status = ? WHERE team_id = ?");
-                        if (!$teamStmt) {
-                            throw new RuntimeException('Unable to prepare team update query.');
-                        }
-
-                        $teamStmt->bind_param('si', $banValue, $banTeamId);
-                        $teamOk = $teamStmt->execute();
-                        $teamError = (string)$teamStmt->error;
-                        $teamAffected = $teamStmt->affected_rows;
-                        $teamStmt->close();
-
-                        if ($teamOk && $teamAffected > 0) {
-                            $teamUpdated = true;
-                            break;
-                        }
-
-                        // Try legacy enum token only when current value is not accepted.
-                        $isEnumError = stripos($teamError, 'truncated') !== false
-                            || stripos($teamError, 'incorrect') !== false
-                            || stripos($teamError, 'enum') !== false;
-                        if (!$isEnumError) {
-                            break;
-                        }
-                    }
-
-                    if (!$teamUpdated) {
-                        throw new RuntimeException('Team status update failed.');
-                    }
-
-                    $memberStmt = $conn->prepare("UPDATE users
-                                                  SET is_banned = 1
-                                                  WHERE is_organizer = 0
-                                                    AND user_id IN (
-                                                        SELECT tm.user_id
-                                                        FROM team_members tm
-                                                        WHERE tm.team_id = ?
-
-                                                        UNION
-
-                                                        SELECT t.leader_id
-                                                        FROM teams t
-                                                        WHERE t.team_id = ?
-                                                    )");
-                    if (!$memberStmt) {
-                        throw new RuntimeException('Unable to prepare member update query.');
-                    }
-                    $memberStmt->bind_param('ii', $banTeamId, $banTeamId);
-                    $memberStmt->execute();
-                    $memberStmt->close();
-
-                    $conn->commit();
-                    $notice = 'team-banned';
-                } catch (Throwable $error) {
-                    $conn->rollback();
-                }
-            }
+        if ($banTeamId > 0 && ($teamId <= 0 || $banTeamId === $teamId)) {
+            $notice = pd_ban_team($conn, $banTeamId);
         } else {
             $notice = 'team-not-found';
         }
@@ -418,7 +459,7 @@ if ($noticeKey === 'banned') {
     $noticeMessage = 'This team is already banned.';
 } elseif ($noticeKey === 'team-not-found') {
     $noticeType = 'warning';
-    $noticeMessage = 'Team not found for this player context.';
+    $noticeMessage = 'Team not found.';
 } elseif ($noticeKey === 'team-ban-failed') {
     $noticeType = 'danger';
     $noticeMessage = 'Failed to ban this team.';
