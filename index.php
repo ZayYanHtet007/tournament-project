@@ -1,14 +1,15 @@
 <?php
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+ob_start(); // Start buffering output
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-    if (isset($_SESSION['user_id']) && isset($_SESSION['is_organizer'])) {
-        if ($_SESSION['is_organizer'] == 1) {
-            header("Location: organizer/organizerDashboard.php");
-            exit;
-        }
+if (isset($_SESSION['user_id']) && isset($_SESSION['is_organizer'])) {
+    if ($_SESSION['is_organizer'] == 1) {
+        header("Location: organizer/organizerDashboard.php");
+        exit;
     }
+}
 include('partial/header.php');
 
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -22,7 +23,7 @@ if ($isLoggedIn && isset($conn) && $conn) {
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res && $row = $res->fetch_assoc()) {
-            $userTeam = $row; 
+            $userTeam = $row;
         }
         $stmt->close();
     }
@@ -37,12 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
     } else {
 
         $teamName = trim($_POST['teamName'] ?? '');
-        $shortName = strtoupper(trim($_POST['shortName'] ?? '')); 
+        $shortName = strtoupper(trim($_POST['shortName'] ?? ''));
         $motto = trim($_POST['motto'] ?? '');
         $players = (int)($_POST['players'] ?? 0);
+        $aim_for = isset($_POST['aim_for']) ? (int)$_POST['aim_for'] : 0; // NEW: Get selected game
 
-        if ($teamName === '' || $shortName === '' || $players <= 0 || empty($_FILES['image']['name'])) {
-            $errors[] = "All fields are required.";
+        if ($teamName === '' || $shortName === '' || $players <= 0 || empty($_FILES['image']['name']) || $aim_for <= 0) {
+            $errors[] = "All fields are required, including game selection.";
         }
 
         if (strlen($teamName) < 6 || strlen($teamName) > 16) {
@@ -53,8 +55,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             $errors[] = "Short name must be 2–4 characters.";
         }
 
+        // NEW: Validate that the selected game exists
+        if ($aim_for > 0) {
+            $check_game = $conn->prepare("SELECT game_id FROM games WHERE game_id = ? AND game_status = 'available'");
+            $check_game->bind_param("i", $aim_for);
+            $check_game->execute();
+            $check_game->store_result();
+            if ($check_game->num_rows == 0) {
+                $errors[] = "Invalid game selection.";
+            }
+            $check_game->close();
+        }
+
         if (empty($errors)) {
-        
+
             if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
                 $errors[] = "File upload error code: " . $_FILES['image']['error'];
             } else {
@@ -88,11 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
         if (empty($errors)) {
             $conn->begin_transaction();
             try {
+                // MODIFIED: Added aim_for to the INSERT query
                 $stmt = $conn->prepare("
-        INSERT INTO teams (team_name, leader_id, short_name, motto, players, logo)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO teams (team_name, leader_id, short_name, motto, players, logo, aim_for)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-                $stmt->bind_param("sissis", $teamName, $user_id, $shortName, $motto, $players, $image);
+                $stmt->bind_param("sissisi", $teamName, $user_id, $shortName, $motto, $players, $image, $aim_for);
                 $stmt->execute();
                 $team_id = $stmt->insert_id;
                 $stmt->close();
@@ -110,11 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 exit;
             } catch (Exception $e) {
                 $conn->rollback();
-                $errors[] = "Database error.";
+                $errors[] = "Database error: " . $e->getMessage();
             }
         }
     }
 }
+ob_end_flush();
 ?>
 
 
@@ -755,7 +771,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 <button id="closeTeam" style="margin-top:20px;padding:10px 20px;border:none;border-radius:6px;background:var(--riot);color:#000;font-weight:800;cursor:pointer;">Close</button>
             </div>
         </div>
-        
+
         <?php
         $status = [
             'players' => 0,
@@ -846,12 +862,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
             </div>
         </section>
     </main>
-    
+
     <div id="teamOverlay" class="<?php echo !empty($errors) ? 'active' : ''; ?>">
         <div class="teamCard">
             <span class="closeBtn">&times;</span>
             <h2>CREATE SQUAD</h2>
-            
+
             <?php if (!empty($errors)): ?>
                 <div class="error-box">
                     <?php foreach ($errors as $error) echo "<div>• $error</div>"; ?>
@@ -867,6 +883,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                     <div style="flex:1">
                         <input type="text" name="teamName" placeholder="TEAM NAME (6-16 CHARS)" required maxlength="16">
                         <input type="text" name="shortName" placeholder="TAG (2-4 CHARS)" required maxlength="4" style="text-transform: uppercase;">
+                        <select name="aim_for" required style="width:100%; padding:15px; background:#111; border:1px solid transparent; border-bottom:2px solid rgba(255,255,255,0.1); color:#fff; margin-bottom:15px; transition:0.3s;">
+                            <option value="" disabled selected>SELECT GAME</option>
+                            <?php
+                            // Fetch games from database
+                            if (isset($conn) && $conn) {
+                                $game_query = "SELECT game_id, name FROM games WHERE game_status = 'available' ORDER BY name";
+                                $game_result = $conn->query($game_query);
+                                if ($game_result && $game_result->num_rows > 0) {
+                                    while ($game = $game_result->fetch_assoc()) {
+                                        echo '<option value="' . $game['game_id'] . '">' . htmlspecialchars($game['name']) . '</option>';
+                                    }
+                                }
+                            }
+                            ?>
+                        </select>
                     </div>
                 </div>
                 <textarea name="motto" placeholder="TEAM MOTTO" rows="2"></textarea>
@@ -995,7 +1026,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
                 end: "bottom bottom",
                 scrub: 1.5,
                 onUpdate: (self) => {
-                    if(document.getElementById('bar')) {
+                    if (document.getElementById('bar')) {
                         document.getElementById('bar').style.height = (self.progress * 100) + "%";
                     }
                 }
@@ -1179,7 +1210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createBtn'])) {
 
         // ================= AUTO UPPERCASE TAG =================
         const shortNameInput = document.querySelector('input[name="shortName"]');
-        if(shortNameInput) {
+        if (shortNameInput) {
             shortNameInput.addEventListener('input', (e) => {
                 e.target.value = e.target.value.toUpperCase();
             });
