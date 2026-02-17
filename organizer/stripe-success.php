@@ -40,7 +40,25 @@ Rank Points:
   }
 
   if ($maxTeams == 12) {
-    return "Group Stage (3 teams per group)\nBO3 Matches\nTop 8 → Quarter Final\nTop 4 → Semi Final";
+    return "Group Stage (3 teams per group)\nBO3 Matches Round Robin
+            \n2 Teams will qualified for each group
+            \nTop 8 → Quarter Final\nTop 4 → Semi 
+            \n Semi losers will play for 2nd runner up final 
+            \nSemi winners will play for GrandFinal";
+  }
+  else if($maxTeams == 16){
+          return "Group Stage (4 teams per group)\nBO3 Matches Round Robin
+            \n2 Teams will qualified for each group
+            \nTop 8 → Quarter Final\nTop 4 → Semi 
+            \n Semi losers will play for 2nd runner up final 
+            \nSemi winners will play for GrandFinal";
+  }
+  else if($maxTeams == 24){
+          return "Group Stage (6 teams per group)\nBO3 Matches Round Robin
+            \n2 Teams will qualified for each group
+            \nTop 8 → Quarter Final\nTop 4 → Semi 
+            \n Semi losers will play for 2nd runner up final 
+            \nSemi winners will play for GrandFinal";
   }
 
   return "Single Elimination Format";
