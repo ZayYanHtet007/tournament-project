@@ -676,18 +676,23 @@ body {
   height: 52px;
   border-radius: 12px;
   padding: 0 16px;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: #f1f5f9;
+  border: 1px solid var(--search-border);
+  background: var(--glass-bg);
+  
 }
 
 .dashboard-date-filter .date-range-input-clean {
   font-size: 14px;
-  color: #7c838d;
+  color: var(--text-primary);
+}
+
+.dashboard-date-filter .date-range-input-clean::placeholder {
+  color: var(--text-muted);
 }
 
 .dashboard-date-filter .calendar-icon {
   font-size: 18px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .dashboard-filter-field {
@@ -2564,6 +2569,40 @@ input[readonly] {
 .flatpickr-month {
   color: var(--text-muted) !important;
   fill: var(--text-muted) !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  border-radius: 6px;
+  padding: 2px 20px 2px 6px;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+.flatpickr-current-month .flatpickr-monthDropdown-months:focus {
+  background: transparent !important;
+  outline: none;
+  box-shadow: none;
+}
+
+.flatpickr-current-month input.cur-year {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+.flatpickr-monthDropdown-months option,
+.flatpickr-monthDropdown-month {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .flatpickr-monthDropdown-months option,
+[data-theme="dark"] .flatpickr-monthDropdown-month {
+  background: #1e293b !important;
+  color: #f8fafc !important;
 }
 
 span.flatpickr-weekday {

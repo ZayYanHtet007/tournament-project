@@ -3,12 +3,6 @@ session_start();
 require_once __DIR__ . '/../database/dbConfig.php';
 require_once __DIR__ . '/sidebar.php';
 
-// Access control: only main admin can manage games
-if (!isset($_SESSION['admin_role']) || $_SESSION['admin_role'] !== 'main_admin') {
-    header("Location: adminDashboard.php");
-    exit;
-}
-
 $message = "";
 $messageType = "";
 $gameImageDirFs = __DIR__ . '/../images/games/';
