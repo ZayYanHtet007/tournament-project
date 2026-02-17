@@ -231,84 +231,88 @@ if ($tournament['status'] === 'completed') {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-:root {
-    --riot-red: #ff4655;
-    --riot-dark: #0f1923;
-    --glass-bg: rgba(20, 20, 20, 0.95);
-}
+    :root {
+        --riot-red: #ff4655;
+        --riot-dark: #0f1923;
+        --glass-bg: rgba(20, 20, 20, 0.95);
+    }
 
-body {
-    background: #0a0a0a;
-    color: #ece8e1;
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-}
+    body {
+        background: #0a0a0a;
+        color: #ece8e1;
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+    }
 
-.container {
-    max-width: 1100px;
-    margin: 60px auto;
-    padding: 0 20px;
-}
+    .container {
+        max-width: 1100px;
+        margin: 60px auto;
+        padding: 0 20px;
+    }
 
-.section-header {
-    border-left: 6px solid var(--riot-red);
-    padding-left: 20px;
-    margin-bottom: 40px;
-}
+    .section-header {
+        border-left: 6px solid var(--riot-red);
+        padding-left: 20px;
+        margin-bottom: 40px;
+    }
 
-.tournament-title {
-    font-size: 3.5rem;
-    font-weight: 900;
-    margin: 0;
-    text-transform: uppercase;
-}
+    .tournament-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin: 0;
+        text-transform: uppercase;
+    }
 
 /* =========================
    INFO CARDS
 ========================= */
-.info-wrapper {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-}
+    .info-wrapper {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
 
-.info-card {
-    flex: 1;
-    min-width: 180px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #fff;
-    transition: all 0.3s ease;
-}
+    .info-card {
+        flex: 1;
+        min-width: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        transition: all 0.3s ease;
+    }
 
-.info-card i {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-    color: var(--riot-red);
-}
+    .info-card i {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: var(--riot-red);
+    }
 
-.info-card span.label {
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    color: #888;
-    margin-bottom: 5px;
-}
+    .info-card span.label {
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+        color: #888;
+        margin-bottom: 5px;
+    }
 
-.info-card span.value {
-    font-weight: 900;
-    font-size: 1.1rem;
-    text-transform: uppercase;
-}
+    .info-card span.value {
+        font-weight: 900;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+    }
 
-/* =========================
+    .green{
+        color: #4ade80;
+    }
+
+    /* =========================
    TABLE DESIGN
 ========================= */
 .table-card {
@@ -431,12 +435,90 @@ td { padding: 20px; border-bottom: 1px solid #222; }
     margin-bottom: 40px;
 }
 
-@media (max-width: 768px) {
-    .info-wrapper { flex-direction: column; }
-    thead { display: none; }
-    td { display: block; text-align: right; padding-left: 50%; position: relative; }
-    td::before { content: attr(data-label); position: absolute; left: 20px; color: var(--riot-red); }
-}
+    th {
+        padding: 20px;
+        text-align: left;
+        color: var(--riot-red);
+        border-bottom: 1px solid #333;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    td {
+        padding: 20px;
+        border-bottom: 1px solid #222;
+    }
+
+    /* Buttons & Gradients */
+    .gradient-red-pink {
+        background: linear-gradient(135deg, #ff4655, #ff858d);
+    }
+
+    .gradient-purple-indigo {
+        background: linear-gradient(135deg, #7b2ff7, #3f51b5);
+    }
+
+    .gradient-orange-yellow {
+        background: linear-gradient(135deg, #ff9800, #ffeb3b);
+    }
+
+    .gradient-rose-orange {
+        background: linear-gradient(135deg, #f43f5e, #fb923c);
+    }
+
+    .gradient-cyan-indigo {
+        background: linear-gradient(135deg, #06b6d4, #6366f1);
+    }
+
+    .gradient-green-teal {
+        background: linear-gradient(135deg, #10b981, #14b8a6);
+    }
+
+    .gradient-blue-cyan {
+        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    }
+
+    .gradient-gray {
+        background: #333;
+    }
+
+    .btn-details {
+        display: inline-block;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        font-weight: 900;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        cursor: pointer;
+        margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+        .info-wrapper {
+            flex-direction: column;
+        }
+
+        thead {
+            display: none;
+        }
+
+        td {
+            display: block;
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+        }
+
+        td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 20px;
+            color: var(--riot-red);
+        }
+    }
 </style>
 
 <div class="container">
@@ -461,7 +543,7 @@ td { padding: 20px; border-bottom: 1px solid #222; }
         <div class="info-card">
             <i class="fa-solid fa-calendar"></i>
             <span class="label">Start Date</span>
-            <span class="value"><?= date('d M Y', strtotime($tournament['start_date'])) ?></span>
+            <span class="value green"><?= date('d M Y', strtotime($tournament['start_date'])) ?></span>
         </div>
         <div class="info-card">
             <i class="fa-solid fa-chart-pie"></i>
@@ -497,28 +579,24 @@ td { padding: 20px; border-bottom: 1px solid #222; }
                     <th>Team Name</th>
                     <th>Leader</th>
                     <th>Roster</th>
-                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-            <?php if (!empty($teams)): ?>
-                <?php foreach ($teams as $team): ?>
-                <tr>
-                    <td data-label="Team Name"><strong><?= htmlspecialchars($team['team_name']) ?></strong></td>
-                    <td data-label="Leader"><?= htmlspecialchars($team['leader_name']) ?></td>
-                    <td data-label="Roster"><?= $team['player_count'] ?> Players</td>
-                    <td data-label="Status">
-                        <span style="color: #00ff88; font-size: 0.75rem; font-weight: 900; text-transform: uppercase;">Confirmed</span>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="4" style="text-align:center; padding:60px; color:#666;">
-                        No teams have joined this tournament yet.
-                    </td>
-                </tr>
-            <?php endif; ?>
+                <?php if (!empty($teams)): ?>
+                    <?php foreach ($teams as $team): ?>
+                        <tr>
+                            <td data-label="Team Name"><strong><?= htmlspecialchars($team['team_name']) ?></strong></td>
+                            <td data-label="Leader"><?= htmlspecialchars($team['leader_name']) ?></td>
+                            <td data-label="Roster"><?= $team['player_count'] ?> Players</td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding:60px; color:#666;">
+                            No teams have joined this tournament yet.
+                        </td>
+                    </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>

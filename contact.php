@@ -240,7 +240,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <section class="page">
     <div style="text-align: center;">
         <h1>CONTACT US</h1>
-        <p class="subtitle">Direct Support Line</p>
+        <p class="subtitle">Direct Mail</p>
     </div>
 
     <?php if ($statusMsg): ?>
@@ -253,7 +253,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="contact-container">
         <form action="" method="POST">
             <div class="form-group">
-                <label>Identification</label>
+                <label>User Name</label>
                 <input type="text" name="sender_name" value="<?= htmlspecialchars($sender_name); ?>"
                     <?= $is_logged_in ? 'readonly' : 'required'; ?>>
             </div>
@@ -269,7 +269,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <textarea name="sender_message" placeholder="TYPE YOUR MESSAGE HERE..." required></textarea>
             </div>
 
-            <button type="submit" class="submit-btn">Send Dispatch</button>
+            <button type="submit" class="submit-btn">Send</button>
         </form>
     </div>
 </section>

@@ -93,18 +93,18 @@ require_once __DIR__ . '/sidebar.php';
                 <div class="password-wrap">
                     <input type="password" name="new" id="new" placeholder="Enter new password" required>
                 </div>
+
+                <div class="changefield">
+                    <label>Confirm Password</label>
+                    <div class="password-wrap">
+                        <input type="password" name="confirm" id="confirm" placeholder="Confirm new password" required>
+                    </div>
+                </div>
                 <div class="strength-box">
                     <div class="bar-container">
                         <div id="strength-bar" class="bar"></div>
                     </div>
                     <p id="validation-feedback" style="font-size: 12px; margin-top: 8px;"></p>
-                </div>
-            </div>
-
-            <div class="changefield">
-                <label>Confirm Password</label>
-                <div class="password-wrap">
-                    <input type="password" name="confirm" id="confirm" placeholder="Confirm new password" required>
                 </div>
             </div>
 

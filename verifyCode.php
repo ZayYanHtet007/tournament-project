@@ -216,5 +216,3 @@ include('partial/header.php');
         </form>
     </div>
 </div>
-
-<?php include('partial/footer.php'); ?>

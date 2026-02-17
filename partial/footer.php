@@ -131,7 +131,7 @@
         <div class="footer-col links">
             <h4>Tournament</h4>
             <ul>
-                <li><a href="tournaments.php">Active Events</a></li>
+                <li><a href="announcement.php">Active Tournaments</a></li>
                 <li><a href="rules.php">Official Rules</a></li>
                 <li><a href="leaderboard.php">Rankings</a></li>
             </ul>
@@ -140,7 +140,7 @@
         <div class="footer-col links">
             <h4>Support</h4>
             <ul>
-                <li><a href="FAQS.php">Help Center</a></li>
+                <li><a href="FAQS.php">FAQS</a></li>
                 <li><a href="aboutUs.php">About Us</a></li>
                 <li><a href="terms_of_service.php">Terms of Service</a></li>
             </ul>
