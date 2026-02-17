@@ -15,14 +15,20 @@ if ($isLoggedIn) {
     $result = mysqli_stmt_get_result($stmt);
     $user = mysqli_fetch_assoc($result);
 
-    $notifications = [];
-    $notiFetch = $conn->prepare("SELECT * FROM notifications WHERE user_id = ?");
+    // 🔽 Fetch notifications, newest first
+    $notiFetch = $conn->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
     $notiFetch->bind_param("i", $uid);
     $notiFetch->execute();
     $notiResult = mysqli_stmt_get_result($notiFetch);
-    //$notifications = mysqli_fetch_assoc($notiResult);
+    $notifications = [];
     while ($row = mysqli_fetch_assoc($notiResult)) {
         $notifications[] = $row;
+    }
+
+    // 🔽 Count unread for the badge
+    $unread_count = 0;
+    foreach ($notifications as $n) {
+        if (!$n['is_read']) $unread_count++;
     }
 }
 
@@ -45,6 +51,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <style>
+        /* ... your existing styles (unchanged) ... */
         :root {
             --riot: #ff4655;
             --bg: #06080f;
@@ -301,6 +308,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
             font-size: 0.8rem;
             padding: 2px 6px;
             border-radius: 50%;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+            line-height: 1.2;
         }
 
         /* ===== RED GAMING NOTIFICATION DROPDOWN ===== */
@@ -465,19 +476,24 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         <span id="notif-icon">
             <i class="fa-regular fa-bell"></i>
+            <!-- 🔽 Unread count badge -->
+            <?php if ($isLoggedIn && $unread_count > 0): ?>
+                <span id="notif-count"><?= $unread_count ?></span>
+            <?php endif; ?>
         </span>
-
 
         <div id="notif-dropdown">
             <?php if (empty($notifications)): ?>
                 <div class="notification read">No notifications</div>
             <?php else: ?>
                 <?php foreach ($notifications as $n): ?>
-                    <div class="notification <?php echo $n['is_read'] ? 'read' : 'unread'; ?>" data-id="<?php echo $n['notification_id']; ?>" onclick="notiClick('<?= $n['token'] ?>')">
+                    <div class="notification <?php echo $n['is_read'] ? 'read' : 'unread'; ?>"
+                         data-id="<?php echo $n['notification_id']; ?>"
+                         data-token="<?= htmlspecialchars($n['token'] ?? '') ?>"
+                         onclick="handleNotiClick(this)">
                         <strong><?php echo htmlspecialchars($n['title']); ?></strong><br>
                         <?php echo htmlspecialchars($n['message']); ?><br>
                         <small><?php echo $n['created_at']; ?></small>
-
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -524,10 +540,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             }
         }
 
-        // --- Toggle dropdown ---
+        // --- Toggle notification dropdown ---
         const notifIcon = document.getElementById("notif-icon");
         const notifDropdown = document.getElementById("notif-dropdown");
-        notifIcon.addEventListener("click", () => {
+        notifIcon.addEventListener("click", (e) => {
+            e.stopPropagation();
             notifDropdown.style.display = notifDropdown.style.display === "block" ? "none" : "block";
         });
         document.addEventListener("click", (e) => {
@@ -536,7 +553,119 @@ $current_page = basename($_SERVER['PHP_SELF']);
             }
         });
 
-        function notiClick(token) {
-            window.location.href = "player/invite_decision.php?token=" + token;
+        // 🔽 NEW: Mark notification as read via AJAX, then redirect using token
+        function handleNotiClick(element) {
+            const notiId = element.dataset.id;
+            const token = element.dataset.token;
+
+            // If there's a token, redirect after marking as read
+            if (token) {
+                // First send mark-read request (fire and forget)
+                if (notiId) {
+                    fetch('mark_notification_read.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'id=' + encodeURIComponent(notiId)
+                    }).catch(err => console.error('Mark read error:', err));
+                }
+                // Then redirect
+                window.location.href = "player/invite_decision.php?token=" + encodeURIComponent(token);
+            } else {
+                // Fallback: just mark as read (if no token) – optional
+                if (notiId) {
+                    fetch('mark_notification_read.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'id=' + encodeURIComponent(notiId)
+                    }).then(() => {
+                        element.classList.remove('unread');
+                        updateUnreadBadge(); // update badge after marking
+                    }).catch(err => console.error('Mark read error:', err));
+                }
+            }
         }
+
+        // 🔽 NEW: Update unread badge (optional, used after marking)
+        function updateUnreadBadge() {
+            fetch('get_unread_count.php')
+                .then(res => res.text())
+                .then(count => {
+                    const notifIconSpan = document.getElementById('notif-icon');
+                    let badge = document.getElementById('notif-count');
+                    const countInt = parseInt(count) || 0;
+
+                    if (countInt > 0) {
+                        if (badge) {
+                            badge.textContent = countInt;
+                        } else {
+                            badge = document.createElement('span');
+                            badge.id = 'notif-count';
+                            badge.textContent = countInt;
+                            notifIconSpan.appendChild(badge);
+                        }
+                    } else if (badge) {
+                        badge.remove();
+                    }
+                })
+                .catch(err => console.error('Badge update error:', err));
+        }
+
+        // 🔽 NEW: Poll for new notifications and update badge (every 10 seconds)
+        let lastNotiId = (() => {
+            const firstNoti = document.querySelector('.notification[data-id]');
+            return firstNoti ? parseInt(firstNoti.dataset.id) : 0;
+        })();
+
+        function pollNotifications() {
+            fetch('fetch_new_notifications.php?since=' + lastNotiId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.notifications.length > 0) {
+                        // Prepend new notifications to the dropdown
+                        const dropdown = document.getElementById('notif-dropdown');
+                        const noNotiMsg = dropdown.querySelector('.notification.read:only-child');
+                        if (noNotiMsg && data.notifications.length > 0) {
+                            noNotiMsg.remove(); // remove "No notifications"
+                        }
+
+                        data.notifications.forEach(n => {
+                            // Build new notification element
+                            const div = document.createElement('div');
+                            div.className = `notification ${n.is_read ? 'read' : 'unread'}`;
+                            div.dataset.id = n.notification_id;
+                            div.dataset.token = n.token || '';
+                            div.setAttribute('onclick', 'handleNotiClick(this)');
+                            div.innerHTML = `
+                                <strong>${escapeHtml(n.title)}</strong><br>
+                                ${escapeHtml(n.message)}<br>
+                                <small>${n.created_at}</small>
+                            `;
+                            dropdown.insertBefore(div, dropdown.firstChild);
+
+                            lastNotiId = Math.max(lastNotiId, parseInt(n.notification_id));
+                        });
+
+                        // Update badge after polling
+                        updateUnreadBadge();
+                    }
+                })
+                .catch(err => console.error('Poll error:', err));
+        }
+
+        // Helper to escape HTML (prevent XSS)
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/[&<>"']/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return '&#039;';
+            });
+        }
+
+        // Start polling if user is logged in
+        <?php if ($isLoggedIn): ?>
+        setInterval(pollNotifications, 10000); // every 10 seconds
+        setInterval(updateUnreadBadge, 10000);
+        <?php endif; ?>
     </script>
