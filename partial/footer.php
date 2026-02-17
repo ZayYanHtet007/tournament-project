@@ -142,7 +142,7 @@
             <ul>
                 <li><a href="FAQS.php">Help Center</a></li>
                 <li><a href="aboutUs.php">About Us</a></li>
-                <li><a href="terms.php">Terms of Service</a></li>
+                <li><a href="terms_of_service.php">Terms of Service</a></li>
             </ul>
         </div>
     </div>
