@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
     $organizer_id = (int)$_SESSION['user_id'];
     $game_id = (int)($_POST['game_id'] ?? 0);
     $title = clean($_POST['title'] ?? '');
+    $type = $_POST['type'] ?? 'standard';
     $description = clean($_POST['description'] ?? '');
     $max_participants = (int)($_POST['max_participants'] ?? 0);
     $team_size = (int)($_POST['team_size'] ?? 0);
@@ -97,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
     $reg_start = $_POST['registration_start_date'] ?? '';
     $reg_end   = $_POST['registration_deadline'] ?? '';
     $start     = $_POST['start_date'] ?? '';
+    
 
     if (!$game_id || !$title || !$description || $max_participants < 8 || !$team_size || !valid_date($reg_start) || !valid_date($reg_end) || !valid_date($start)) {
         $message = "❌ Please fill all required fields correctly.";
@@ -108,10 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
         $message = "❌ Tournament start must be after registration deadline.";
         $currentStep = 3;
     } else {
-        $_SESSION['pending_tournament']=[
+        $_SESSION['pending_tournament'] = [
             'organizer_id' => $organizer_id,
             'game_id' => $game_id,
             'title' => $title,
+            'type' => $type,                       // <-- added here
             'description' => $description,
             'max_participants' => $max_participants,
             'team_size' => $team_size,
@@ -120,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
             'registration_start_date' => $reg_start,
             'registration_deadline' => $reg_end,
             'start_date' => $start
-
         ];
        
             header("Location: stripe-payment.php?tournament_id=" . $tournamentId);
@@ -456,6 +458,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
 
         <form method="post">
             <input type="hidden" name="current_step" id="current_step" value="<?= $currentStep ?>">
+            <!-- Hidden input for tournament type -->
+            <input type="hidden" name="type" id="tournamentType" value="standard">
 
             <div class="glass-card p-6 md:p-8">
                 <div class="mb-8">
@@ -596,6 +600,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
         const bracketPreview = document.getElementById('bracketPreview');
         const bracketSvg = document.getElementById('bracketSvg');
         const bracketContainer = document.getElementById('bracketContainer');
+        const tournamentTypeInput = document.getElementById('tournamentType');
 
         regStart.min = today;
         regEnd.min = today;
@@ -626,6 +631,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
             const isStandard = (type === 'standard');
             document.getElementById('checkStandard').checked = isStandard;
             document.getElementById('checkElim').checked = !isStandard;
+
+            // Update hidden input value
+            tournamentTypeInput.value = isStandard ? 'standard' : 'singleelimination';
 
             const stdGrid = document.getElementById('standardGrid');
             const elimGrid = document.getElementById('elimGrid');
