@@ -464,7 +464,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="auth-wrapper" style="position: relative;">
             <div class="auth-trigger" onclick="toggleUserMenu()">
                 <?php if ($isLoggedIn): ?>
-                    <img src="../images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" class="user-img">
+                    <img src="./images/<?= htmlspecialchars($user['image'] ?: 'default.png') ?>" class="user-img">
                 <?php else: ?>
                     <i class="fa-solid fa-circle-user" style="font-size: 30px; color: #fff;"></i>
                 <?php endif; ?>

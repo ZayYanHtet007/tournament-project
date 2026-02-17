@@ -162,7 +162,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         .nav-item span {
             position: absolute;
-            left: 55px;
+            left: 45px;
             background: var(--surface);
             padding: 6px 12px;
             border-radius: 4px;

@@ -48,7 +48,7 @@ if (isset($_POST['save_all'])) {
         $update_stmt->bind_param("sssi", $username, $email, $newImage, $userId);
 
         if ($update_stmt->execute()) {
-            echo "<script>alert('Profile updated successfully!'); window.location.href='userprofile.php';</script>";
+            echo "<script>alert('Profile updated successfully!'); window.location.href='organizerProfile.php';</script>";
             exit;
         } else {
             $error = "Update failed.";
