@@ -623,9 +623,6 @@ include("header.php");
         <img src="../images/TX.png" id="txLogo">
     </div>
 
-    <!-- 3D Canvas for floating letters -->
-    <canvas id="bg"></canvas>
-
     <div class="content-wrap">
         <!-- Hero section with fade-up -->
         <section class="hero fade-up">
@@ -851,121 +848,6 @@ include("header.php");
                 behavior: 'smooth'
             });
         }
-    </script>
-
-    <!-- 3D Floating Letters Animation (TournaX) -->
-    <script>
-        // --- THREE.JS SCENE SETUP ---
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({
-            canvas: document.querySelector('#bg'),
-            antialias: true,
-            alpha: true
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000000, 0);
-        renderer.setPixelRatio(window.devicePixelRatio);
-
-        // Core 3D object (icosahedron) – for visual interest
-        const geometry = new THREE.IcosahedronGeometry(8, 1);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0x00f2ff,
-            wireframe: true,
-            emissive: 0x00f2ff,
-            emissiveIntensity: 0.3
-        });
-        const core = new THREE.Mesh(geometry, material);
-        scene.add(core);
-
-        // --- FLOATING LETTERS: T O U R N A X ---
-        const lettersGroup = new THREE.Group();
-        const fontLoader = new THREE.FontLoader();
-        const letters = ['T', 'O', 'U', 'R', 'N', 'A', 'X'];
-
-        fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
-            // Create glowing materials
-            const redMat = new THREE.MeshStandardMaterial({
-                color: 0xff4655,
-                emissive: 0xff4655,
-                emissiveIntensity: 1.5,
-                transparent: true,
-                opacity: 0.9
-            });
-            const cyanMat = new THREE.MeshStandardMaterial({
-                color: 0x00f2ff,
-                emissive: 0x00f2ff,
-                emissiveIntensity: 1.5,
-                transparent: true,
-                opacity: 0.9
-            });
-
-            // Create 400 letters
-            for (let i = 0; i < 400; i++) {
-                const char = letters[Math.floor(Math.random() * letters.length)];
-                const textGeo = new THREE.TextGeometry(char, {
-                    font: font,
-                    size: 1.2,
-                    height: 0.2
-                });
-
-                // Randomly choose material
-                const material = Math.random() > 0.5 ? redMat : cyanMat;
-                const mesh = new THREE.Mesh(textGeo, material);
-
-                // Random position within a sphere of radius 30-50
-                const r = 30 + Math.random() * 20;
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                mesh.position.x = r * Math.sin(phi) * Math.cos(theta);
-                mesh.position.y = r * Math.sin(phi) * Math.sin(theta);
-                mesh.position.z = r * Math.cos(phi);
-
-                // Random rotation
-                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-
-                lettersGroup.add(mesh);
-            }
-        });
-        scene.add(lettersGroup);
-
-        // Lighting
-        const light1 = new THREE.PointLight(0xffffff, 1, 100);
-        light1.position.set(20, 20, 20);
-        scene.add(light1);
-        const light2 = new THREE.PointLight(0x00f2ff, 0.5, 100);
-        light2.position.set(-20, -10, 20);
-        scene.add(light2);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        camera.position.z = 30;
-
-        // Mouse interaction
-        let mouseX = 0, mouseY = 0;
-        document.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX / window.innerWidth) - 0.5;
-            mouseY = (e.clientY / window.innerHeight) - 0.5;
-        });
-
-        function animate() {
-            requestAnimationFrame(animate);
-            core.rotation.x += 0.001;
-            core.rotation.y += 0.002;
-            lettersGroup.rotation.y += 0.0005;
-            lettersGroup.rotation.x += 0.0002;
-            camera.position.x += (mouseX * 20 - camera.position.x) * 0.05;
-            camera.position.y += (-mouseY * 20 - camera.position.y) * 0.05;
-            camera.lookAt(scene.position);
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Resize handler
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 
     <?php include("footer.php"); ?>

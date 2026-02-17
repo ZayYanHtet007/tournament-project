@@ -51,16 +51,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <style>
     :root {
-        --primary-red: #ff4655;
-        --dark-bg: #0f1923;
-        --card-bg: rgba(23, 27, 34, 0.95);
-        --input-bg: #1b2733;
+        --primary-red: #3b82f6;        /* changed from red to blue */
+        --dark-bg: #0f172a;             /* changed from dark red to dark blue */
+        --card-bg: rgba(30, 40, 60, 0.95);   /* blue‑tinted card background */
+        --input-bg: #1e293b;             /* dark blue input field */
         --success-green: #11e06e;
     }
 
     body {
         background: var(--dark-bg);
-        background-image: linear-gradient(rgba(15, 25, 35, 0.85), rgba(15, 25, 35, 0.85)),
+        background-image: linear-gradient(rgba(20, 30, 50, 0.85), rgba(20, 30, 50, 0.85)),
             url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
@@ -73,23 +73,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         color: #ffffff; 
         font-family: 'Segoe UI', Helvetica, Arial, sans-serif; 
         
-        /* INTENSE RED GRADIENT BACKGROUND */
+        /* INTENSE BLUE GRADIENT BACKGROUND */
         background-image: 
-            radial-gradient(circle at 10% 20%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
-            radial-gradient(circle at 90% 80%, rgba(255, 77, 90, 0.15) 0%, transparent 40%),
-            linear-gradient(rgba(255, 77, 90, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 77, 90, 0.05) 1px, transparent 1px);
+            radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+            linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
         background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
         background-attachment: fixed;
     }
 
-    /* ENHANCED DYNAMIC RED GLOW */
+    /* ENHANCED DYNAMIC BLUE GLOW */
     body::before {
         content: "";
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                    rgba(255, 77, 90, 0.25) 0%, 
+                    rgba(59, 130, 246, 0.25) 0%, 
                     transparent 45%);
         z-index: -1;
         pointer-events: none;
@@ -141,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         background: var(--card-bg);
         backdrop-filter: blur(15px);
         padding: 50px 40px;
-        border: 1px solid rgba(255, 77, 90, 0.3);
+        border: 1px solid rgba(59, 130, 246, 0.3);
         width: 100%;
         max-width: 550px;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -190,7 +190,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     input[readonly] {
-        background: #141b23;
+        background: #1a2634;        /* dark blue */
         color: #8b978f;
         border-color: #2c3540;
         cursor: not-allowed;
@@ -254,7 +254,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="contact-container">
         <form action="" method="POST">
             <div class="form-group">
-                <label>Identification</label>
+                <label>Your Name</label>
                 <input type="text" name="sender_name" value="<?= htmlspecialchars($sender_name); ?>"
                     <?= $is_logged_in ? 'readonly' : 'required'; ?>>
             </div>
@@ -270,7 +270,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <textarea name="sender_message" placeholder="TYPE YOUR MESSAGE HERE..." required></textarea>
             </div>
 
-            <button type="submit" class="submit-btn">Send Dispatch</button>
+            <button type="submit" class="submit-btn">Send</button>
         </form>
     </div>
 </section>
