@@ -14,26 +14,49 @@ $offset = ($page - 1) * $limit;
 // Handle Fee Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_fee_btn'])) {
     $new_fee = floatval($_POST['new_fee']);
-    $update_sql = "UPDATE creation_fee SET tournament_create_value = '$new_fee'";
-    if (mysqli_query($conn, $update_sql)) {
-        $message = "Tournament fee updated successfully to $" . number_format($new_fee, 2);
-        $messageType = "success";
+
+    // 1. Get the current logged-in admin's ID from the session
+    $admin_id = $_SESSION['admin_id'] ?? null;
+
+    if ($admin_id) {
+        // 2. Updated SQL: You must include admin_id because of your NOT NULL constraint
+        // We use a specific ID if your table has a primary key, or update the existing row
+        $update_sql = "UPDATE creation_fee 
+                       SET tournament_create_value = '$new_fee', 
+                           admin_id = '$admin_id'";
+
+        if (mysqli_query($conn, $update_sql)) {
+            $message = "Tournament fee updated successfully to $" . number_format($new_fee, 2);
+            $messageType = "success";
+        } else {
+            $message = "Error updating fee: " . mysqli_error($conn);
+            $messageType = "error";
+        }
     } else {
-        $message = "Error updating fee: " . mysqli_error($conn);
+        $message = "Error: You must be logged in as an admin to change the fee.";
         $messageType = "error";
     }
 }
 
-// Get Current Fee
-$current_fee = 0;
-$fee_sql = "SELECT tournament_create_value FROM creation_fee LIMIT 1";
-$fee_result = mysqli_query($conn, $fee_sql);
-if ($fee_result && mysqli_num_rows($fee_result) > 0) {
-    $fee_row = mysqli_fetch_assoc($fee_result);
-    $current_fee = $fee_row['tournament_create_value'];
-}
+        // Get Current Fee
+        // --- 3. GET CURRENT FEE AND ADMIN INFO ---
+        $current_fee = 0;
+        $last_updated_by = "System";
 
-$searchTerm = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+        // JOIN with admins table to see who made the last change
+        $fee_sql = "SELECT cf.tournament_create_value, a.username 
+            FROM creation_fee cf 
+            LEFT JOIN admins a ON cf.admin_id = a.admin_id 
+            LIMIT 1";
+        $fee_result = mysqli_query($conn, $fee_sql);
+
+        if ($fee_result && mysqli_num_rows($fee_result) > 0) {
+            $fee_row = mysqli_fetch_assoc($fee_result);
+            $current_fee = $fee_row['tournament_create_value'];
+            $last_updated_by = $fee_row['username'] ?? "Unknown Admin";
+        }
+
+        $searchTerm = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
 // --- DATE RANGE FILTER ---
 $startDateFromRaw = $_GET['start_from'] ?? '';

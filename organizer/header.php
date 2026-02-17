@@ -110,7 +110,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             justify-content: center;
             align-items: center;
             text-decoration: none;
-            opacity: 0.6;
+            color: rgba(255, 255, 255, 0.5);
             transition: var(--transition);
         }
 
@@ -121,6 +121,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         .nav-item:hover,
         .nav-item.active {
+            color: #fff;
             opacity: 1;
         }
 
@@ -379,27 +380,27 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         <nav class="nav-stack">
             <a href="organizerDashboard.php" class="nav-item <?= ($current_page == 'organizerDashboard.php' || $current_page == '') ? 'active' : '' ?>">
-                <i class="fa-solid fa-house" style="color: #fff;"></i>
+                <i class="fa-solid fa-house"></i>
                 <span>HOME</span>
             </a>
 
             <a href="tournaments.php" class="nav-item <?= ($current_page == 'tournaments.php') ? 'active' : '' ?>">
-                <i class="fa-solid fa-trophy" style="color: #fff;"></i>
+                <i class="fa-solid fa-trophy"></i>
                 <span>TOURNAMENTS</span>
             </a>
 
             <a href="teams.php" class="nav-item <?= ($current_page == 'teams.php') ? 'active' : '' ?>">
-                <i class="fa-solid fa-users" style="color: #fff;"></i>
+                <i class="fa-solid fa-users"></i>
                 <span>TEAMS</span>
             </a>
 
             <a href="organizerStatistic.php" class="nav-item <?= ($current_page == 'organizerStatistics.php') ? 'active' : '' ?>">
-                <i class="fa-solid fa-ranking-star" style="color: #fff;"></i>
+                <i class="fa-solid fa-chart-bar"></i>
                 <span>LEADERBOARD</span>
             </a>
 
             <a href="contact.php" class="nav-item <?= ($current_page == 'contact.php') ? 'active' : '' ?>">
-                <i class="fa-solid fa-envelope" style="color: #fff;"></i>
+                <i class="fa-solid fa-envelope"></i>
                 <span>CONTACT US</span>
             </a>
         </nav>

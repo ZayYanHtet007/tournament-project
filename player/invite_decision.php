@@ -30,8 +30,13 @@ $invite = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$invite) {
-    die("Invite not found or already used.");
+    echo "<script>
+        alert('Invite not found or already used.');
+        window.location.replace('../index.php');
+    </script>";
+    exit;
 }
+
 
 // Check team status
 if ($invite['team_status'] === 'disbanded') {

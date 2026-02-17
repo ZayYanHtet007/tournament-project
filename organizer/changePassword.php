@@ -1,6 +1,6 @@
 <?php
-require_once "../partial/init.php";
 include('header.php');
+require_once "../partial/init.php";
 
 $userId = $_SESSION['user_id'];
 
@@ -14,24 +14,29 @@ if (!$user) {
     die("User not found");
 }
 
-/* ================= CONSOLIDATED UPDATE LOGIC ================= */
-if (isset($_POST['save_all'])) {
+$profile_message = "";
+$profile_error = "";
+$password_message = "";
+$password_error = "";
+
+/* ================= PROFILE UPDATE LOGIC ================= */
+if (isset($_POST['save_profile'])) {
     $username = trim($_POST['username']);
     $email    = trim($_POST['email']);
     $input_password = $_POST['verify_password'];
     $newImage = $user['image'];
 
-    // 1. Verify Password first
+    // Verify Password first
     if (password_verify($input_password, $user['password'])) {
 
-        // 2. Handle Image if uploaded
+        // Handle Image if uploaded
         if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === 0) {
             $file = $_FILES['avatar'];
             $ext  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
             if (in_array($ext, $allowed)) {
-                $target_dir = "images/"; // Fixed path
+                $target_dir = "images/";
                 if (!is_dir($target_dir)) {
                     mkdir($target_dir, 0777, true);
                 }
@@ -43,18 +48,57 @@ if (isset($_POST['save_all'])) {
             }
         }
 
-        // 3. Update Database
+        // Update Database
         $update_stmt = $conn->prepare("UPDATE users SET username=?, email=?, image=? WHERE user_id=?");
         $update_stmt->bind_param("sssi", $username, $email, $newImage, $userId);
 
         if ($update_stmt->execute()) {
-            echo "<script>alert('Profile updated successfully!'); window.location.href='userprofile.php';</script>";
-            exit;
+            $profile_message = "Profile updated successfully!";
+            // Refresh user data
+            $user['username'] = $username;
+            $user['email'] = $email;
+            $user['image'] = $newImage;
         } else {
-            $error = "Update failed.";
+            $profile_error = "Update failed.";
         }
     } else {
-        echo "<script>alert('Incorrect password! Changes denied.');</script>";
+        $profile_error = "Incorrect password! Changes denied.";
+    }
+}
+
+/* ================= PASSWORD CHANGE LOGIC ================= */
+if (isset($_POST['change_password'])) {
+    $current = $_POST['current_password'] ?? '';
+    $new     = $_POST['new_password'] ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
+
+    // Validation
+    if ($current === '' || $new === '' || $confirm === '') {
+        $password_error = "All fields are required!";
+    } elseif ($new !== $confirm) {
+        $password_error = "Passwords do not match!";
+    } elseif (!preg_match('/[A-Z]/', $new)) {
+        $password_error = "At least one uppercase letter required!";
+    } elseif (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $new)) {
+        $password_error = "At least one special character required!";
+    } elseif (!preg_match('/[0-9]/', $new)) {
+        $password_error = "At least one number required!";
+    } elseif (strlen($new) < 8) {
+        $password_error = "Password must be at least 8 characters!";
+    } else {
+        // Verify current password
+        if (password_verify($current, $user['password'])) {
+            $hashed = password_hash($new, PASSWORD_DEFAULT);
+            $update = $conn->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+            $update->bind_param("si", $hashed, $userId);
+            if ($update->execute()) {
+                $password_message = "Password updated successfully!";
+            } else {
+                $password_error = "Database error. Please try again.";
+            }
+        } else {
+            $password_error = "Current password is incorrect!";
+        }
     }
 }
 ?>
@@ -76,7 +120,7 @@ if (isset($_POST['save_all'])) {
 
     /* CYBER-GRID ANIMATED BACKGROUND */
     .profile-wrapper {
-        min-height: calc(100vh - 75px);
+        min-height: calc(100vh);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -84,7 +128,6 @@ if (isset($_POST['save_all'])) {
         background-color: var(--gaming-dark);
         position: relative;
         overflow: hidden;
-        /* The Grid */
         background-image:
             linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
@@ -130,22 +173,16 @@ if (isset($_POST['save_all'])) {
     }
 
     @keyframes scanline {
-        0% {
-            transform: translateY(-100%);
-        }
-
-        100% {
-            transform: translateY(100%);
-        }
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
     }
 
     .profile-container {
         width: 100%;
-        max-width: 450px;
+        max-width: 500px;
         background: black;
-        /* Solid Riot Dark */
         border: 1px solid var(--riot-border);
-        padding: 50px 40px;
+        padding: 40px 35px;
         position: relative;
         z-index: 1;
         box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 242, 255, 0.05);
@@ -153,12 +190,21 @@ if (isset($_POST['save_all'])) {
 
     h2 {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 3rem;
+        font-size: 2.8rem;
         line-height: 0.9;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
         letter-spacing: 1px;
         color: #fff;
         text-shadow: 2px 2px 0px var(--riot-blue);
+    }
+
+    h3 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.8rem;
+        margin: 30px 0 20px;
+        color: #fff;
+        border-bottom: 1px solid var(--riot-border);
+        padding-bottom: 10px;
     }
 
     .close-btn {
@@ -182,9 +228,9 @@ if (isset($_POST['save_all'])) {
 
     .avatar-upload-wrapper {
         position: relative;
-        width: 160px;
-        height: 160px;
-        margin: 0 auto 40px;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 30px;
         cursor: pointer;
     }
 
@@ -192,7 +238,7 @@ if (isset($_POST['save_all'])) {
         width: 100%;
         height: 100%;
         border: 2px solid var(--riot-blue);
-        padding: 5px;
+        padding: 3px;
         background: #000;
         transition: 0.3s;
         object-fit: cover;
@@ -211,7 +257,7 @@ if (isset($_POST['save_all'])) {
         left: 50%;
         transform: translate(-50%, -50%);
         font-family: 'Bebas Neue';
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         opacity: 0;
         transition: 0.3s;
         pointer-events: none;
@@ -228,7 +274,7 @@ if (isset($_POST['save_all'])) {
     }
 
     .field {
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
 
     label {
@@ -242,9 +288,10 @@ if (isset($_POST['save_all'])) {
     }
 
     input[type="text"],
-    input[type="email"] {
+    input[type="email"],
+    input[type="password"] {
         width: 100%;
-        padding: 15px;
+        padding: 14px;
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid transparent;
         border-bottom: 2px solid var(--riot-border);
@@ -260,39 +307,68 @@ if (isset($_POST['save_all'])) {
         border-bottom-color: var(--riot-blue);
     }
 
-    .save-btn {
+    /* Password strength bar */
+    .strength-box {
+        margin-top: 8px;
+    }
+    .bar-container {
         width: 100%;
-        padding: 20px;
+        height: 4px;
+        background: #222;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .bar {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease;
+        border-radius: 2px;
+    }
+    #validation-feedback {
+        font-size: 11px;
+        margin-top: 5px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        font-family: 'Bebas Neue';
+        font-size: 1.3rem;
+        letter-spacing: 1px;
+        cursor: pointer;
+        border: none;
+        transition: 0.3s;
+        text-transform: uppercase;
+    }
+
+    .save-btn, .password-btn {
+        width: 100%;
+        padding: 16px;
         background: transparent;
         color: #fff;
         border: 1px solid var(--riot-blue);
-        font-family: 'Bebas Neue';
-        font-size: 1.5rem;
-        letter-spacing: 2px;
-        cursor: pointer;
         position: relative;
         z-index: 1;
-        margin-top: 20px;
-        transition: 0.3s;
+        margin-top: 10px;
+        font-size: 1.4rem;
     }
 
-    .save-btn::before {
+    .save-btn::before, .password-btn::before {
         content: "";
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 0;
-        height: 100%;
+        top: 0; left: 0;
+        width: 0; height: 100%;
         background: var(--riot-blue);
         transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         z-index: -1;
     }
 
-    .save-btn:hover {
+    .save-btn:hover, .password-btn:hover {
         color: #000;
     }
-
-    .save-btn:hover::before {
+    .save-btn:hover::before, .password-btn:hover::before {
         width: 100%;
     }
 
@@ -303,15 +379,8 @@ if (isset($_POST['save_all'])) {
         margin-bottom: 20px;
         text-transform: uppercase;
     }
-
-    .msg {
-        color: #00ff99;
-        text-shadow: 0 0 10px rgba(0, 255, 153, 0.3);
-    }
-
-    .err {
-        color: var(--riot-blue);
-    }
+    .msg { color: #00ff99; }
+    .err { color: var(--riot-blue); }
 
     /* Modal Styles */
     .modal-overlay {
@@ -319,7 +388,6 @@ if (isset($_POST['save_all'])) {
         inset: 0;
         background: rgba(0, 0, 0, 0.9);
         display: none;
-        /* Hidden by default */
         justify-content: center;
         align-items: center;
         z-index: 9999;
@@ -347,6 +415,7 @@ if (isset($_POST['save_all'])) {
         padding: 10px;
         flex: 1;
         cursor: pointer;
+        font-weight: bold;
     }
 
     .btn-cancel {
@@ -357,61 +426,54 @@ if (isset($_POST['save_all'])) {
         flex: 1;
         cursor: pointer;
     }
+
+    hr {
+        border: 0.5px solid var(--riot-border);
+        margin: 30px 0 20px;
+    }
 </style>
 
 <div class="profile-wrapper" id="bg-wrapper">
     <div class="profile-container">
-        <h2>EDIT PREFERENCES</h2>
+        <!-- Change Password Section -->
+        <h3>CHANGE PASSWORD</h3>
+        <form method="post">
+            <?php if (!empty($password_message)): ?>
+                <p class="status msg"><?= $password_message ?></p>
+            <?php endif; ?>
+            <?php if (!empty($password_error)): ?>
+                <p class="status err"><?= $password_error ?></p>
+            <?php endif; ?>
 
-        <a href="index.php" class="close-btn">X</a>
-
-        <?php if (isset($message)): ?>
-            <p class="status msg"><?= $message ?></p>
-        <?php endif; ?>
-        <?php if (isset($error)): ?>
-            <p class="status err"><?= $error ?></p>
-        <?php endif; ?>
-
-        <form method="post" enctype="multipart/form-data">
-            <div class="avatar-upload-wrapper" onclick="document.getElementById('file-input').click()">
-                <img id="preview" src="images/<?= $user['image'] ?? 'default.png' ?>" class="avatar-preview">
-                <div class="upload-hint">CHANGE IMAGE</div>
-                <input type="file" name="avatar" id="file-input" onchange="previewImage(this)">
+            <div class="field">
+                <label>Current Password</label>
+                <input type="password" name="current_password" id="current" placeholder="••••••••" required>
             </div>
 
             <div class="field">
-                <label>User Name</label>
-                <input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>">
+                <label>New Password</label>
+                <input type="password" name="new_password" id="new" placeholder="Enter new password" required>
+                
             </div>
 
             <div class="field">
-                <label>Email Address</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>">
-            </div>
-
-            <button type="button" class="save-btn" onclick="openModal()">SAVE CHANGES</button>
-
-            <div id="passwordModal" class="modal-overlay">
-                <div class="password-card">
-                    <h3 style="color: var(--riot-blue); font-family:'Bebas Neue';">CONFIRM PASSWORD</h3>
-                    <p style="font-size: 12px; color: #888; margin-bottom: 20px;">Please enter your password to save changes.</p>
-
-                    <div class="field">
-                        <input type="password" name="verify_password" id="modalPassword" placeholder="ENTER CURRENT PASSWORD">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" id="confirm" placeholder="Confirm new password" required>
+                <div class="strength-box">
+                    <div class="bar-container">
+                        <div id="strength-bar" class="bar"></div>
                     </div>
-
-                    <div class="modal-actions">
-                        <button type="button" onclick="closeModal()" class="btn-cancel">CANCEL</button>
-                        <button type="submit" name="save_all" class="btn-confirm">VERIFY & SAVE</button>
-                    </div>
+                    <p id="validation-feedback" style="font-size: 12px; margin-top: 8px;"></p>
                 </div>
             </div>
+
+            <button type="submit" name="change_password" class="password-btn">UPDATE PASSWORD</button>
         </form>
     </div>
 </div>
 
 <script>
-    // Preview image logic
+    // Preview image logic (kept for compatibility, though not used in this simplified version)
     function previewImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
@@ -432,20 +494,66 @@ if (isset($_POST['save_all'])) {
         wrapper.style.setProperty('--mouse-y', y + '%');
     });
 
+    // Modal functions (kept for compatibility)
     function openModal() {
         document.getElementById('passwordModal').style.display = 'flex';
         document.getElementById('modalPassword').focus();
     }
-
     function closeModal() {
         document.getElementById('passwordModal').style.display = 'none';
     }
-
-    // Close modal if user clicks outside the card
     window.onclick = function(event) {
         let modal = document.getElementById('passwordModal');
         if (event.target == modal) {
             closeModal();
         }
+    }
+
+    // Password strength meter (adapted to blue theme)
+    const newInput = document.getElementById('new');
+    const bar = document.getElementById('strength-bar');
+    const feedback = document.getElementById('validation-feedback');
+
+    if (newInput) {
+        newInput.addEventListener('input', () => {
+            const val = newInput.value;
+            let message = "";
+            let score = 0;
+            let gradient = "";
+
+            if (val === "") {
+                feedback.textContent = "";
+                bar.style.width = "0%";
+                return;
+            }
+
+            if (val.length < 8) {
+                message = "❌ Too short (min 8)";
+                score = 1;
+                gradient = "linear-gradient(90deg, #4da6ff, #80bfff)";
+            } else if (!/[A-Z]/.test(val)) {
+                message = "❌ Need uppercase";
+                score = 2;
+                gradient = "linear-gradient(90deg, #0077ff, #4da6ff)";
+            } else if (!/[0-9]/.test(val)) {
+                message = "❌ Need number";
+                score = 3;
+                gradient = "linear-gradient(90deg, #00aaff, #00ccff)";
+            } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(val)) {
+                message = "❌ Need special character";
+                score = 4;
+                gradient = "linear-gradient(90deg, #00ccff, #00e676)";
+            } else {
+                message = "✅ Strong password";
+                score = 5;
+                gradient = "linear-gradient(90deg, #00e676, #00c853)";
+            }
+
+            feedback.textContent = message;
+            bar.style.width = (score * 20) + '%';
+            bar.style.background = gradient;
+            bar.style.boxShadow = `0 0 10px ${score > 3 ? 'rgba(0, 230, 118, 0.3)' : 'rgba(0, 100, 255, 0.3)'}`;
+            feedback.style.color = (score === 5) ? "#00c853" : "#4da6ff";
+        });
     }
 </script>
