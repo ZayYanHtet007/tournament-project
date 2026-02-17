@@ -303,35 +303,70 @@ $current_page = basename($_SERVER['PHP_SELF']);
             border-radius: 50%;
         }
 
+        /* ===== RED GAMING NOTIFICATION DROPDOWN ===== */
         #notif-dropdown {
             display: none;
             position: absolute;
             right: 20px;
             top: 60px;
-            width: 300px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            width: 320px;
+            background: #0a0c12;
+            border: 1px solid #ff4655;
+            border-radius: 0;
+            box-shadow: 0 4px 20px rgba(255, 70, 85, 0.3);
             z-index: 1000;
             max-height: 400px;
             overflow-y: auto;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #notif-dropdown::-webkit-scrollbar {
+            width: 4px;
+            background: #111;
+        }
+        #notif-dropdown::-webkit-scrollbar-thumb {
+            background: #ff4655;
+            border-radius: 0;
         }
 
         .notification {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 70, 85, 0.2);
             cursor: pointer;
+            transition: background 0.2s ease;
+            color: #ddd;
+            font-size: 13px;
+            line-height: 1.4;
         }
 
         .notification.unread {
-            background: #facc15;
-            color: #000;
+            background: rgba(255, 70, 85, 0.15);
+            border-left: 3px solid #ff4655;
+            color: #fff;
         }
 
         .notification.read {
-            background: #f1f5f9;
-            color: #333;
+            background: rgba(10, 12, 18, 0.8);
+            color: #aaa;
+        }
+
+        .notification:hover {
+            background: rgba(255, 70, 85, 0.25);
+            color: #fff;
+        }
+
+        .notification strong {
+            color: #ff4655;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .notification small {
+            display: block;
+            margin-top: 5px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
         }
 
         /* ================= MOBILE ================= */
@@ -381,6 +416,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             .tx-header {
                 left: 0;
+            }
+
+            #notif-dropdown {
+                right: 10px;
+                width: 300px;
             }
         }
     </style>
@@ -432,7 +472,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <?php if (empty($notifications)): ?>
                 <div class="notification read">No notifications</div>
             <?php else: ?>
-                <?php print_r($notifications); ?>
                 <?php foreach ($notifications as $n): ?>
                     <div class="notification <?php echo $n['is_read'] ? 'read' : 'unread'; ?>" data-id="<?php echo $n['notification_id']; ?>" onclick="notiClick('<?= $n['token'] ?>')">
                         <strong><?php echo htmlspecialchars($n['title']); ?></strong><br>
@@ -461,7 +500,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </div>
                     <div class="drop-links">
                         <a href="userprofile.php">CUSTOMIZE PROFILE</a>
-                        <a href="changePassword.php">CHANGE PASSWORD</a>
+                        <a href="changePassword1.php">CHANGE PASSWORD</a>
                         <a href="logout.php" style="color: var(--riot)">LOGOUT</a>
                     </div>
                 <?php else: ?>

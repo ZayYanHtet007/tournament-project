@@ -123,6 +123,9 @@ body {
 
 /* Title area */
 .br-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 2rem;
 }
 .br-title h1 {
@@ -140,6 +143,27 @@ body {
 .br-title p {
     color: #9aaec9;
     margin-top: 0.5rem;
+}
+
+/* Back button */
+.br-back-button {
+    background-color: #1e3142;
+    border: 1px solid #2d7ff9;
+    color: white;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: 0.1s;
+    border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.br-back-button:hover {
+    background-color: #264763;
+    border-color: #5a9eff;
 }
 
 /* Search input – square, dark */
@@ -188,6 +212,7 @@ body {
     text-align: center;
     cursor: pointer;
     border-radius: 0; /* square */
+    max-height: 170px;
 }
 .br-team-card:hover {
     border-color: #2d7ff9;
@@ -203,7 +228,7 @@ body {
     height: 80px;
     border-radius: 0; /* square */
     object-fit: cover;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     border: 1px solid #2f3a4a;
 }
 .br-team-card h3 {
@@ -225,6 +250,8 @@ body {
     position: relative;
     perspective: 1000px;
     flex-shrink: 0;
+    min-height: 390px;
+    max-height: 390px;
 }
 .br-team-panel.active {
     width: 360px;
@@ -414,7 +441,7 @@ i, .fa, .fas, .far {
 
 <div class="br-title">
     <h1><i class="fas fa-users"></i> Teams & Players</h1>
-    <p><?= htmlspecialchars($tournament['title']) ?></p>
+    <button class="br-back-button" onclick="history.back()"><i class="fas fa-arrow-left"></i> Back</button>
 </div>
 
 <div class="br-search">
@@ -441,10 +468,7 @@ i, .fa, .fas, .far {
         <div class="br-panel-front">
             <div class="br-panel-title" id="panelTitle"></div>
 
-            <div class="br-role-block">
-                <h4><i class="fas fa-chalkboard-teacher"></i> Coach</h4>
-                <div id="coachBlock"></div>
-            </div>
+            <!-- Removed coach block -->
             <div class="br-role-block">
                 <h4><i class="fas fa-crown"></i> Leader</h4>
                 <div id="leaderBlock"></div>
@@ -453,10 +477,7 @@ i, .fa, .fas, .far {
                 <h4><i class="fas fa-gamepad"></i> Members</h4>
                 <div id="memberBlock"></div>
             </div>
-            <div class="br-role-block">
-                <h4><i class="fas fa-exchange-alt"></i> Substitutes</h4>
-                <div id="subBlock"></div>
-            </div>
+            <!-- Removed substitutes block -->
 
             <button class="br-ban-btn" id="banBtn"><i class="fas fa-ban"></i> Ban Team</button>
         </div>
@@ -483,10 +504,8 @@ const cards   = document.querySelectorAll('.br-team-card');
 const panel = document.getElementById('teamPanel');
 const grid = document.getElementById('teamGrid');
 const title = document.getElementById('panelTitle');
-const coachBlock = document.getElementById('coachBlock');
 const leaderBlock = document.getElementById('leaderBlock');
 const memberBlock = document.getElementById('memberBlock');
-const subBlock = document.getElementById('subBlock');
 const search = document.getElementById('teamSearch');
 
 const panelInner = document.getElementById('panelInner');
@@ -512,30 +531,26 @@ cards.forEach(card => {
         
         title.textContent = card.querySelector('h3').textContent;
 
-        coachBlock.innerHTML = '';
         leaderBlock.innerHTML = '';
         memberBlock.innerHTML = '';
-        subBlock.innerHTML = '';
 
         const members = JSON.parse(card.dataset.team);
-        let hasCoach = false;
         let hasLeader = false;
         let hasMember = false;
-        let hasSub = false;
 
         members.forEach(m => {
-            switch(m.role) {
-                case 'coach': hasCoach = true; coachBlock.innerHTML += `<div class="br-member">🧑‍🏫 ${m.username}</div>`; break;
-                case 'leader': hasLeader = true; leaderBlock.innerHTML += `<div class="br-member">👑 ${m.username}</div>`; break;
-                case 'member': hasMember = true; memberBlock.innerHTML += `<div class="br-member">🎮 ${m.username}</div>`; break;
-                case 'sub': hasSub = true; subBlock.innerHTML += `<div class="br-member">🔄 ${m.username}</div>`; break;
+            if (m.role === 'leader') {
+                hasLeader = true;
+                leaderBlock.innerHTML += `<div class="br-member">👑 ${m.username}</div>`;
+            } else if (m.role === 'member') {
+                hasMember = true;
+                memberBlock.innerHTML += `<div class="br-member">🎮 ${m.username}</div>`;
             }
+            // coach and sub roles are ignored (not displayed)
         });
 
-        if (!hasCoach) coachBlock.innerHTML = `<div class="br-empty">No coach</div>`;
         if (!hasLeader) leaderBlock.innerHTML = `<div class="br-empty">No leader</div>`;
         if (!hasMember) memberBlock.innerHTML = `<div class="br-empty">No members</div>`;
-        if (!hasSub) subBlock.innerHTML = `<div class="br-empty">No substitutes</div>`;
     });
 });
 

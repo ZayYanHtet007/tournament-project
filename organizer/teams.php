@@ -1,5 +1,5 @@
 <?php
-include ('header.php');
+include('header.php');
 
 // ==================== ORGANIZER AUTHENTICATION ====================
 if (!isset($_SESSION['user_id'])) {
@@ -289,14 +289,21 @@ function include_grid_content($data)
         text-transform: uppercase;
         cursor: pointer;
         appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
         width: 200px;
     }
 
-    .game-filter-nav select.filter-btn:focus {
-        border-color: var(--org-blue);
-        outline: none;
-        box-shadow: 0 0 10px rgba(0, 163, 255, 0.2);
+    .game-filter-nav select.filter-btn option {
+        background-color: #0f1923;
+        color: white;
     }
+
+    select.filter-btn:focus {
+        background-color: #0f1923;
+        color: white;
+    }
+
 
     .search-input {
         width: 0;
@@ -550,9 +557,18 @@ function include_grid_content($data)
     }
 
     @media (max-width: 768px) {
-        .teams-container { padding: 0 15px; margin: 40px auto; }
-        .page-title { font-size: 3rem; }
-        .team-grid { grid-template-columns: 1fr; }
+        .teams-container {
+            padding: 0 15px;
+            margin: 40px auto;
+        }
+
+        .page-title {
+            font-size: 3rem;
+        }
+
+        .team-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -605,7 +621,6 @@ function include_grid_content($data)
         </div>
         <h4 style="color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; margin: 25px 0 10px; font-size:0.9rem;">Active Players</h4>
         <div id="m-players"></div>
-        <button id="m-join-btn" class="modal-join-btn">Request to Join</button>
     </div>
 </div>
 
@@ -628,7 +643,9 @@ function include_grid_content($data)
 
     function handleSearch() {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => { fetchTeams(1); }, 300);
+        searchTimer = setTimeout(() => {
+            fetchTeams(1);
+        }, 300);
     }
 
     function filterGame(type) {
@@ -649,7 +666,9 @@ function include_grid_content($data)
                 dynamicContent.innerHTML = html;
                 dynamicContent.style.opacity = '1';
                 const pushUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?page=${page}&search=${encodeURIComponent(search)}&game_type=${encodeURIComponent(currentGameType)}`;
-                window.history.pushState({ path: pushUrl }, '', pushUrl);
+                window.history.pushState({
+                    path: pushUrl
+                }, '', pushUrl);
             })
             .catch(err => {
                 console.warn('Something went wrong.', err);
@@ -682,7 +701,9 @@ function include_grid_content($data)
         document.getElementById('m-players').innerHTML = html;
 
         const joinBtn = document.getElementById('m-join-btn');
-        joinBtn.onclick = function() { requestJoin(teamId); };
+        joinBtn.onclick = function() {
+            requestJoin(teamId);
+        };
         document.getElementById('teamModal').style.display = 'flex';
     }
 
@@ -700,7 +721,9 @@ function include_grid_content($data)
             formData.append('team_id', teamId);
             fetch('player/request_join.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: formData.toString()
                 })
                 .then(async response => {
@@ -708,8 +731,13 @@ function include_grid_content($data)
                     if (!response.ok) throw new Error(text || "Server Error");
                     return text;
                 })
-                .then(message => { alert(message); closeTeam(); })
-                .catch(error => { alert("Failed: " + error.message); })
+                .then(message => {
+                    alert(message);
+                    closeTeam();
+                })
+                .catch(error => {
+                    alert("Failed: " + error.message);
+                })
                 .finally(() => {
                     joinBtn.innerText = originalText;
                     joinBtn.disabled = false;
