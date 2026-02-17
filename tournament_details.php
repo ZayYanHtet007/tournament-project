@@ -45,7 +45,7 @@ if ($checkBR->num_rows > 0) {
 }
 $checkBR->close();
 
-// Fetch registered teams and players (existing code)
+// Fetch registered teams and players
 $sqlTeams = "
     SELECT te.team_id, te.team_name, u.username AS leader_name, COUNT(tm.user_id) AS player_count
     FROM tournament_teams tt
@@ -66,7 +66,7 @@ while ($row = $resultTeams->fetch_assoc()) {
 }
 $stmt->close();
 
-// Determine gradient for UI (existing)
+// Determine gradient for UI (now all forced to red/black in CSS, but keep for fallback)
 $gradients = [
     'League of Legends' => 'red-pink',
     'Dota 2'            => 'purple-indigo',
@@ -79,13 +79,12 @@ $gradients = [
 $gradient = $gradients[$tournament['game_name']] ?? 'blue-cyan';
 $image = !empty($tournament['game_image']) ? $tournament['game_image'] : 'default.png';
 
-// Check if registration is open (existing)
+// Check if registration is open
 $today = date('Y-m-d');
 $registration_open = ($today >= $tournament['registration_start_date'] && $today <= $tournament['registration_deadline']);
 
 // ---------- ADDITIONAL DATA FETCH BASED ON TOURNAMENT TYPE ----------
 
-// Prepare arrays for additional displays
 $groupStandings = [];
 $matchesList = [];
 $brStandings = [];
@@ -112,6 +111,7 @@ if ($tournament['type'] === 'standard' && !$isBattleRoyale) {
     }
 
     // Fetch all matches with team names and aggregated scores
+    // Changed order: third_place before final
     $matchQuery = "
         SELECT m.*,
                t1.team_name AS team1_name,
@@ -124,7 +124,7 @@ if ($tournament['type'] === 'standard' && !$isBattleRoyale) {
         LEFT JOIN teams t2 ON m.team2_id = t2.team_id
         LEFT JOIN teams w ON m.winner_team_id = w.team_id
         WHERE m.tournament_id = ?
-        ORDER BY FIELD(m.round, 'group', 'quarterfinal', 'semifinal', 'final', 'third_place'),
+        ORDER BY FIELD(m.round, 'group', 'quarterfinal', 'semifinal', 'third_place', 'final'),
                  m.group_name, m.match_order
     ";
     $stmt = $conn->prepare($matchQuery);
@@ -263,9 +263,7 @@ if ($tournament['status'] === 'completed') {
         text-transform: uppercase;
     }
 
-/* =========================
-   INFO CARDS
-========================= */
+    /* INFO CARDS */
     .info-wrapper {
         display: flex;
         gap: 15px;
@@ -308,132 +306,24 @@ if ($tournament['status'] === 'completed') {
         text-transform: uppercase;
     }
 
-    .green{
-        color: #4ade80;
+    /* Green changed to red */
+    .green {
+        color: greenyellow;
     }
 
-    /* =========================
-   TABLE DESIGN
-========================= */
-.table-card {
-    background: var(--glass-bg);
-    border: 1px solid #333;
-    margin-bottom: 30px;
-}
+    /* TABLE DESIGN */
+    .table-card {
+        background: var(--glass-bg);
+        border: 1px solid #333;
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
 
-table { width: 100%; border-collapse: collapse; }
-th {
-    padding: 20px;
-    text-align: left;
-    color: var(--riot-red);
-    border-bottom: 1px solid #333;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-}
-td { padding: 20px; border-bottom: 1px solid #222; }
-
-/* Winner card */
-.winner-card {
-    background: linear-gradient(135deg, #ffd700, #ffb347);
-    color: #000;
-    padding: 20px;
-    margin-bottom: 30px;
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    border: 2px solid #fff;
-}
-
-/* Group standings tables */
-.group-standings {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.group-card {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    padding: 20px;
-}
-.group-card h3 {
-    color: var(--riot-red);
-    margin-bottom: 15px;
-    text-transform: uppercase;
-}
-
-/* Match cards */
-.match-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-.match-card {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    padding: 20px;
-}
-.match-card.completed {
-    border-color: #00ff88;
-}
-.match-round {
-    color: var(--riot-red);
-    font-weight: bold;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-}
-.match-teams {
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-}
-.match-schedule {
-    color: #888;
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-}
-.match-score {
-    font-size: 1.1rem;
-    color: #00ff88;
-}
-.match-winner {
-    margin-top: 10px;
-    color: #ffd700;
-}
-
-/* Battle royale specific */
-.br-standings-table {
-    width: 100%;
-    margin-bottom: 30px;
-}
-.br-match-detail {
-    margin-bottom: 20px;
-}
-
-/* Buttons & Gradients */
-.gradient-red-pink { background: linear-gradient(135deg, #ff4655, #ff858d); }
-.gradient-purple-indigo { background: linear-gradient(135deg, #7b2ff7, #3f51b5); }
-.gradient-orange-yellow { background: linear-gradient(135deg, #ff9800, #ffeb3b); }
-.gradient-rose-orange { background: linear-gradient(135deg, #f43f5e, #fb923c); }
-.gradient-cyan-indigo { background: linear-gradient(135deg, #06b6d4, #6366f1); }
-.gradient-green-teal { background: linear-gradient(135deg, #10b981, #14b8a6); }
-.gradient-blue-cyan { background: linear-gradient(135deg, #3b82f6, #06b6d4); }
-.gradient-gray { background: #333; }
-
-.btn-details {
-    display: inline-block;
-    color: white;
-    padding: 12px 24px;
-    text-decoration: none;
-    font-weight: 900;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border: none;
-    cursor: pointer;
-    margin-bottom: 40px;
-}
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 500px;
+    }
 
     th {
         padding: 20px;
@@ -449,37 +339,133 @@ td { padding: 20px; border-bottom: 1px solid #222; }
         border-bottom: 1px solid #222;
     }
 
-    /* Buttons & Gradients */
-    .gradient-red-pink {
-        background: linear-gradient(135deg, #ff4655, #ff858d);
+    /* Winner card - red/black */
+    .winner-card {
+        background: linear-gradient(135deg, #ff4655, #b3002d);
+        color: #fff;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        border: 2px solid #fff;
     }
 
-    .gradient-purple-indigo {
-        background: linear-gradient(135deg, #7b2ff7, #3f51b5);
+    .winner-card i {
+        color: #fff;
     }
 
-    .gradient-orange-yellow {
-        background: linear-gradient(135deg, #ff9800, #ffeb3b);
+    /* Group standings - now stacked vertically (up & down) */
+    .group-standings {
+        display: block;
+        margin-bottom: 30px;
     }
 
-    .gradient-rose-orange {
-        background: linear-gradient(135deg, #f43f5e, #fb923c);
+    .group-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 20px;
+        margin-bottom: 20px;
+        overflow-x: auto;
     }
 
-    .gradient-cyan-indigo {
-        background: linear-gradient(135deg, #06b6d4, #6366f1);
+    .group-card h3 {
+        color: var(--riot-red);
+        margin-bottom: 15px;
+        text-transform: uppercase;
     }
 
-    .gradient-green-teal {
-        background: linear-gradient(135deg, #10b981, #14b8a6);
+    /* Match cards */
+    .match-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
     }
 
+    .match-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 20px;
+    }
+
+    .match-card.completed {
+        border-color: var(--riot-red);
+    }
+
+    /* Special styling for final match */
+    .match-card-final {
+        border: 3px solid gold;
+        box-shadow: 0 0 20px gold;
+        transform: scale(1.02);
+        background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
+    }
+    .match-card-final .match-round {
+        color: gold;
+        font-size: 1.1rem;
+    }
+    .match-card-final .match-teams {
+        font-size: 1.5rem;
+    }
+    .match-card-final .match-score {
+        font-size: 1.3rem;
+        color: gold;
+    }
+    .match-card-final .match-winner {
+        color: gold;
+    }
+
+    .match-round {
+        color: var(--riot-red);
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+
+    .match-teams {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    .match-schedule {
+        color: #888;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .match-score {
+        font-size: 1.1rem;
+        color: var(--riot-red);
+    }
+
+    .match-winner {
+        margin-top: 10px;
+        color: var(--riot-red);
+    }
+
+    /* Battle royale specific */
+    .br-standings-table {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .br-match-detail {
+        margin-bottom: 20px;
+    }
+
+    /* Buttons & Gradients - all forced to red/black */
+    .gradient-red-pink,
+    .gradient-purple-indigo,
+    .gradient-orange-yellow,
+    .gradient-rose-orange,
+    .gradient-cyan-indigo,
+    .gradient-green-teal,
     .gradient-blue-cyan {
-        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        background: linear-gradient(135deg, #ff4655, #b3002d) !important;
     }
 
     .gradient-gray {
-        background: #333;
+        background: #333 !important;
     }
 
     .btn-details {
@@ -496,11 +482,21 @@ td { padding: 20px; border-bottom: 1px solid #222; }
         margin-bottom: 40px;
     }
 
+    /* Responsive adjustments */
     @media (max-width: 768px) {
-        .info-wrapper {
-            flex-direction: column;
+        .tournament-title {
+            font-size: 2rem;
         }
 
+        .info-card {
+            min-width: 100%;
+        }
+
+        .section-header {
+            margin-bottom: 20px;
+        }
+
+        /* Hide thead, make td blocks with labels */
         thead {
             display: none;
         }
@@ -510,6 +506,7 @@ td { padding: 20px; border-bottom: 1px solid #222; }
             text-align: right;
             padding-left: 50%;
             position: relative;
+            border-bottom: 1px solid #333;
         }
 
         td::before {
@@ -517,7 +514,47 @@ td { padding: 20px; border-bottom: 1px solid #222; }
             position: absolute;
             left: 20px;
             color: var(--riot-red);
+            font-weight: bold;
         }
+
+        .group-card table,
+        .br-standings-table {
+            min-width: 100%;
+        }
+
+        .match-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .winner-card {
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .container {
+            padding: 0 10px;
+        }
+
+        td {
+            padding: 15px;
+            font-size: 0.9rem;
+        }
+
+        .btn-details {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
+    /* Ensure group tables show all data clearly */
+    .group-card table {
+        min-width: 600px;
+    }
+
+    .group-card th,
+    .group-card td {
+        white-space: nowrap;
     }
 </style>
 
@@ -567,7 +604,7 @@ td { padding: 20px; border-bottom: 1px solid #222; }
         </div>
     <?php endif; ?>
 
-    <!-- Registered Teams (existing) -->
+    <!-- Registered Teams -->
     <div class="section-header" style="margin-top: 20px;">
         <h2 style="font-size: 1.5rem; text-transform: uppercase; margin: 0;">Registered Teams</h2>
     </div>
@@ -603,7 +640,7 @@ td { padding: 20px; border-bottom: 1px solid #222; }
 
     <!-- Additional tournament content based on type -->
     <?php if ($tournament['type'] === 'standard' && !$isBattleRoyale): ?>
-        <!-- Group Standings -->
+        <!-- Group Standings - now stacked vertically -->
         <?php if (!empty($groupStandings)): ?>
             <div class="section-header" style="margin-top: 40px;">
                 <h2 style="font-size: 1.5rem; text-transform: uppercase; margin: 0;">Group Stage Standings</h2>
@@ -613,39 +650,41 @@ td { padding: 20px; border-bottom: 1px solid #222; }
                     <?php if (isset($groupStandings[$group]) && count($groupStandings[$group]) > 0): ?>
                         <div class="group-card">
                             <h3>Group <?= $group ?></h3>
-                            <table style="width:100%;">
-                                <thead>
-                                    <tr>
-                                        <th>Team</th>
-                                        <th>P</th>
-                                        <th>W</th>
-                                        <th>L</th>
-                                        <th>PTS</th>
-                                        <th>NET</th>
-                                        <th>DUR</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($groupStandings[$group] as $team): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($team['team_name']) ?></td>
-                                        <td><?= $team['played'] ?></td>
-                                        <td><?= $team['wins'] ?></td>
-                                        <td><?= $team['losses'] ?></td>
-                                        <td><?= $team['points'] ?></td>
-                                        <td><?= $team['net_game'] ?></td>
-                                        <td><?= gmdate('i:s', $team['duration']) ?></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                            <div style="overflow-x: auto;">
+                                <table style="width:100%; min-width: 600px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>P</th>
+                                            <th>W</th>
+                                            <th>L</th>
+                                            <th>PTS</th>
+                                            <th>NET</th>
+                                            <th>DUR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($groupStandings[$group] as $team): ?>
+                                        <tr>
+                                            <td data-label="Team"><?= htmlspecialchars($team['team_name']) ?></td>
+                                            <td data-label="P"><?= $team['played'] ?></td>
+                                            <td data-label="W"><?= $team['wins'] ?></td>
+                                            <td data-label="L"><?= $team['losses'] ?></td>
+                                            <td data-label="PTS"><?= $team['points'] ?></td>
+                                            <td data-label="NET"><?= $team['net_game'] ?></td>
+                                            <td data-label="DUR"><?= gmdate('i:s', $team['duration']) ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     <?php endif; ?>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
 
-        <!-- All Matches -->
+        <!-- All Matches - with final special -->
         <?php if (!empty($matchesList)): ?>
             <div class="section-header" style="margin-top: 40px;">
                 <h2 style="font-size: 1.5rem; text-transform: uppercase; margin: 0;">All Matches</h2>
@@ -662,9 +701,21 @@ td { padding: 20px; border-bottom: 1px solid #222; }
                     $team2 = $m['team2_name'] ?? 'TBD';
                     $score1 = $m['total_score1'] ?? '?';
                     $score2 = $m['total_score2'] ?? '?';
+                    $cardClass = 'match-card';
+                    if ($m['status'] === 'completed') {
+                        $cardClass .= ' completed';
+                    }
+                    if ($m['round'] === 'final') {
+                        $cardClass .= ' match-card-final';
+                    }
                 ?>
-                    <div class="match-card <?= $m['status'] === 'completed' ? 'completed' : '' ?>">
-                        <div class="match-round"><?= $m['group_name'] ? "Group ".$m['group_name'] : '' ?></div>
+                    <div class="<?= $cardClass ?>">
+                        <div class="match-round">
+                            <?= $m['group_name'] ? "Group ".$m['group_name'] : '' ?>
+                            <?php if ($m['round'] === 'final'): ?>
+                                <i class="fas fa-crown" style="margin-left: 8px; color: gold;"></i>
+                            <?php endif; ?>
+                        </div>
                         <div class="match-teams"><?= htmlspecialchars($team1) ?> vs <?= htmlspecialchars($team2) ?></div>
                         <?php if ($m['scheduled_time']): ?>
                             <div class="match-schedule"><i class="fas fa-calendar-alt"></i> <?= date('d M Y, h:i A', strtotime($m['scheduled_time'])) ?></div>
@@ -734,10 +785,10 @@ td { padding: 20px; border-bottom: 1px solid #222; }
                     <tbody>
                         <?php $rank = 1; foreach ($brStandings as $s): ?>
                         <tr>
-                            <td><?= $rank++ ?></td>
-                            <td><?= htmlspecialchars($s['team_name']) ?></td>
-                            <td><?= $s['points'] ?? 0 ?></td>
-                            <td><?= $s['kills'] ?? 0 ?></td>
+                            <td data-label="#"><?= $rank++ ?></td>
+                            <td data-label="Team"><?= htmlspecialchars($s['team_name']) ?></td>
+                            <td data-label="Points"><?= $s['points'] ?? 0 ?></td>
+                            <td data-label="Kills"><?= $s['kills'] ?? 0 ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -757,8 +808,8 @@ td { padding: 20px; border-bottom: 1px solid #222; }
                         <?php if ($m['scheduled_time']): ?>
                             <div class="match-schedule"><?= date('d M Y, h:i A', strtotime($m['scheduled_time'])) ?></div>
                         <?php endif; ?>
-                        <div style="margin-top: 10px;">
-                            <table style="width:100%;">
+                        <div style="margin-top: 10px; overflow-x: auto;">
+                            <table style="width:100%; min-width: 400px;">
                                 <thead>
                                     <tr>
                                         <th>Team</th>
@@ -769,9 +820,9 @@ td { padding: 20px; border-bottom: 1px solid #222; }
                                 <tbody>
                                     <?php foreach ($m['participants'] as $p): ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($p['team_name']) ?></td>
-                                        <td><?= $p['rank_position'] ?></td>
-                                        <td><?= $p['kill_count'] ?></td>
+                                        <td data-label="Team"><?= htmlspecialchars($p['team_name']) ?></td>
+                                        <td data-label="Rank"><?= $p['rank_position'] ?></td>
+                                        <td data-label="Kills"><?= $p['kill_count'] ?></td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
