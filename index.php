@@ -572,7 +572,7 @@ ob_end_flush();
         }
 
         .teamCard::before {
-            content: "ESTABLISH SQUAD // 02";
+            content: "ESTABLISH SQUAD";
             position: absolute;
             top: 0;
             left: 0;
@@ -615,7 +615,11 @@ ob_end_flush();
             border: 2px solid var(--riot);
             object-fit: cover;
             padding: 4px;
-            background: #000;
+            width: 100px;
+            filter: brightness(0) invert(1);
+            /* force white */
+            animation: subtlePulse 2s ease-in-out infinite;
+            
         }
 
         .teamCard input,
@@ -902,7 +906,7 @@ ob_end_flush();
                 </div>
                 <textarea name="motto" placeholder="TEAM MOTTO" rows="2"></textarea>
                 <input type="number" name="players" placeholder="MAX PLAYERS" min="1" required>
-                <button type="submit" name="createBtn" class="createBtn">CONFIRM FORMATION</button>
+                <button type="submit" name="createBtn" class="createBtn">CREATE TEAM</button>
             </form>
         </div>
     </div>

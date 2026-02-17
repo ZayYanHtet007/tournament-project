@@ -376,6 +376,10 @@ include('partial/header.php');
         text-transform: uppercase;
     }
 
+    .btn-cancel:hover {
+        color: var(--primary-red);
+}
+
     @media (max-width: 850px) {
         .signup-panel { flex-direction: column; }
         .signup-main-wrapper { margin-left: 0; }

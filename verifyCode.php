@@ -19,200 +19,224 @@ if (isset($_POST['submit'])) {
 include('partial/header.php');
 ?>
 
+<!-- Fonts & Icon libraries (same as login.php) -->
+<script src="https://cdn.lordicon.com/lordicon.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
 <style>
     :root {
-        --riot-red: #ff4655;
-        --riot-white: #ece8e1;
-        --riot-border: rgba(255, 255, 255, 0.15);
-        --gaming-bg: #1a1d23;
+        --primary-red: #ff4d5a;
+        --dark-red: #4a0a0a;
+        --deep-black: #050505;
+        --riot-dark: #080a0c;
+        --panel-bg: #0f0f0f;
     }
 
-    .reset-wrapper {
-        margin-left: 85px;
-        /* Alignment with your side layout */
-        margin-top: 75px;
-        min-height: calc(100vh - 75px);
+    body {
+        background-color: var(--riot-dark) !important;
+        margin: 0;
+        overflow-x: hidden;
+        position: relative;
+        /* CYBER GRID BACKGROUND */
+        background-image:
+            linear-gradient(rgba(255, 50, 50, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 50, 50, 0.05) 1px, transparent 1px);
+        
+        background-attachment: fixed;
+    }
+
+    /* INTENSIFIED RED ATMOSPHERIC LIGHTING */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 51, 68, 0.25) 0%,
+                transparent 60%),
+            radial-gradient(circle at 10% 10%, rgba(255, 0, 0, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 90%, rgba(255, 0, 0, 0.15) 0%, transparent 40%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    /* GLOBAL ANIMATED SCANLINE */
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(255, 51, 68, 0.03) 50%,
+                transparent 100%);
+        background-size: 100% 4px;
+        animation: globalScanline 10s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    @keyframes globalScanline {
+        0% {
+            transform: translateY(-100%);
+        }
+
+        100% {
+            transform: translateY(100%);
+        }
+    }
+
+    .verify-container-wrapper {
+        min-height: 88vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 40px 20px;
-        background-color: var(--gaming-bg);
-        position: relative;
-        overflow: hidden;
-        /* Cyber Grid Pattern */
-        background-image:
-            radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 40px 40px;
-    }
-
-    /* Red Atmospheric Glow */
-    .reset-wrapper::before {
-        content: "";
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(255, 70, 85, 0.12) 0%, transparent 70%);
-        bottom: -100px;
-        left: -100px;
-        z-index: 0;
-        animation: pulse-glow 8s ease-in-out infinite;
-    }
-
-    @keyframes pulse-glow {
-
-        0%,
-        100% {
-            opacity: 0.3;
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.6;
-            transform: scale(1.1);
-        }
-    }
-
-    .reset-container {
-        width: 100%;
-        max-width: 400px;
-        background: #111;
-        border: 1px solid var(--riot-border);
-        padding: 50px 40px;
         position: relative;
         z-index: 1;
-        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        margin-left: 85px;  /* match sidebar width */
+        margin-top: 25px;   /* match header height */
+        box-sizing: border-box;
     }
 
-    /* Tactical Label */
-    .reset-container::after {
-        content: "IDENTITY // VERIFICATION";
-        position: absolute;
-        top: 0;
-        right: 0;
-        background: var(--riot-red);
-        color: #000;
-        font-family: 'Bebas Neue', sans-serif;
-        padding: 2px 10px;
-        font-size: 12px;
+    .verify-panel {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 50px 40px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 4px solid var(--primary-red);
+        border-bottom: 4px solid var(--primary-red);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        backface-visibility: hidden;
+        box-sizing: border-box;
     }
 
-    h2 {
+    .verify-panel h2 {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 2.5rem;
-        line-height: 0.9;
-        margin-bottom: 10px;
-        letter-spacing: 1px;
+        font-size: 42px;
         color: #fff;
-        text-transform: uppercase;
+        text-align: center;
+        margin-bottom: 5px;
+        letter-spacing: 3px;
     }
 
     .subtitle {
-        color: rgba(255, 255, 255, 0.5);
+        color: #888;
         font-size: 11px;
         text-transform: uppercase;
-        margin-bottom: 30px;
-        letter-spacing: 1px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 40px;
+        letter-spacing: 2px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 15px;
     }
 
-    .field {
+    .form-group-custom {
         margin-bottom: 25px;
     }
 
-    label {
+    .form-group-custom label {
         display: block;
+        color: var(--primary-red);
         font-size: 11px;
         font-weight: 900;
-        text-transform: uppercase;
         margin-bottom: 8px;
-        color: var(--riot-red);
-        letter-spacing: 1.5px;
+        text-transform: uppercase;
     }
 
-    input[type="text"] {
+    .form-group-custom input {
         width: 100%;
         padding: 15px;
-        background: #1a1a1a;
-        border: 1px solid transparent;
-        border-bottom: 2px solid var(--riot-border);
+        background: #0a0a0a;
+        border: 1px solid #333;
         color: #fff;
+        transition: 0.3s;
+        box-sizing: border-box;
         font-size: 18px;
         letter-spacing: 4px;
         text-align: center;
-        transition: 0.3s;
     }
 
-    input[type="text"]:focus {
+    .form-group-custom input:focus {
+        border-color: var(--primary-red);
         outline: none;
-        background: #222;
-        border-bottom-color: var(--riot-red);
+        background: #110505;
+        box-shadow: 0 0 10px rgba(255, 51, 68, 0.1);
     }
 
-    .submit-btn {
+    .btn-red-action {
         width: 100%;
         padding: 18px;
-        background: transparent;
+        background: var(--primary-red);
         color: #fff;
-        border: 1px solid var(--riot-red);
+        border: none;
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 1.4rem;
-        letter-spacing: 2px;
-        cursor: pointer;
-        position: relative;
-        z-index: 1;
-        transition: 0.3s;
-    }
-
-    .submit-btn::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 0;
-        height: 100%;
-        background: var(--riot-red);
-        transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        z-index: -1;
-    }
-
-    .submit-btn:hover {
-        color: #000;
-    }
-
-    .submit-btn:hover::before {
-        width: 100%;
-    }
-
-    .err-msg {
-        background: rgba(255, 70, 85, 0.1);
-        color: var(--riot-red);
-        padding: 10px;
-        font-size: 12px;
-        font-weight: 800;
-        margin-bottom: 20px;
-        text-align: center;
+        font-size: 24px;
         text-transform: uppercase;
-        border-left: 3px solid var(--riot-red);
+        cursor: pointer;
+        transition: 0.3s;
+        letter-spacing: 2px;
+    }
+
+    .btn-red-action:hover {
+        filter: brightness(1.2);
+        box-shadow: 0 0 20px rgba(255, 51, 68, 0.4);
+    }
+
+    .error-notice {
+        background: rgba(255, 51, 68, 0.1);
+        color: var(--primary-red);
+        padding: 15px;
+        border-left: 3px solid var(--primary-red);
+        margin-bottom: 25px;
+        font-size: 12px;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .verify-container-wrapper {
+            margin-left: 0;
+            margin-top: 70px;
+        }
     }
 </style>
 
-<div class="reset-wrapper">
-    <div class="reset-container">
-        <h2>Verify Access</h2>
-        <p class="subtitle">Enter the 6-digit code sent to your email.</p>
+<main class="verify-container-wrapper">
+    <div class="verify-panel">
+        <h2>VERIFY <span style="color: var(--primary-red);">ACCESS</span></h2>
+        <p class="subtitle">Enter the 6‑digit code</p>
 
         <?php if (isset($error)): ?>
-            <p class="err-msg"><?= htmlspecialchars($error) ?></p>
+            <div class="error-notice"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <form method="post">
-            <div class="field">
-                <label>Access Token</label>
+        <form method="POST">
+            <div class="form-group-custom">
+                <label>VERIFICATION CODE</label>
                 <input type="text" name="resetcode" placeholder="000000" maxlength="6" autocomplete="off" required>
             </div>
 
-            <button type="submit" name="submit" class="submit-btn">AUTHORIZE ACCESS</button>
+            <button type="submit" name="submit" class="btn-red-action">AUTHORIZE</button>
         </form>
     </div>
-</div>
+</main>
+
+<script>
+    // MOUSE GLOW TRACKING (same as login.php)
+    window.addEventListener('mousemove', e => {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.setProperty('--mouse-x', x + '%');
+        document.body.style.setProperty('--mouse-y', y + '%');
+    });
+</script>

@@ -373,7 +373,7 @@ include('partial/header.php');
                 </div>
                 <button type="submit" name="btnlogin" class="btn-red-action">Login</button>
                 <div class="login-helper-links">
-                    <a href="signup.php">Register New Acc</a>
+                    <a href="signup.php">Register New Account</a>
                     <a onclick="toggleCard(true)">Forgot Password?</a>
                 </div>
             </form>
