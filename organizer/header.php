@@ -548,7 +548,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 const isTournamentRejection = (notiType === 'tournament_rejected') || (isRejectedText && /tournament/i.test(notiText));
 
                 if (tournamentId && tournamentId != 0) {
-                    window.location.href = `editTournament.php?id=${tournamentId}`;
+                    window.location.href = `editTournament.php?tournament_id=${tournamentId}`;
                     return;
                 }
 
