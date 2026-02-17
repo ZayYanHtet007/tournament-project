@@ -396,7 +396,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <a href="organizerStatistic.php" class="nav-item <?= ($current_page == 'organizerStatistics.php') ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-bar"></i>
-                <span>LEADERBOARD</span>
+                <span>STATISTICS</span>
             </a>
 
             <a href="contact.php" class="nav-item <?= ($current_page == 'contact.php') ? 'active' : '' ?>">

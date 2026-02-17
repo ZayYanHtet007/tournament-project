@@ -363,7 +363,7 @@ if (isset($_POST['save_all'])) {
     <div class="profile-container">
         <h2>EDIT PREFERENCES</h2>
 
-        <a href="index.php" class="close-btn">X</a>
+        <a href="organizerDashboard.php" class="close-btn">X</a>
 
         <?php if (isset($message)): ?>
             <p class="status msg"><?= $message ?></p>

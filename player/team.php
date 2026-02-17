@@ -501,10 +501,6 @@ $conn->commit();
                   <div class="text-[10px] text-gray-500"><?= htmlspecialchars($inv['created_at']) ?></div>
                 </div>
                 <div class="flex items-center gap-3">
-                  <a class="text-red-500 text-[10px] uppercase font-bold hover:underline" 
-                   href="invite_decision.php?token=<?= urlencode($inv['token']) ?>" target="_blank">
-                   Link
-                  </a>
                   <form method="post">
                     <input type="hidden" name="action" value="revoke_invite">
                     <input type="hidden" name="invite_id" value="<?= (int)$inv['invite_id'] ?>">

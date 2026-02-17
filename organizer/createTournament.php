@@ -341,25 +341,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
             pointer-events: none;
         }
 
-        /* Bracket preview */
-        .bracket {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            padding: 1rem;
+        /* Bracket preview container with relative positioning for SVG lines */
+        .bracket-container {
+            position: relative;
             border: 1px solid #2f3a4a;
             background-color: #0f141e;
             min-height: 120px;
+            overflow-x: auto;
+        }
+        .bracket {
+            display: flex;
+            gap: 30px;
+            padding: 1rem;
             align-items: center;
             justify-content: center;
+            min-width: max-content;
+        }
+        .round {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
         }
         .match {
             background-color: #161b26;
             border-left: 3px solid #2d7ff9;
-            padding: 6px;
-            margin-bottom: 8px;
+            padding: 8px 12px;
             font-size: 11px;
             color: #9aaec9;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            min-width: 80px;
+            text-align: center;
+        }
+        /* SVG overlay for lines */
+        .bracket-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .bracket-svg line {
+            stroke: #2d7ff9;
+            stroke-width: 2;
+            stroke-dasharray: 5,3;
         }
 
         /* Icons */
@@ -542,7 +570,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
 
                     <div class="mb-8">
                         <label class="font-bold">Tournament Structure Preview</label>
-                        <div id="bracketPreview" class="bracket rounded-lg min-h-[120px] flex items-center justify-center">
+                        <div id="bracketContainer" class="bracket-container" style="min-height: 150px;">
+                            <div id="bracketPreview" class="bracket"></div>
+                            <svg id="bracketSvg" class="bracket-svg"></svg>
                         </div>
                     </div>
 
@@ -564,6 +594,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
         const startDate = document.getElementById('startDate');
         const maxParticipantsInput = document.getElementById('max_participants');
         const bracketPreview = document.getElementById('bracketPreview');
+        const bracketSvg = document.getElementById('bracketSvg');
+        const bracketContainer = document.getElementById('bracketContainer');
 
         regStart.min = today;
         regEnd.min = today;
@@ -577,7 +609,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
             });
             document.getElementById('stepNum').textContent = step;
             document.getElementById('progress').style.width = (step / 3 * 100) + '%';
+
+            // If moving to step3 and we have a single elimination bracket, redraw lines
+            if (step === 3 && currentFormat === 'elim' && bracketPreview.children.length > 0) {
+                setTimeout(() => {
+                    clearSvg();
+                    drawBracketLines();
+                }, 100);
+            }
         }
+
+        // Track current format
+        let currentFormat = 'standard'; // standard or elim
 
         function toggleFormat(type) {
             const isStandard = (type === 'standard');
@@ -590,26 +633,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
             if (isStandard) {
                 stdGrid.classList.remove('disabled');
                 elimGrid.classList.add('disabled');
+                currentFormat = 'standard';
             } else {
                 elimGrid.classList.remove('disabled');
                 stdGrid.classList.add('disabled');
+                currentFormat = 'elim';
             }
             
             // Clear selections when switching formats
             document.querySelectorAll('.p-card').forEach(c => c.classList.remove('selected'));
             maxParticipantsInput.value = "";
             bracketPreview.innerHTML = "";
+            clearSvg();
+
+            // If a team count was already selected, regenerate preview for new format
+            if (maxParticipantsInput.value) {
+                generateBracket(maxParticipantsInput.value, currentFormat);
+            }
         }
 
         function pick(v, el) {
             maxParticipantsInput.value = v;
             document.querySelectorAll('.p-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
-            generateBracket(v);
+            generateBracket(v, currentFormat);
         }
 
-        function generateBracket(teams) {
+        function generateBracket(teams, format) {
+            if (format === 'standard') {
+                generateStandardBracket(teams);
+            } else {
+                generateSingleElimBracket(teams);
+            }
+        }
+
+        function generateStandardBracket(teams) {
             bracketPreview.innerHTML = '';
+            clearSvg();
             teams = parseInt(teams);
             if (!teams) return;
 
@@ -620,15 +680,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
             for (let g = 1; g <= groupCount; g++) {
                 let size = baseGroupSize + (extra > 0 ? 1 : 0);
                 if (extra > 0) extra--;
-                let col = document.createElement('div');
-                col.className = 'flex-shrink-0';
-                col.innerHTML = `<h3 class="text-[9px] text-blue-400 font-bold mb-2 uppercase">Pool ${g}</h3>`;
+                let roundDiv = document.createElement('div');
+                roundDiv.className = 'round';
+                roundDiv.innerHTML = `<h3 class="text-[9px] text-blue-400 font-bold mb-2 uppercase">Pool ${g}</h3>`;
                 for (let i = 1; i <= size; i++) {
-                    col.innerHTML += `<div class="match text-gray-400">Team</div>`;
+                    roundDiv.innerHTML += `<div class="match">Team</div>`;
                 }
-                bracketPreview.appendChild(col);
+                bracketPreview.appendChild(roundDiv);
             }
         }
+
+        function generateSingleElimBracket(teams) {
+            bracketPreview.innerHTML = '';
+            clearSvg();
+            teams = parseInt(teams);
+            if (!teams || teams < 2) return;
+
+            // Number of rounds = log2(teams)
+            let rounds = Math.log2(teams);
+            let roundNames = [];
+            if (teams === 256) roundNames = ['R128', 'R64', 'R32', 'R16', 'QF', 'SF', 'F'];
+            else if (teams === 128) roundNames = ['R64', 'R32', 'R16', 'QF', 'SF', 'F'];
+            else if (teams === 64) roundNames = ['R32', 'R16', 'QF', 'SF', 'F'];
+            else if (teams === 32) roundNames = ['R16', 'QF', 'SF', 'F'];
+            else if (teams === 16) roundNames = ['R16', 'QF', 'SF', 'F'];
+            else if (teams === 8) roundNames = ['QF', 'SF', 'F'];
+            else roundNames = Array(rounds).fill('Round');
+
+            let matchesPerRound = teams / 2;
+            for (let r = 0; r < rounds; r++) {
+                let roundDiv = document.createElement('div');
+                roundDiv.className = 'round';
+                roundDiv.dataset.round = r;
+                roundDiv.dataset.matches = matchesPerRound;
+                let roundLabel = roundNames[r] || `Round ${r+1}`;
+                roundDiv.innerHTML = `<h3 class="text-[9px] text-blue-400 font-bold mb-2 uppercase">${roundLabel}</h3>`;
+                for (let m = 0; m < matchesPerRound; m++) {
+                    roundDiv.innerHTML += `<div class="match" data-match="${m}">Match</div>`;
+                }
+                bracketPreview.appendChild(roundDiv);
+                matchesPerRound = Math.floor(matchesPerRound / 2);
+            }
+
+            // Draw lines after a short delay to ensure DOM is updated
+            setTimeout(drawBracketLines, 50);
+        }
+
+        function clearSvg() {
+            bracketSvg.innerHTML = '';
+        }
+
+        function drawBracketLines() {
+            if (currentFormat !== 'elim') return;
+            
+            const rounds = bracketPreview.querySelectorAll('.round');
+            if (rounds.length < 2) return;
+
+            // Get container dimensions
+            const containerRect = bracketContainer.getBoundingClientRect();
+            bracketSvg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+            
+            // For each round except the last, draw lines from matches to next round
+            for (let r = 0; r < rounds.length - 1; r++) {
+                const currentRound = rounds[r];
+                const nextRound = rounds[r + 1];
+                
+                const currentMatches = currentRound.querySelectorAll('.match');
+                const nextMatches = nextRound.querySelectorAll('.match');
+                
+                for (let i = 0; i < currentMatches.length; i++) {
+                    const match = currentMatches[i];
+                    const matchRect = match.getBoundingClientRect();
+                    
+                    // Determine which next match this connects to (floor(i/2))
+                    const nextIndex = Math.floor(i / 2);
+                    if (nextIndex >= nextMatches.length) continue;
+                    
+                    const nextMatch = nextMatches[nextIndex];
+                    const nextMatchRect = nextMatch.getBoundingClientRect();
+                    
+                    // Calculate line start (right side of current match, center Y)
+                    const startX = matchRect.right - containerRect.left;
+                    const startY = matchRect.top + matchRect.height/2 - containerRect.top;
+                    
+                    // Calculate line end (left side of next match, center Y)
+                    const endX = nextMatchRect.left - containerRect.left;
+                    const endY = nextMatchRect.top + nextMatchRect.height/2 - containerRect.top;
+                    
+                    // Create SVG line
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", startX);
+                    line.setAttribute("y1", startY);
+                    line.setAttribute("x2", endX);
+                    line.setAttribute("y2", endY);
+                    line.setAttribute("stroke", "#2d7ff9");
+                    line.setAttribute("stroke-width", "2");
+                    line.setAttribute("stroke-dasharray", "5,3");
+                    bracketSvg.appendChild(line);
+                }
+            }
+        }
+
+        // Redraw lines on window resize
+        window.addEventListener('resize', () => {
+            if (currentFormat === 'elim' && bracketPreview.children.length > 0) {
+                clearSvg();
+                drawBracketLines();
+            }
+        });
 
         document.getElementById('game').addEventListener('change', function() {
             document.getElementById('gameType').value = this.options[this.selectedIndex].dataset.genre || '';
@@ -637,7 +796,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnCreate'])) {
         regStart.addEventListener('change', () => regEnd.min = regStart.value);
         regEnd.addEventListener('change', () => startDate.min = regEnd.value);
 
-        if (maxParticipantsInput.value) generateBracket(maxParticipantsInput.value);
+        // Initialize with default value if any
+        if (maxParticipantsInput.value) generateBracket(maxParticipantsInput.value, currentFormat);
     </script>
 </body>
 </html>
