@@ -100,8 +100,9 @@ try {
 
   // 1. Insert Tournament
   $status = calculateStatus($data['registration_start_date'], $data['start_date']);
-  $stmt = $conn->prepare("INSERT INTO tournaments (organizer_id, game_id, title, description, max_participants, team_size, fee, registration_start_date, registration_deadline, start_date, status, admin_status, prize_pool) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)");
-  $stmt->bind_param("iissiidssssd", $organizer_id, $data['game_id'], $data['title'], $data['description'], $data['max_participants'], $data['team_size'], $data['fee'], $data['registration_start_date'], $data['registration_deadline'], $data['start_date'], $status, $data['prize_pool']);
+  $stmt = $conn->prepare("INSERT INTO tournaments (organizer_id, game_id, title, type, description, max_participants, team_size, fee, registration_start_date, registration_deadline, start_date, status, admin_status, prize_pool) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)");
+
+  $stmt->bind_param("iisssiidssssd", $organizer_id, $data['game_id'], $data['title'],$data['type'], $data['description'], $data['max_participants'], $data['team_size'], $data['fee'], $data['registration_start_date'], $data['registration_deadline'], $data['start_date'], $status, $data['prize_pool']);
   $stmt->execute();
   $tournament_id = $stmt->insert_id;
 
