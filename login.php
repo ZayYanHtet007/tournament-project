@@ -38,6 +38,11 @@ if (isset($_POST['btnlogin'])) {
     $result = mysqli_stmt_get_result($stmt);
 
     if ($user = mysqli_fetch_assoc($result)) {
+        if ((int)$user['is_banned'] === 1) {
+            $_SESSION['error'] = "This account has been banned. Please contact support.";
+            header("Location: login.php");
+            exit;
+        }
         if (!password_verify($password, $user['password'])) {
             $_SESSION['error'] = "Invalid email or password";
             header("Location: login.php");
