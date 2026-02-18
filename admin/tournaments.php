@@ -201,25 +201,29 @@ while ($row = mysqli_fetch_assoc($result)) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($tournaments as $row):
-                            $statusClass = "status-" . $row['status'];
-                            $approvalClass = "approval-" . ($row['admin_status'] == 'approved' ? 'success' : ($row['admin_status'] == 'rejected' ? 'danger' : 'pending'));
-                        ?>
-                            <tr onclick="window.location='tournamentsDetail.php?id=<?= $row['tournament_id'] ?>'" style="cursor: pointer;">
-                                <td><span>#<?= $row['tournament_id'] ?></span></td>
-                                <td><?= htmlspecialchars($row['title']) ?></td>
-                                <td><?= htmlspecialchars($row['game_name']) ?></td>
-                                <td><?= number_format($row['max_participants']) ?> Players</td>
-                                <td class="fee-text">$<?= number_format($row['fee'], 2) ?></td>
-                                <td><?= date('d M Y', strtotime($row['start_date'])) ?></td>
-                                <td><span class="custom-badge <?= $statusClass ?>"><?= strtoupper($row['status']) ?></span></td>
-                                <td><span class="custom-badge <?= $approvalClass ?>"><?= strtoupper($row['admin_status']) ?></span></td>
+                        <?php if (!empty($tournaments)): ?>
+                            <?php foreach ($tournaments as $row):
+                                $statusClass = "status-" . $row['status'];
+                                $approvalClass = "approval-" . ($row['admin_status'] == 'approved' ? 'success' : ($row['admin_status'] == 'rejected' ? 'danger' : 'pending'));
+                            ?>
+                                <tr onclick="window.location='tournamentsDetail.php?id=<?= $row['tournament_id'] ?>'" style="cursor: pointer;">
+                                    <td><span>#<?= $row['tournament_id'] ?></span></td>
+                                    <td><?= htmlspecialchars($row['title']) ?></td>
+                                    <td><?= htmlspecialchars($row['game_name']) ?></td>
+                                    <td><?= number_format($row['max_participants']) ?> Players</td>
+                                    <td class="fee-text">$<?= number_format($row['fee'], 2) ?></td>
+                                    <td><?= date('d M Y', strtotime($row['start_date'])) ?></td>
+                                    <td><span class="custom-badge <?= $statusClass ?>"><?= strtoupper($row['status']) ?></span></td>
+                                    <td><span class="custom-badge <?= $approvalClass ?>"><?= strtoupper($row['admin_status']) ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 18px 12px;">
+                                    <?= !empty($searchTerm) ? 'Tournament not found' : 'No tournaments available' ?>
+                                </td>
                             </tr>
-
-
-
-                        <?php endforeach; ?>
-
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
