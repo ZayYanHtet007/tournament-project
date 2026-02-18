@@ -1,5 +1,6 @@
 <?php
-include('partial/header.php');
+// Ensure session and DB are available before handling POST so redirects work
+require_once 'partial/init.php';
 
 // Handle Logic before any HTML output to allow header redirection
 if(isset($_POST['submit'])){
@@ -26,6 +27,7 @@ if(isset($_POST['submit'])){
     }
 }
 ?>
+<?php include('partial/header.php'); ?>
 
 <!-- Fonts & Icon libraries (same as login.php) -->
 <script src="https://cdn.lordicon.com/lordicon.js"></script>
@@ -209,26 +211,6 @@ if(isset($_POST['submit'])){
         text-align: center;
     }
 
-    /* Loading spinner for buttons */
-    .btn-loading {
-        opacity: 0.8;
-        cursor: wait;
-    }
-    .spinner {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 0.8s linear infinite;
-        margin-left: 8px;
-        vertical-align: middle;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
     /* Responsive */
     @media (max-width: 768px) {
         .change-pwd-wrapper {
@@ -272,18 +254,5 @@ if(isset($_POST['submit'])){
         document.body.style.setProperty('--mouse-y', y + '%');
     });
 
-    // Loading effect on form submission
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (!submitBtn) return;
-                submitBtn.disabled = true;
-                submitBtn.classList.add('btn-loading');
-                const buttonText = submitBtn.innerText;
-                submitBtn.innerHTML = buttonText + ' <span class="spinner"></span>';
-            });
-        }
-    });
+   
 </script>
