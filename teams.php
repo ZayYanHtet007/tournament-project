@@ -35,7 +35,7 @@ function getTeamsData($conn, $limit, $page, $search, $game_type = '')
     $sql = "SELECT t.team_id, t.team_name, t.short_name, t.motto, t.logo, 
             g.name AS game_name, -- Fetch the actual game name
             l.username AS leader_name,
-            GROUP_CONCAT(CONCAT(u.username, ':', IFNULL(u.image, 'default_user.png')) SEPARATOR '|') as player_list
+            GROUP_CONCAT(CONCAT(u.username, ':', IFNULL(u.image, 'default.png')) SEPARATOR '|') as player_list
             FROM teams t
             LEFT JOIN games g ON t.aim_for = g.game_id 
             LEFT JOIN users l ON t.leader_id = l.user_id 
@@ -106,7 +106,7 @@ function include_grid_content($data)
 )">
                     <div class="card-accent"></div>
                     <div class="photo-box">
-                        <img src="images/<?= $row['logo'] ?: 'default_team.png' ?>" alt="Team">
+                        <img src="images/<?= $row['logo'] ?: 'TX red.png' ?>" alt="Team">
                         <div class="img-overlay"></div>
                     </div>
                     <div class="info-box">
